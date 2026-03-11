@@ -227,7 +227,7 @@ const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','pro
 
 // ===== API =====
 async function api(action, body) {
-  const url = action === 'get' ? '/.netlify/functions/api' : `/.netlify/functions/api?action=${action}`;
+  const url = action === 'get' ? '/.netlify/functions/feishu' : `/.netlify/functions/feishu?action=${action}`;
   const opt = action === 'get'
     ? { method: 'GET' }
     : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
