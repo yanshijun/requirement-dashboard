@@ -65,9 +65,16 @@ function mapFromFeishu(record) {
   };
 }
 
+// 日期字符串转飞书时间戳（毫秒）
+function toFeishuDate(str) {
+  if (!str) return null;
+  const ts = new Date(str).getTime();
+  return isNaN(ts) ? null : ts;
+}
+
 // 看板字段映射到飞书字段
 function mapToFeishu(item) {
-  return {
+  const fields = {
     "需求编号": item.no || "",
     "需求名称": item.name || "",
     "需求描述": item.desc || "",
@@ -77,12 +84,15 @@ function mapToFeishu(item) {
     "开发状态": item.status || "待开始",
     "开发进度": String(item.progress || 0) + "%",
     "需求认领人": item.person || "",
-    "预计上线日期": item.deadline || "",
     "是否需要设计": item.design || "",
     "评审是否通过": item.review || "",
     "提出时间": item.createTime || "",
     "备注": item.note || ""
   };
+  // 日期字段单独处理，飞书要求时间戳
+  const deadline = toFeishuDate(item.deadline);
+  if (deadline) fields["预计上线日期"] = deadline;
+  return fields;
 }
 
 exports.handler = async function (event) {
