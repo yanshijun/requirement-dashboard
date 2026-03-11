@@ -17,6 +17,28 @@ function err(msg, code = 500) {
   return { statusCode: code, headers: cors, body: JSON.stringify({ error: msg }) };
 }
 
+// 日期字符串/时间戳 → 飞书时间戳（毫秒整数）
+function toFeishuDate(val) {
+  if (!val) return null;
+  // 已经是数字时间戳
+  if (typeof val === "number") return val;
+  // 尝试解析字符串
+  const ts = new Date(val).getTime();
+  return isNaN(ts) ? null : ts;
+}
+
+// 飞书时间戳 → 日期字符串 YYYY-MM-DD
+function fromFeishuDate(val) {
+  if (!val) return "";
+  try {
+    const d = new Date(typeof val === "number" ? val : parseInt(val));
+    if (isNaN(d.getTime())) return String(val);
+    return d.toISOString().split("T")[0];
+  } catch (e) {
+    return String(val);
+  }
+}
+
 // 获取飞书 token
 async function getToken() {
   const res = await fetch(`${BASE}/auth/v3/tenant_access_token/internal`, {
@@ -43,7 +65,7 @@ async function getAllRecords(token) {
   return records;
 }
 
-// 飞书字段映射到看板字段
+// 飞书字段 → 看板字段
 function mapFromFeishu(record) {
   const f = record.fields || {};
   return {
@@ -57,41 +79,35 @@ function mapFromFeishu(record) {
     status: String(f["开发状态"] || "待开始"),
     progress: parseInt(String(f["开发进度"] || "0").replace("%", "")) || 0,
     person: String(f["需求认领人"] || ""),
-    deadline: String(f["预计上线日期"] || ""),
+    deadline: fromFeishuDate(f["预计上线日期"]),
     design: String(f["是否需要设计"] || "待设计"),
     review: String(f["评审是否通过"] || "待确认"),
-    createTime: String(f["提出时间"] || ""),
+    createTime: fromFeishuDate(f["提出时间"]),
     note: String(f["备注"] || "")
   };
 }
 
-// 日期字符串转飞书时间戳（毫秒）
-function toFeishuDate(str) {
-  if (!str) return null;
-  const ts = new Date(str).getTime();
-  return isNaN(ts) ? null : ts;
-}
-
-// 看板字段映射到飞书字段
+// 看板字段 → 飞书字段（日期字段转时间戳）
 function mapToFeishu(item) {
   const fields = {
-    "需求编号": item.no || "",
-    "需求名称": item.name || "",
-    "需求描述": item.desc || "",
-    "需求类型": item.type || "",
-    "所属计划": item.plan || "",
-    "优先级": item.priority || "",
-    "开发状态": item.status || "待开始",
+    "需求编号": String(item.no || ""),
+    "需求名称": String(item.name || ""),
+    "需求描述": String(item.desc || ""),
+    "需求类型": String(item.type || ""),
+    "所属计划": String(item.plan || ""),
+    "优先级": String(item.priority || ""),
+    "开发状态": String(item.status || "待开始"),
     "开发进度": String(item.progress || 0) + "%",
-    "需求认领人": item.person || "",
-    "是否需要设计": item.design || "",
-    "评审是否通过": item.review || "",
-    "提出时间": item.createTime || "",
-    "备注": item.note || ""
+    "需求认领人": String(item.person || ""),
+    "是否需要设计": String(item.design || ""),
+    "评审是否通过": String(item.review || ""),
+    "备注": String(item.note || "")
   };
-  // 日期字段单独处理，飞书要求时间戳
+  // 日期字段：有值才传，且必须是时间戳
   const deadline = toFeishuDate(item.deadline);
   if (deadline) fields["预计上线日期"] = deadline;
+  const createTime = toFeishuDate(item.createTime);
+  if (createTime) fields["提出时间"] = createTime;
   return fields;
 }
 
@@ -119,7 +135,6 @@ exports.handler = async function (event) {
     // ===== 新增 =====
     if (action === "add") {
       if (!body.name) return err("需求名称不能为空", 400);
-      body.createTime = body.createTime || new Date().toLocaleDateString("zh-CN");
       const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN}/tables/${TABLE_ID}/records`, {
         method: "POST",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
@@ -127,8 +142,7 @@ exports.handler = async function (event) {
       });
       const data = await res.json();
       if (data.code !== 0) throw new Error("新增失败: " + JSON.stringify(data));
-      const newItem = mapFromFeishu(data.data.record);
-      return ok({ ok: true, item: newItem });
+      return ok({ ok: true, item: mapFromFeishu(data.data.record) });
     }
 
     // ===== 更新 =====
@@ -156,7 +170,7 @@ exports.handler = async function (event) {
       return ok({ ok: true });
     }
 
-    // ===== 批量导入（从飞书直接读，无需操作）=====
+    // ===== 批量导入 =====
     if (action === "import") {
       const items = Array.isArray(body) ? body : [];
       if (!items.length) return err("数据为空", 400);
