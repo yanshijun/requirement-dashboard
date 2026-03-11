@@ -20,9 +20,7 @@ function err(msg, code = 500) {
 // 日期字符串/时间戳 → 飞书时间戳（毫秒整数）
 function toFeishuDate(val) {
   if (!val) return null;
-  // 已经是数字时间戳
   if (typeof val === "number") return val;
-  // 尝试解析字符串
   const ts = new Date(val).getTime();
   return isNaN(ts) ? null : ts;
 }
@@ -65,45 +63,62 @@ async function getAllRecords(token) {
   return records;
 }
 
+// 从飞书单选/下拉字段安全取值
+function getSingleSelect(val) {
+  if (!val) return "";
+  // 飞书单选返回格式可能是 { text: "xxx" } 或直接字符串
+  if (typeof val === "object" && val.text) return String(val.text);
+  return String(val);
+}
+
 // 飞书字段 → 看板字段
 function mapFromFeishu(record) {
   const f = record.fields || {};
+  // 进度条字段：飞书返回 0~1 的小数 或 0~100 整数，统一转成 0~100 整数
+  let progress = 0;
+  if (f["开发进度"] !== undefined && f["开发进度"] !== null) {
+    const raw = parseFloat(f["开发进度"]);
+    // 飞书进度条存的是 0~1 小数
+    progress = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+  }
   return {
     id: record.record_id,
     no: String(f["需求编号"] || ""),
     name: String(f["需求名称"] || ""),
     desc: String(f["需求描述"] || ""),
     type: String(f["需求类型"] || "用户需求"),
-    plan: String(f["所属计划"] || "SAE2.3.3"),
-    priority: String(f["优先级"] || "中🟡"),
-    status: String(f["开发状态"] || "待开始"),
-    progress: parseInt(String(f["开发进度"] || "0").replace("%", "")) || 0,
-    person: String(f["需求认领人"] || ""),
+    plan: getSingleSelect(f["所属计划"]),
+    priority: getSingleSelect(f["优先级"]),
+    status: getSingleSelect(f["开发状态"]),
+    progress,
+    person: getSingleSelect(f["需求认领人"]),
     deadline: fromFeishuDate(f["预计上线日期"]),
-    design: String(f["是否需要设计"] || "待设计"),
-    review: String(f["评审是否通过"] || "待确认"),
+    design: getSingleSelect(f["是否需要设计"]),
+    review: getSingleSelect(f["评审是否通过"]),
     createTime: fromFeishuDate(f["提出时间"]),
     note: String(f["备注"] || "")
   };
 }
 
-// 看板字段 → 飞书字段（日期字段转时间戳）
+// 看板字段 → 飞书字段
 function mapToFeishu(item) {
   const fields = {
     "需求编号": String(item.no || ""),
     "需求名称": String(item.name || ""),
     "需求描述": String(item.desc || ""),
     "需求类型": String(item.type || ""),
+    // 下拉（单选）字段：直接传字符串
     "所属计划": String(item.plan || ""),
     "优先级": String(item.priority || ""),
     "开发状态": String(item.status || "待开始"),
-    "开发进度": String(item.progress || 0) + "%",
+    // 进度条字段：飞书要求传 0~1 小数
+    "开发进度": Math.round(parseInt(item.progress || 0)) / 100,
     "需求认领人": String(item.person || ""),
     "是否需要设计": String(item.design || ""),
     "评审是否通过": String(item.review || ""),
     "备注": String(item.note || "")
   };
-  // 日期字段：有值才传，且必须是时间戳
+  // 日期字段：有值才传，且必须是时间戳（毫秒）
   const deadline = toFeishuDate(item.deadline);
   if (deadline) fields["预计上线日期"] = deadline;
   const createTime = toFeishuDate(item.createTime);
