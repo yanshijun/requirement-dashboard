@@ -3,228 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>需求池 · 项目管理看板</title>
+<title>需求池看板</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
-.header { background: #fff; border-bottom: 1px solid #e8ecf0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.header-left h1 { font-size: 16px; font-weight: 700; color: #1a1a2e; }
-.header-left p { font-size: 11px; color: #9ca3af; margin-top: 1px; }
-.header-right { display: flex; gap: 8px; align-items: center; }
-.btn-refresh { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #374151; cursor: pointer; }
-.btn-refresh:hover { background: #e5e7eb; }
-.tab-btn { padding: 7px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.tab-btn.active { background: #4f46e5; color: #fff; }
-.tab-btn:not(.active) { background: #f3f4f6; color: #6b7280; }
-.tab-btn:not(.active):hover { background: #e5e7eb; }
-.stats-bar { background: #fff; border-bottom: 1px solid #e8ecf0; padding: 12px 24px; display: flex; gap: 10px; flex-wrap: wrap; }
-.stat-card { border-radius: 8px; padding: 7px 16px; text-align: center; border: 1px solid; }
-.stat-card .num { font-size: 20px; font-weight: 700; line-height: 1; }
-.stat-card .lbl { font-size: 11px; margin-top: 2px; opacity: .75; }
-.loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 14px; color: #9ca3af; }
-.spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-box { margin: 24px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 20px 24px; }
-.error-box h3 { color: #dc2626; font-size: 14px; margin-bottom: 8px; }
-.error-box p { color: #6b7280; font-size: 13px; line-height: 1.6; }
-.error-box code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-.main { padding: 16px 24px; }
-.filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
-.filters input { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 12px; font-size: 12px; width: 170px; outline: none; }
-.filters input:focus { border-color: #4f46e5; }
-.filters select { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 10px; font-size: 12px; color: #374151; background: #fff; cursor: pointer; outline: none; }
-.filter-count { font-size: 12px; color: #9ca3af; margin-left: 4px; }
-.table-wrap { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead tr { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
-thead th { padding: 10px 12px; text-align: left; font-weight: 600; color: #6b7280; font-size: 11px; white-space: nowrap; text-transform: uppercase; }
-tbody tr { border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background .1s; }
-tbody tr:hover { background: #f5f3ff; }
-tbody tr.expanded { background: #f5f3ff; }
-tbody td { padding: 9px 12px; vertical-align: middle; }
-.desc-row td { background: #fafafa; padding: 10px 24px 14px; }
-.desc-content { font-size: 12px; color: #4b5563; line-height: 1.7; border-left: 3px solid #4f46e5; padding-left: 12px; }
-.tag { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid; }
-.prog-wrap { display: flex; align-items: center; gap: 6px; min-width: 110px; }
-.prog-bar { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
-.prog-fill { height: 100%; border-radius: 3px; }
-.prog-txt { font-size: 11px; color: #9ca3af; min-width: 28px; }
-.kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
-.kb-col { min-width: 210px; flex: 0 0 210px; background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; }
-.kb-head { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid; }
-.kb-head-title { font-weight: 700; font-size: 13px; }
-.kb-count { color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
-.kb-body { padding: 8px; display: flex; flex-direction: column; gap: 7px; max-height: 560px; overflow-y: auto; }
-.kb-card { background: #f9fafb; border-radius: 7px; padding: 10px 11px; border: 1px solid #e5e7eb; }
-.kb-card-id { font-size: 10px; color: #d1d5db; font-family: monospace; margin-bottom: 3px; }
-.kb-card-name { font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.4; margin-bottom: 7px; }
-.kb-card-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }
-.kb-empty { color: #d1d5db; font-size: 12px; text-align: center; padding: 24px 0; }
-.person-list { display: flex; flex-direction: column; gap: 14px; }
-.person-card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; }
-.person-head { padding: 14px 20px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.avatar { width: 38px; height: 38px; border-radius: 50%; background: #4f46e5; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
-.person-info { flex: 1; }
-.person-info h3 { font-size: 15px; font-weight: 700; }
-.person-info p { font-size: 12px; color: #9ca3af; margin-top: 2px; }
-.person-counts { display: flex; gap: 8px; }
-.pcount { text-align: center; border-radius: 8px; padding: 5px 14px; border: 1px solid; }
-.pcount .n { font-weight: 700; font-size: 16px; }
-.pcount .l { font-size: 11px; opacity: .75; }
-.person-prog { min-width: 140px; }
-.person-prog .pl { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
-.person-table { font-size: 12px; width: 100%; border-collapse: collapse; }
-.person-table th { padding: 7px 12px; background: #fdfdfd; border-bottom: 1px solid #f3f4f6; color: #9ca3af; font-weight: 600; font-size: 11px; text-align: left; white-space: nowrap; }
-.person-table td { padding: 7px 12px; border-bottom: 1px solid #f9fafb; }
-.name-cell { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-.atag { border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 500; }
-.unassigned { background: #fef9c3; color: #854d0e; }
-.assigned { background: #eff6ff; color: #1d4ed8; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+header{background:#1d2b4f;color:#fff;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{font-size:16px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:8px}
+.last-update{font-size:12px;opacity:.5}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
+.btn-primary{background:#3370ff;color:#fff}.btn-primary:hover{background:#2860e0}
+.btn-success{background:#52c41a;color:#fff}.btn-success:hover{background:#3ea80e}
+.btn-danger{background:#ff4d4f;color:#fff}.btn-danger:hover{background:#d9363e}
+.btn-ghost{background:transparent;color:#3370ff;border:1px solid #3370ff}.btn-ghost:hover{background:#f0f5ff}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{background:#fff;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #e8e8e8}
+.toolbar select,.toolbar input[type=text]{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;color:#333}
+.toolbar input[type=text]{width:200px}
+.tabs{background:#fff;display:flex;padding:0 24px;border-bottom:2px solid #e8e8e8}
+.tab{padding:12px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#666;white-space:nowrap}
+.tab.active{color:#3370ff;border-bottom-color:#3370ff;font-weight:600}
+.content{padding:20px 24px}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.stat-card .num{font-size:28px;font-weight:700;color:#3370ff}
+.stat-card .lbl{font-size:12px;color:#888;margin-top:2px}
+.tbl-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden}
+.tbl-info{padding:10px 16px;font-size:13px;color:#888;border-bottom:1px solid #f0f0f0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f7f8fa;padding:10px 12px;text-align:left;font-weight:600;color:#555;border-bottom:1px solid #e8e8e8;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.tag-ur{background:#e6f4ff;color:#1677ff}
+.tag-sr{background:#f0f0ff;color:#722ed1}
+.tag-p1{background:#fff1f0;color:#f5222d}
+.tag-p2{background:#fff7e6;color:#fa8c16}
+.tag-p3{background:#fffbe6;color:#d4b106}
+.tag-p4{background:#f6ffed;color:#52c41a}
+.tag-s0{background:#f5f5f5;color:#8c8c8c}
+.tag-s1{background:#e6f7ff;color:#1677ff}
+.tag-s2{background:#fff0f6;color:#eb2f96}
+.tag-s3{background:#f9f0ff;color:#722ed1}
+.tag-s4{background:#f6ffed;color:#52c41a}
+.tag-s5{background:#fafafa;color:#bfbfbf}
+.prog{display:flex;align-items:center;gap:6px;min-width:90px}
+.prog-bar{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:#3370ff;border-radius:3px;transition:width .3s}
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.k-col{min-width:210px;max-width:210px;background:#f7f8fa;border-radius:10px;padding:10px}
+.k-col-head{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.k-count{background:#e0e0e0;border-radius:10px;padding:1px 7px;font-size:11px;color:#666}
+.k-card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;transition:box-shadow .15s}
+.k-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.k-card-name{font-size:12px;font-weight:600;margin-bottom:6px;line-height:1.4}
+.k-card-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.person-card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.person-card .pname{font-size:15px;font-weight:700;margin-bottom:8px}
+.person-stats{display:flex;gap:16px;margin:10px 0}
+.pstat{text-align:center}.pstat .pnum{font-size:22px;font-weight:700}.pstat .plbl{font-size:11px;color:#888}
+.ptask-item{padding:5px 0;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:8px;font-size:12px}
+.ptask-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-head{padding:18px 24px 14px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1}
+.modal-body{padding:20px 24px}
+.modal-foot{padding:14px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:7px;font-size:13px;color:#333;font-family:inherit}
+.form-row textarea{min-height:80px;resize:vertical}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:#3370ff;box-shadow:0 0 0 2px rgba(51,112,255,.1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:6px;white-space:nowrap}
+.empty{text-align:center;padding:60px;color:#aaa;font-size:14px}
+.loading-mask{text-align:center;padding:60px;color:#888;font-size:15px}
+.err-box{background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:16px 20px;color:#cf1322;font-size:13px;line-height:1.8}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="header-left">
-    <h1>📦 客服GPT SAE版 · 需求池看板</h1>
-    <p id="update-time">数据加载中...</p>
-  </div>
+
+<header>
+  <h1>📋 客服GPT SAE版 · 需求池看板</h1>
   <div class="header-right">
-    <button class="btn-refresh" onclick="openImport()" style="background:#fff;color:#3370ff;border:1px solid #3370ff;">📥 导入数据</button>
-    <button class="btn-refresh" onclick="loadData()">🔄 刷新数据</button>
-    <button class="tab-btn active" onclick="switchTab('list',this)">📋 需求列表</button>
-    <button class="tab-btn" onclick="switchTab('kanban',this)">🗂 开发看板</button>
-    <button class="tab-btn" onclick="switchTab('person',this)">👤 人员任务</button>
+    <span class="last-update" id="lastUpdate"></span>
+    <button class="btn btn-ghost" onclick="openImport()" style="color:#fff;border-color:rgba(255,255,255,.4)">📥 导入数据</button>
+    <button class="btn btn-success" onclick="openAdd()">＋ 新增需求</button>
+    <button class="btn btn-primary" onclick="loadData()">🔄 刷新</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <select id="fPlan" onchange="render()"><option value="">全部计划</option><option>SAE2.3.3</option><option>1688商贸版</option></select>
+  <select id="fType" onchange="render()"><option value="">全部类型</option><option>用户需求</option><option>研发需求</option></select>
+  <select id="fPri" onchange="render()"><option value="">全部优先级</option><option>紧急🔴</option><option>高🟠</option><option>中🟡</option><option>低🟢</option></select>
+  <select id="fStatus" onchange="render()"><option value="">全部状态</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>已上线</option><option>已暂缓</option></select>
+  <select id="fPerson" onchange="render()"><option value="">全部认领人</option></select>
+  <input type="text" id="fSearch" placeholder="🔍 搜索需求名称/描述" oninput="render()">
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('list',this)">📋 需求列表</div>
+  <div class="tab" onclick="switchTab('kanban',this)">🗂 开发看板</div>
+  <div class="tab" onclick="switchTab('person',this)">👤 人员任务</div>
+</div>
+
+<div class="content" id="mainContent">
+  <div class="loading-mask">⏳ 加载中...</div>
+</div>
+
+<!-- 新增/编辑 -->
+<div class="modal-bg" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">新增需求</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <div class="form-grid">
+        <div class="form-row"><label>需求编号</label><input id="fNo" placeholder="如 URQ-322"></div>
+        <div class="form-row"><label>需求类型 <span style="color:red">*</span></label>
+          <select id="fFType"><option>用户需求</option><option>研发需求</option></select></div>
+      </div>
+      <div class="form-row"><label>需求名称 <span style="color:red">*</span></label><input id="fName" placeholder="请输入需求名称"></div>
+      <div class="form-row"><label>需求描述</label><textarea id="fDesc" placeholder="请详细描述需求背景、目标和预期效果"></textarea></div>
+      <div class="form-grid">
+        <div class="form-row"><label>所属计划</label>
+          <select id="fFPlan"><option>SAE2.3.3</option><option>1688商贸版</option></select></div>
+        <div class="form-row"><label>优先级</label>
+          <select id="fFPri"><option>中🟡</option><option>紧急🔴</option><option>高🟠</option><option>低🟢</option></select></div>
+        <div class="form-row"><label>开发状态</label>
+          <select id="fFStatus"><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>已上线</option><option>已暂缓</option></select></div>
+        <div class="form-row"><label>开发进度 (%)</label><input id="fFProg" type="number" min="0" max="100" value="0"></div>
+        <div class="form-row"><label>需求认领人</label><input id="fFPerson" placeholder="姓名"></div>
+        <div class="form-row"><label>预计上线日期</label><input id="fFDate" type="date"></div>
+        <div class="form-row"><label>是否需要设计</label>
+          <select id="fFDesign"><option>待设计</option><option>需要设计</option><option>不需要设计</option><option>设计完成</option></select></div>
+        <div class="form-row"><label>评审是否通过</label>
+          <select id="fFReview"><option>待确认</option><option>已通过</option><option>已拒绝</option><option>暂缓</option></select></div>
+      </div>
+      <div class="form-row"><label>备注</label><textarea id="fFNote" style="min-height:54px"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">💾 保存</button>
+    </div>
   </div>
 </div>
-<div class="stats-bar" id="stats-bar"><div style="color:#9ca3af;font-size:13px;align-self:center">加载中...</div></div>
-<div class="main" id="main-content"><div class="loading"><div class="spinner"></div><span>正在从飞书获取数据...</span></div></div>
 
-<script>
-var PC  = {紧急:["#ff4d4f","#fff1f0"],高:["#fa8c16","#fff7e6"],中:["#faad14","#fffbe6"],低:["#8c8c8c","#f5f5f5"]};
-var SC  = {待开始:["#8c8c8c","#f5f5f5"],开发中:["#1677ff","#e6f4ff"],联调中:["#722ed1","#f9f0ff"],测试中:["#fa8c16","#fff7e6"],已上线:["#52c41a","#f6ffed"],已暂缓:["#ff4d4f","#fff1f0"]};
-var TC  = {用户需求:["#1677ff","#e6f4ff"],研发需求:["#fa8c16","#fff7e6"]};
-var PLC = {"SAE2.3.3":["#722ed1","#f9f0ff"],"1688商贸版":["#13c2c2","#e6fffb"]};
-var allRows=[],curTab="list",fSearch="",fPlan="全部",fType="全部",fPriority="全部",fStatus="全部",fAssignee="全部",expandedId=null;
+<!-- 详情 -->
+<div class="modal-bg" id="detailModal" style="display:none" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="detailTitle">需求详情</h2>
+      <button class="modal-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeDetail()">关闭</button>
+      <button class="btn btn-primary" id="detailEditBtn">✏️ 编辑</button>
+    </div>
+  </div>
+</div>
 
-async function loadData() {
-  document.getElementById("main-content").innerHTML='<div class="loading"><div class="spinner"></div><span>正在从飞书获取数据...</span></div>';
-  document.getElementById("update-time").textContent="数据加载中...";
-  try {
-    var res = await fetch("/.netlify/functions/api");
-    var json = await res.json();
-    if (!json.success) throw new Error(json.error);
-    allRows = json.data;
-    document.getElementById("update-time").textContent="最后更新："+new Date().toLocaleString("zh-CN")+" · 共"+allRows.length+"条";
-    renderStats();
-    renderTab();
-  } catch(e) {
-    document.getElementById("main-content").innerHTML='<div class="error-box"><h3>⚠️ 数据加载失败</h3><p>错误：<code>'+e.message+'</code></p><p style="margin-top:8px">请检查飞书应用权限配置是否正确</p></div>';
-    document.getElementById("update-time").textContent="加载失败";
-  }
-}
-
-function renderStats() {
-  var r=allRows;
-  var items=[["总需求",r.length,"#4f46e5","#eef2ff","#c7d2fe"],["用户需求",r.filter(function(x){return x.type==="用户需求"}).length,"#1677ff","#e6f4ff","#bae0ff"],["研发需求",r.filter(function(x){return x.type==="研发需求"}).length,"#fa8c16","#fff7e6","#ffd591"],["🔴 紧急",r.filter(function(x){return x.priority==="紧急"}).length,"#ff4d4f","#fff1f0","#ffccc7"],["进行中",r.filter(function(x){return["开发中","联调中","测试中"].includes(x.status)}).length,"#722ed1","#f9f0ff","#d3adf7"],["已上线",r.filter(function(x){return x.status==="已上线"}).length,"#52c41a","#f6ffed","#b7eb8f"],["待认领",r.filter(function(x){return x.assignee==="待认领"}).length,"#8c8c8c","#f5f5f5","#d9d9d9"]];
-  document.getElementById("stats-bar").innerHTML=items.map(function(i){return'<div class="stat-card" style="background:'+i[3]+';border-color:'+i[4]+'"><div class="num" style="color:'+i[2]+'">'+i[1]+'</div><div class="lbl" style="color:'+i[2]+'">'+i[0]+'</div></div>'}).join("");
-}
-
-function tag(l,c){if(!l)return"";var col=c||["#8c8c8c","#f5f5f5"];return'<span class="tag" style="color:'+col[0]+';background:'+col[1]+';border-color:'+col[0]+'30">'+l+'</span>';}
-function prog(v){var c=v===100?"#52c41a":v>=70?"#1677ff":v>=30?"#faad14":"#d9d9d9";return'<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:'+v+'%;background:'+c+'"></div></div><span class="prog-txt">'+v+'%</span></div>';}
-function atag(a){return'<span class="atag '+(a==="待认领"?"unassigned":"assigned")+'">'+a+'</span>';}
-function switchTab(t,btn){curTab=t;document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active")});btn.classList.add("active");renderTab();}
-function renderTab(){if(curTab==="list")renderList();else if(curTab==="kanban")renderKanban();else renderPerson();}
-function selOpts(opts,val,fn){return'<select onchange="'+fn+'(this.value)">'+opts.map(function(o){return'<option'+(o===val?' selected':'')+'>'+o+'</option>'}).join("")+'</select>';}
-
-function renderList(){
-  var assignees=["全部"].concat(Array.from(new Set(allRows.map(function(r){return r.assignee}))));
-  var filtered=allRows.filter(function(r){
-    if(fPlan!=="全部"&&r.plan!==fPlan)return false;
-    if(fType!=="全部"&&r.type!==fType)return false;
-    if(fPriority!=="全部"&&r.priority!==fPriority)return false;
-    if(fStatus!=="全部"&&r.status!==fStatus)return false;
-    if(fAssignee!=="全部"&&r.assignee!==fAssignee)return false;
-    if(fSearch&&!r.name.includes(fSearch)&&!r.id.includes(fSearch))return false;
-    return true;
-  });
-  document.getElementById("main-content").innerHTML=
-    '<div class="filters">'+
-    '<input placeholder="🔍 搜索编号/名称..." value="'+fSearch+'" oninput="fSearch=this.value;renderList()">'+
-    selOpts(["全部","SAE2.3.3","1688商贸版"],fPlan,"setPlan")+
-    selOpts(["全部","用户需求","研发需求"],fType,"setType")+
-    selOpts(["全部","紧急","高","中","低"],fPriority,"setPriority")+
-    selOpts(["全部","待开始","开发中","联调中","测试中","已上线","已暂缓"],fStatus,"setStatus")+
-    selOpts(assignees,fAssignee,"setAssignee")+
-    '<span class="filter-count">共 '+filtered.length+' 条</span></div>'+
-    '<div class="table-wrap"><table><thead><tr><th>需求编号</th><th>需求名称</th><th>所属计划</th><th>优先级</th><th>需求类型</th><th>提出时间</th><th>需求认领人</th><th>开发状态</th><th>开发进度</th></tr></thead><tbody>'+
-    filtered.map(function(r){
-      var exp=expandedId===r.id;
-      return'<tr class="'+(exp?"expanded":"")+'" onclick="toggleRow(\''+r.id+'\')">'+
-        '<td style="font-family:monospace;font-size:11px;color:#9ca3af">'+r.id+'</td>'+
-        '<td style="font-weight:500;max-width:220px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</div></td>'+
-        '<td>'+tag(r.plan,PLC[r.plan])+'</td><td>'+tag(r.priority,PC[r.priority])+'</td><td>'+tag(r.type,TC[r.type])+'</td>'+
-        '<td style="color:#9ca3af;font-size:12px;white-space:nowrap">'+r.date+'</td>'+
-        '<td>'+atag(r.assignee)+'</td><td>'+tag(r.status,SC[r.status])+'</td><td>'+prog(r.progress)+'</td></tr>'+
-        (exp?'<tr class="desc-row"><td colspan="9"><div class="desc-content"><strong style="color:#4f46e5">需求描述：</strong>'+r.desc+'</div></td></tr>':"");
-    }).join("")+'</tbody></table></div>';
-}
-function toggleRow(id){expandedId=expandedId===id?null:id;renderList();}
-function setPlan(v){fPlan=v;renderList();}
-function setType(v){fType=v;renderList();}
-function setPriority(v){fPriority=v;renderList();}
-function setStatus(v){fStatus=v;renderList();}
-function setAssignee(v){fAssignee=v;renderList();}
-
-function renderKanban(){
-  var cols=["待开始","开发中","联调中","测试中","已上线"];
-  var map={};cols.forEach(function(c){map[c]=[];});
-  allRows.forEach(function(r){if(map[r.status])map[r.status].push(r);});
-  document.getElementById("main-content").innerHTML='<div class="kanban">'+cols.map(function(col){
-    var c=SC[col]||["#8c8c8c","#f5f5f5"];
-    return'<div class="kb-col"><div class="kb-head" style="background:'+c[1]+';border-color:'+c[0]+'"><span class="kb-head-title" style="color:'+c[0]+'">'+col+'</span><span class="kb-count" style="background:'+c[0]+'">'+map[col].length+'</span></div><div class="kb-body">'+
-    (map[col].length===0?'<div class="kb-empty">暂无需求</div>':map[col].map(function(r){
-      return'<div class="kb-card"><div class="kb-card-id">'+r.id+'</div><div class="kb-card-name">'+r.name+'</div><div class="kb-card-foot">'+tag(r.priority,PC[r.priority])+atag(r.assignee)+'</div>'+(r.progress>0?'<div style="margin-top:6px">'+prog(r.progress)+'</div>':'')+'</div>';
-    }).join(""))+
-    '</div></div>';
-  }).join("")+'</div>';
-}
-
-function renderPerson(){
-  var map={};
-  allRows.forEach(function(r){
-    if(r.assignee==="待认领")return;
-    if(!map[r.assignee])map[r.assignee]={done:0,doing:0,pending:0,items:[]};
-    if(r.status==="已上线")map[r.assignee].done++;
-    else if(r.status==="待开始")map[r.assignee].pending++;
-    else map[r.assignee].doing++;
-    map[r.assignee].items.push(r);
-  });
-  var persons=Object.entries(map).sort(function(a,b){return b[1].items.length-a[1].items.length});
-  document.getElementById("main-content").innerHTML='<div class="person-list">'+persons.map(function(entry){
-    var name=entry[0],d=entry[1],total=d.items.length;
-    var avgP=total?Math.round(d.items.reduce(function(s,r){return s+r.progress},0)/total):0;
-    var pc=avgP===100?"#52c41a":avgP>=60?"#1677ff":avgP>=30?"#faad14":"#d9d9d9";
-    return'<div class="person-card"><div class="person-head">'+
-      '<div class="avatar">'+name[0]+'</div>'+
-      '<div class="person-info"><h3>'+name+'</h3><p>共 '+total+' 条需求 · 整体进度 '+avgP+'%</p></div>'+
-      '<div class="person-counts">'+
-      [["已上线",d.done,"#52c41a","#f6ffed","#b7eb8f"],["进行中",d.doing,"#1677ff","#e6f4ff","#bae0ff"],["待开始",d.pending,"#8c8c8c","#f5f5f5","#d9d9d9"]].map(function(x){
-        return'<div class="pcount" style="background:'+x[3]+';border-color:'+x[4]+'"><div class="n" style="color:'+x[2]+'">'+x[1]+'</div><div class="l" style="color:'+x[2]+'">'+x[0]+'</div></div>';
-      }).join("")+'</div>'+
-      '<div class="person-prog"><div class="pl">整体进度</div><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:'+avgP+'%;background:'+pc+'"></div></div><span class="prog-txt">'+avgP+'%</span></div></div>'+
-      '</div>'+
-      '<table class="person-table"><thead><tr><th>编号</th><th>需求名称</th><th>所属计划</th><th>优先级</th><th>开发状态</th><th>开发进度</th></tr></thead><tbody>'+
-      d.items.map(function(r){
-        return'<tr><td style="font-family:monospace;font-size:11px;color:#d1d5db">'+r.id+'</td><td><div class="name-cell">'+r.name+'</div></td><td>'+tag(r.plan,PLC[r.plan])+'</td><td>'+tag(r.priority,PC[r.priority])+'</td><td>'+tag(r.status,SC[r.status])+'</td><td>'+prog(r.progress)+'</td></tr>';
-      }).join("")+
-      '</tbody></table></div>';
-  }).join("")+'</div>';
-}
-
-loadData();
-</script>
-<!-- ===== 导入数据 模态框 ===== -->
-<!-- 放在 </body> 标签前面 -->
+<!-- 导入 -->
 <div class="modal-bg" id="importModal" style="display:none" onclick="if(event.target===this)closeImport()">
   <div class="modal" style="max-width:700px">
     <div class="modal-head">
@@ -232,43 +180,36 @@ loadData();
       <button class="modal-close" onclick="closeImport()">×</button>
     </div>
     <div class="modal-body">
-      <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.8">
+      <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;line-height:1.8">
         <strong>操作步骤：</strong><br>
-        1. 打开飞书多维表格<br>
-        2. 点击左上角全选按钮（选中所有数据行，不含表头）<br>
-        3. <strong>Ctrl + C</strong> 复制<br>
-        4. 点击下方输入框，<strong>Ctrl + V</strong> 粘贴<br>
-        5. 点击「解析预览」确认数据无误后再导入
+        1. 打开飞书多维表格 → 全选所有数据行（不含表头）→ Ctrl+C 复制<br>
+        2. 点击下方输入框 → Ctrl+V 粘贴 → 点「解析预览」→ 确认无误后点「确认导入」
       </div>
-      <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#2f54eb">
-        <strong>飞书表格列顺序（必须对应）：</strong><br>
+      <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#2f54eb">
+        <strong>飞书列顺序（必须对应）：</strong>
         需求编号 · 需求名称 · 需求描述 · 需求类型 · 所属计划 · 优先级 · 开发状态 · 开发进度 · 需求认领人 · 预计上线日期 · 是否需要设计 · 评审是否通过 · 备注
       </div>
       <div class="form-row">
-        <label>粘贴飞书数据（Tab 分隔）</label>
-        <textarea id="importRaw" placeholder="在这里粘贴从飞书复制的数据..." style="min-height:160px;font-size:12px;font-family:monospace" oninput="previewImport()"></textarea>
+        <label>粘贴飞书数据</label>
+        <textarea id="importRaw" placeholder="在这里粘贴从飞书复制的数据..." style="min-height:140px;font-size:12px;font-family:monospace" oninput="previewImport()"></textarea>
       </div>
       <div id="importPreview" style="display:none">
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">
-          预览（共 <span id="importCount">0</span> 条）：
-        </div>
-        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:6px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">预览（共 <span id="importCount">0</span> 条）：</div>
+        <div style="overflow-x:auto;max-height:180px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:6px">
           <table style="width:100%;font-size:12px;border-collapse:collapse">
-            <thead>
-              <tr style="background:#f7f8fa;position:sticky;top:0">
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">编号</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">需求名称</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">类型</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">优先级</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">所属计划</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">认领人</th>
-                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">状态</th>
-              </tr>
-            </thead>
+            <thead><tr style="background:#f7f8fa;position:sticky;top:0">
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">编号</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">需求名称</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">类型</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">优先级</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">所属计划</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">认领人</th>
+              <th style="padding:6px 10px;border-bottom:1px solid #e8e8e8">状态</th>
+            </tr></thead>
             <tbody id="importPreviewBody"></tbody>
           </table>
         </div>
-        <div style="margin-top:10px;font-size:12px;color:#f5222d" id="importWarning"></div>
+        <div style="margin-top:8px;font-size:12px;color:#f5222d;white-space:pre-line" id="importWarning"></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -279,50 +220,275 @@ loadData();
 </div>
 
 <script>
-// ===== 导入功能 =====
-// 列顺序对应飞书表格
-const IMPORT_COLS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
+let allData = [];
+let curTab = 'list';
+const COLS = ['待开始','开发中','联调中','测试中','已上线','已暂缓'];
+const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
 
-function openImport() {
-  document.getElementById('importRaw').value = '';
-  document.getElementById('importPreview').style.display = 'none';
-  document.getElementById('importBtn').disabled = true;
-  document.getElementById('importModal').style.display = 'flex';
-}
-function closeImport() {
-  document.getElementById('importModal').style.display = 'none';
+// ===== API =====
+async function api(action, body) {
+  const url = action === 'get' ? '/.netlify/functions/api' : `/.netlify/functions/api?action=${action}`;
+  const opt = action === 'get'
+    ? { method: 'GET' }
+    : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const res = await fetch(url, opt);
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(e) { throw new Error('返回格式错误: ' + text.substring(0, 100)); }
+  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+  return json;
 }
 
-function previewImport() {
-  const raw = document.getElementById('importRaw').value.trim();
-  if (!raw) {
-    document.getElementById('importPreview').style.display = 'none';
-    document.getElementById('importBtn').disabled = true;
-    return;
+// ===== 加载数据 =====
+async function loadData() {
+  document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+  try {
+    allData = await api('get');
+    document.getElementById('lastUpdate').textContent = '更新 ' + new Date().toLocaleTimeString();
+    buildPersonFilter();
+    render();
+  } catch(e) {
+    document.getElementById('mainContent').innerHTML = `<div class="err-box">❌ 加载失败：${e.message}</div>`;
   }
+}
 
-  const lines = raw.split('\n').filter(l => l.trim());
-  const items = [];
-  const warnings = [];
+function buildPersonFilter() {
+  const sel = document.getElementById('fPerson');
+  const cur = sel.value;
+  const persons = [...new Set(allData.map(d => d.person).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">全部认领人</option>' + persons.map(p => `<option>${p}</option>`).join('');
+  sel.value = cur;
+}
 
-  lines.forEach((line, i) => {
-    const cols = line.split('\t');
-    const item = {};
-    IMPORT_COLS.forEach((key, j) => {
-      item[key] = (cols[j] || '').trim();
-    });
-    // 处理进度：去掉%符号转为数字
-    item.progress = parseInt(item.progress) || 0;
-    // 必填校验
-    if (!item.name) warnings.push(`第${i+1}行：需求名称为空，已跳过`);
+function filtered() {
+  const plan = document.getElementById('fPlan').value;
+  const type = document.getElementById('fType').value;
+  const pri = document.getElementById('fPri').value;
+  const stat = document.getElementById('fStatus').value;
+  const person = document.getElementById('fPerson').value;
+  const kw = document.getElementById('fSearch').value.trim().toLowerCase();
+  return allData.filter(d => {
+    if (plan && d.plan !== plan) return false;
+    if (type && d.type !== type) return false;
+    if (pri && d.priority !== pri) return false;
+    if (stat && (d.status || '待开始') !== stat) return false;
+    if (person && d.person !== person) return false;
+    if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
+    return true;
+  });
+}
+
+// ===== 标签 =====
+const priMap = {'紧急🔴':'tag-p1','高🟠':'tag-p2','中🟡':'tag-p3','低🟢':'tag-p4'};
+const statMap = {'待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','已上线':'tag-s4','已暂缓':'tag-s5'};
+const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
+const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
+const statTag = s => `<span class="tag ${statMap[s||'待开始']||'tag-s0'}">${s||'待开始'}</span>`;
+const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
+
+function render() {
+  const data = filtered();
+  if (curTab==='list') renderList(data);
+  else if (curTab==='kanban') renderKanban(data);
+  else renderPerson(data);
+}
+
+function renderList(data) {
+  const total = allData.length;
+  const done = allData.filter(d=>d.status==='已上线').length;
+  const doing = allData.filter(d=>['开发中','联调中','测试中'].includes(d.status)).length;
+  const todo = allData.filter(d=>!d.status||d.status==='待开始').length;
+  const urgent = allData.filter(d=>d.priority==='紧急🔴').length;
+  const stats = `<div class="stat-row">
+    <div class="stat-card"><div class="num">${total}</div><div class="lbl">全部需求</div></div>
+    <div class="stat-card"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
+    <div class="stat-card"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">进行中</div></div>
+    <div class="stat-card"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
+    <div class="stat-card"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
+  </div>`;
+  if (!data.length) { document.getElementById('mainContent').innerHTML = stats+'<div class="tbl-wrap"><div class="empty">暂无匹配需求</div></div>'; return; }
+  const rows = data.map(d=>`<tr>
+    <td style="color:#aaa;font-size:12px;white-space:nowrap">${d.no||''}</td>
+    <td style="font-weight:600;min-width:140px;cursor:pointer;color:#3370ff" onclick="openDetail('${d.id}')">${d.name||''}</td>
+    <td>${typeTag(d.type)}</td><td>${priTag(d.priority)}</td>
+    <td style="white-space:nowrap;font-size:12px">${d.plan||''}</td>
+    <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
+    <td style="white-space:nowrap;font-size:13px">${d.person||'<span style="color:#ccc">待认领</span>'}</td>
+    <td>${statTag(d.status)}</td><td>${progBar(d.progress)}</td>
+    <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
+    <td><div class="actions">
+      <button class="btn btn-ghost btn-sm" onclick="openEdit('${d.id}')">编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteItem('${d.id}','${(d.name||'').replace(/'/g,'')}')">删除</button>
+    </div></td>
+  </tr>`).join('');
+  document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
+    <div class="tbl-info">共 ${data.length} 条${data.length<total?' （已筛选）':''}</div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th>优先级</th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+function renderKanban(data) {
+  const cols = COLS.map(col=>{
+    const cards = data.filter(d=>(d.status||'待开始')===col);
+    return `<div class="k-col"><div class="k-col-head">${col}<span class="k-count">${cards.length}</span></div>
+      ${cards.map(d=>`<div class="k-card" onclick="openDetail('${d.id}')">
+        <div class="k-card-name">${d.name||''}</div>
+        <div class="k-card-meta">${typeTag(d.type)}${priTag(d.priority)}${d.person?`<span style="font-size:11px;color:#888">👤${d.person}</span>`:''}${progBar(d.progress)}</div>
+      </div>`).join('')||'<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0">暂无</div>'}
+    </div>`;
+  }).join('');
+  document.getElementById('mainContent').innerHTML = `<div class="kanban">${cols}</div>`;
+}
+
+function renderPerson(data) {
+  const map = {};
+  data.forEach(d=>{ const p=d.person||'未认领'; if(!map[p])map[p]=[]; map[p].push(d); });
+  const cards = Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([name,tasks])=>{
+    const done=tasks.filter(t=>t.status==='已上线').length;
+    const doing=tasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
+    const todo=tasks.filter(t=>!t.status||t.status==='待开始').length;
+    const avg=Math.round(tasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/tasks.length);
+    return `<div class="person-card"><div class="pname">👤 ${name}</div>${progBar(avg)}
+      <div class="person-stats">
+        <div class="pstat"><div class="pnum" style="color:#52c41a">${done}</div><div class="plbl">已上线</div></div>
+        <div class="pstat"><div class="pnum" style="color:#1677ff">${doing}</div><div class="plbl">进行中</div></div>
+        <div class="pstat"><div class="pnum" style="color:#8c8c8c">${todo}</div><div class="plbl">待开始</div></div>
+        <div class="pstat"><div class="pnum">${tasks.length}</div><div class="plbl">总计</div></div>
+      </div>
+      <div>${tasks.slice(0,6).map(t=>`<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${t.name||''}</span>${statTag(t.status)}</div>`).join('')}
+      ${tasks.length>6?`<div style="text-align:center;color:#aaa;font-size:12px;padding:4px">…还有${tasks.length-6}条</div>`:''}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('mainContent').innerHTML = `<div class="person-grid">${cards||'<div class="empty">暂无数据</div>'}</div>`;
+}
+
+function switchTab(tab,el) {
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+// ===== 新增/编辑 =====
+function openAdd() {
+  document.getElementById('modalTitle').textContent='新增需求';
+  document.getElementById('fId').value='';
+  ['fNo','fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fFType').value='用户需求';
+  document.getElementById('fFPlan').value='SAE2.3.3';
+  document.getElementById('fFPri').value='中🟡';
+  document.getElementById('fFStatus').value='待开始';
+  document.getElementById('fFProg').value='0';
+  document.getElementById('fFDate').value='';
+  document.getElementById('fFDesign').value='待设计';
+  document.getElementById('fFReview').value='待确认';
+  document.getElementById('modal').style.display='flex';
+}
+function openEdit(id) {
+  const d=allData.find(x=>x.id===id); if(!d)return;
+  document.getElementById('modalTitle').textContent='编辑需求';
+  document.getElementById('fId').value=d.id;
+  document.getElementById('fNo').value=d.no||'';
+  document.getElementById('fName').value=d.name||'';
+  document.getElementById('fDesc').value=d.desc||'';
+  document.getElementById('fFType').value=d.type||'用户需求';
+  document.getElementById('fFPlan').value=d.plan||'SAE2.3.3';
+  document.getElementById('fFPri').value=d.priority||'中🟡';
+  document.getElementById('fFStatus').value=d.status||'待开始';
+  document.getElementById('fFProg').value=d.progress||0;
+  document.getElementById('fFPerson').value=d.person||'';
+  document.getElementById('fFDate').value=d.deadline||'';
+  document.getElementById('fFDesign').value=d.design||'待设计';
+  document.getElementById('fFReview').value=d.review||'待确认';
+  document.getElementById('fFNote').value=d.note||'';
+  document.getElementById('modal').style.display='flex';
+  closeDetail();
+}
+function closeModal(){document.getElementById('modal').style.display='none';}
+async function saveItem() {
+  const name=document.getElementById('fName').value.trim();
+  if(!name){alert('需求名称不能为空');return;}
+  const btn=document.getElementById('saveBtn');
+  btn.disabled=true;btn.textContent='保存中...';
+  const item={
+    id:document.getElementById('fId').value||undefined,
+    no:document.getElementById('fNo').value.trim(),
+    name,desc:document.getElementById('fDesc').value.trim(),
+    type:document.getElementById('fFType').value,
+    plan:document.getElementById('fFPlan').value,
+    priority:document.getElementById('fFPri').value,
+    status:document.getElementById('fFStatus').value,
+    progress:parseInt(document.getElementById('fFProg').value)||0,
+    person:document.getElementById('fFPerson').value.trim(),
+    deadline:document.getElementById('fFDate').value,
+    design:document.getElementById('fFDesign').value,
+    review:document.getElementById('fFReview').value,
+    note:document.getElementById('fFNote').value.trim()
+  };
+  try{await api(item.id?'update':'add',item);await loadData();closeModal();}
+  catch(e){alert('保存失败：'+e.message);}
+  btn.disabled=false;btn.textContent='💾 保存';
+}
+
+async function deleteItem(id,name) {
+  if(!confirm(`确认删除需求「${name}」？`))return;
+  try{await api('delete',{id});await loadData();}
+  catch(e){alert('删除失败：'+e.message);}
+}
+
+function openDetail(id) {
+  const d=allData.find(x=>x.id===id);if(!d)return;
+  document.getElementById('detailTitle').textContent=d.name||'需求详情';
+  document.getElementById('detailBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><div style="font-size:12px;color:#888">编号</div><div style="margin-top:3px">${d.no||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">类型</div><div style="margin-top:3px">${typeTag(d.type)}</div></div>
+      <div><div style="font-size:12px;color:#888">所属计划</div><div style="margin-top:3px;font-size:13px">${d.plan||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">优先级</div><div style="margin-top:3px">${priTag(d.priority)}</div></div>
+      <div><div style="font-size:12px;color:#888">开发状态</div><div style="margin-top:3px">${statTag(d.status)}</div></div>
+      <div><div style="font-size:12px;color:#888">开发进度</div><div style="margin-top:3px">${progBar(d.progress)}</div></div>
+      <div><div style="font-size:12px;color:#888">认领人</div><div style="margin-top:3px;font-size:13px">${d.person||'待认领'}</div></div>
+      <div><div style="font-size:12px;color:#888">预计上线</div><div style="margin-top:3px;font-size:13px">${d.deadline||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">是否需要设计</div><div style="margin-top:3px;font-size:13px">${d.design||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">评审是否通过</div><div style="margin-top:3px;font-size:13px">${d.review||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">提出时间</div><div style="margin-top:3px;font-size:13px">${d.createTime||'-'}</div></div>
+    </div>
+    <div style="margin-bottom:12px"><div style="font-size:12px;color:#888">需求描述</div>
+      <div style="margin-top:5px;font-size:13px;line-height:1.8;background:#f7f8fa;padding:10px;border-radius:6px">${(d.desc||'暂无描述').replace(/\n/g,'<br>')}</div></div>
+    ${d.note?`<div><div style="font-size:12px;color:#888">备注</div><div style="margin-top:5px;font-size:13px;color:#666">${d.note}</div></div>`:''}`;
+  document.getElementById('detailEditBtn').onclick=()=>openEdit(id);
+  document.getElementById('detailModal').style.display='flex';
+}
+function closeDetail(){document.getElementById('detailModal').style.display='none';}
+
+// ===== 导入 =====
+function openImport(){
+  document.getElementById('importRaw').value='';
+  document.getElementById('importPreview').style.display='none';
+  document.getElementById('importBtn').disabled=true;
+  document.getElementById('importModal').style.display='flex';
+}
+function closeImport(){document.getElementById('importModal').style.display='none';}
+
+function previewImport(){
+  const raw=document.getElementById('importRaw').value.trim();
+  if(!raw){document.getElementById('importPreview').style.display='none';document.getElementById('importBtn').disabled=true;return;}
+  const lines=raw.split('\n').filter(l=>l.trim());
+  const items=[],warnings=[];
+  lines.forEach((line,i)=>{
+    const cols=line.split('\t');
+    const item={};
+    IMPORT_FIELDS.forEach((key,j)=>{item[key]=(cols[j]||'').trim();});
+    item.progress=parseInt(item.progress)||0;
+    if(!item.name)warnings.push(`第${i+1}行：名称为空已跳过`);
     else items.push(item);
   });
-
-  document.getElementById('importCount').textContent = items.length;
-  document.getElementById('importWarning').textContent = warnings.join('\n');
-
-  const tbody = document.getElementById('importPreviewBody');
-  tbody.innerHTML = items.slice(0, 20).map(d => `
+  document.getElementById('importCount').textContent=items.length;
+  document.getElementById('importWarning').textContent=warnings.join('\n');
+  document.getElementById('importPreviewBody').innerHTML=items.slice(0,20).map(d=>`
     <tr style="border-bottom:1px solid #f5f5f5">
       <td style="padding:5px 10px;color:#aaa">${d.no||''}</td>
       <td style="padding:5px 10px;font-weight:500">${d.name||''}</td>
@@ -331,49 +497,27 @@ function previewImport() {
       <td style="padding:5px 10px">${d.plan||''}</td>
       <td style="padding:5px 10px">${d.person||''}</td>
       <td style="padding:5px 10px">${d.status||'待开始'}</td>
-    </tr>`).join('');
-
-  if (items.length > 20) {
-    tbody.innerHTML += `<tr><td colspan="7" style="padding:8px 10px;text-align:center;color:#aaa;font-size:12px">...还有 ${items.length-20} 条（导入时全部处理）</td></tr>`;
-  }
-
-  document.getElementById('importPreview').style.display = items.length > 0 ? 'block' : 'none';
-  document.getElementById('importBtn').disabled = items.length === 0;
-
-  // 存到临时变量供导入使用
-  window._importItems = items;
+    </tr>`).join('')+(items.length>20?`<tr><td colspan="7" style="padding:8px;text-align:center;color:#aaa">…还有${items.length-20}条</td></tr>`:'');
+  document.getElementById('importPreview').style.display=items.length>0?'block':'none';
+  document.getElementById('importBtn').disabled=items.length===0;
+  window._importItems=items;
 }
 
-async function doImport() {
-  const items = window._importItems || [];
-  if (!items.length) return;
-  if (!confirm(`确认导入 ${items.length} 条需求？这将覆盖现有全部数据！`)) return;
-
-  const btn = document.getElementById('importBtn');
-  btn.disabled = true;
-  btn.textContent = '导入中...';
-
-  try {
-    const res = await fetch('/.netlify/functions/api?action=import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(items)
-    });
-    const data = await res.json();
-    if (data.ok) {
-      alert(`✅ 成功导入 ${data.count} 条需求！`);
-      closeImport();
-      await loadData();
-    } else {
-      alert('导入失败：' + (data.error || '未知错误'));
-    }
-  } catch(e) {
-    alert('导入失败：' + e.message);
-  }
-
-  btn.disabled = false;
-  btn.textContent = '📥 确认导入（覆盖现有数据）';
+async function doImport(){
+  const items=window._importItems||[];
+  if(!items.length)return;
+  if(!confirm(`确认导入 ${items.length} 条需求？这将覆盖现有全部数据！`))return;
+  const btn=document.getElementById('importBtn');
+  btn.disabled=true;btn.textContent='导入中...';
+  try{
+    const res=await api('import',items);
+    if(res.ok){alert(`✅ 成功导入 ${res.count} 条需求！`);closeImport();await loadData();}
+    else alert('导入失败：'+(res.error||'未知错误'));
+  }catch(e){alert('导入失败：'+e.message);}
+  btn.disabled=false;btn.textContent='📥 确认导入（覆盖现有数据）';
 }
+
+loadData();
 </script>
 </body>
 </html>
