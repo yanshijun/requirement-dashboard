@@ -89,6 +89,7 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
     <p id="update-time">数据加载中...</p>
   </div>
   <div class="header-right">
+    <button class="btn-refresh" onclick="openImport()" style="background:#fff;color:#3370ff;border:1px solid #3370ff;">📥 导入数据</button>
     <button class="btn-refresh" onclick="loadData()">🔄 刷新数据</button>
     <button class="tab-btn active" onclick="switchTab('list',this)">📋 需求列表</button>
     <button class="tab-btn" onclick="switchTab('kanban',this)">🗂 开发看板</button>
@@ -109,7 +110,7 @@ async function loadData() {
   document.getElementById("main-content").innerHTML='<div class="loading"><div class="spinner"></div><span>正在从飞书获取数据...</span></div>';
   document.getElementById("update-time").textContent="数据加载中...";
   try {
-    var res = await fetch("/.netlify/functions/feishu");
+    var res = await fetch("/.netlify/functions/api");
     var json = await res.json();
     if (!json.success) throw new Error(json.error);
     allRows = json.data;
@@ -221,6 +222,158 @@ function renderPerson(){
 }
 
 loadData();
+</script>
+<!-- ===== 导入数据 模态框 ===== -->
+<!-- 放在 </body> 标签前面 -->
+<div class="modal-bg" id="importModal" style="display:none" onclick="if(event.target===this)closeImport()">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-head">
+      <h2>📥 从飞书导入数据</h2>
+      <button class="modal-close" onclick="closeImport()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.8">
+        <strong>操作步骤：</strong><br>
+        1. 打开飞书多维表格<br>
+        2. 点击左上角全选按钮（选中所有数据行，不含表头）<br>
+        3. <strong>Ctrl + C</strong> 复制<br>
+        4. 点击下方输入框，<strong>Ctrl + V</strong> 粘贴<br>
+        5. 点击「解析预览」确认数据无误后再导入
+      </div>
+      <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#2f54eb">
+        <strong>飞书表格列顺序（必须对应）：</strong><br>
+        需求编号 · 需求名称 · 需求描述 · 需求类型 · 所属计划 · 优先级 · 开发状态 · 开发进度 · 需求认领人 · 预计上线日期 · 是否需要设计 · 评审是否通过 · 备注
+      </div>
+      <div class="form-row">
+        <label>粘贴飞书数据（Tab 分隔）</label>
+        <textarea id="importRaw" placeholder="在这里粘贴从飞书复制的数据..." style="min-height:160px;font-size:12px;font-family:monospace" oninput="previewImport()"></textarea>
+      </div>
+      <div id="importPreview" style="display:none">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">
+          预览（共 <span id="importCount">0</span> 条）：
+        </div>
+        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:6px">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <thead>
+              <tr style="background:#f7f8fa;position:sticky;top:0">
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">编号</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">需求名称</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">类型</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">优先级</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">所属计划</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">认领人</th>
+                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8">状态</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#f5222d" id="importWarning"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeImport()">取消</button>
+      <button class="btn btn-primary" id="importBtn" onclick="doImport()" disabled>📥 确认导入（覆盖现有数据）</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 导入功能 =====
+// 列顺序对应飞书表格
+const IMPORT_COLS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
+
+function openImport() {
+  document.getElementById('importRaw').value = '';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importBtn').disabled = true;
+  document.getElementById('importModal').style.display = 'flex';
+}
+function closeImport() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+function previewImport() {
+  const raw = document.getElementById('importRaw').value.trim();
+  if (!raw) {
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('importBtn').disabled = true;
+    return;
+  }
+
+  const lines = raw.split('\n').filter(l => l.trim());
+  const items = [];
+  const warnings = [];
+
+  lines.forEach((line, i) => {
+    const cols = line.split('\t');
+    const item = {};
+    IMPORT_COLS.forEach((key, j) => {
+      item[key] = (cols[j] || '').trim();
+    });
+    // 处理进度：去掉%符号转为数字
+    item.progress = parseInt(item.progress) || 0;
+    // 必填校验
+    if (!item.name) warnings.push(`第${i+1}行：需求名称为空，已跳过`);
+    else items.push(item);
+  });
+
+  document.getElementById('importCount').textContent = items.length;
+  document.getElementById('importWarning').textContent = warnings.join('\n');
+
+  const tbody = document.getElementById('importPreviewBody');
+  tbody.innerHTML = items.slice(0, 20).map(d => `
+    <tr style="border-bottom:1px solid #f5f5f5">
+      <td style="padding:5px 10px;color:#aaa">${d.no||''}</td>
+      <td style="padding:5px 10px;font-weight:500">${d.name||''}</td>
+      <td style="padding:5px 10px">${d.type||''}</td>
+      <td style="padding:5px 10px">${d.priority||''}</td>
+      <td style="padding:5px 10px">${d.plan||''}</td>
+      <td style="padding:5px 10px">${d.person||''}</td>
+      <td style="padding:5px 10px">${d.status||'待开始'}</td>
+    </tr>`).join('');
+
+  if (items.length > 20) {
+    tbody.innerHTML += `<tr><td colspan="7" style="padding:8px 10px;text-align:center;color:#aaa;font-size:12px">...还有 ${items.length-20} 条（导入时全部处理）</td></tr>`;
+  }
+
+  document.getElementById('importPreview').style.display = items.length > 0 ? 'block' : 'none';
+  document.getElementById('importBtn').disabled = items.length === 0;
+
+  // 存到临时变量供导入使用
+  window._importItems = items;
+}
+
+async function doImport() {
+  const items = window._importItems || [];
+  if (!items.length) return;
+  if (!confirm(`确认导入 ${items.length} 条需求？这将覆盖现有全部数据！`)) return;
+
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  btn.textContent = '导入中...';
+
+  try {
+    const res = await fetch('/.netlify/functions/api?action=import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert(`✅ 成功导入 ${data.count} 条需求！`);
+      closeImport();
+      await loadData();
+    } else {
+      alert('导入失败：' + (data.error || '未知错误'));
+    }
+  } catch(e) {
+    alert('导入失败：' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📥 确认导入（覆盖现有数据）';
+}
 </script>
 </body>
 </html>
