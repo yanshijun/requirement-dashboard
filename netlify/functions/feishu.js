@@ -63,12 +63,30 @@ async function getAllRecords(token) {
   return records;
 }
 
-// 从飞书单选/下拉字段安全取值
+// 飞书单选字段取值（返回 {text:"xxx"} 或字符串）
 function getSingleSelect(val) {
   if (!val) return "";
-  // 飞书单选返回格式可能是 { text: "xxx" } 或直接字符串
   if (typeof val === "object" && val.text) return String(val.text);
   return String(val);
+}
+
+// 飞书多选字段取值（返回数组 [{text:"xxx"}] 或字符串数组）
+function getMultiSelect(val) {
+  if (!val) return "";
+  if (Array.isArray(val)) {
+    return val.map(v => (typeof v === "object" && v.text ? v.text : String(v))).join(",");
+  }
+  if (typeof val === "object" && val.text) return String(val.text);
+  return String(val);
+}
+
+// 将值转为飞书多选数组格式
+function toMultiSelect(val) {
+  if (!val) return [];
+  const str = String(val).trim();
+  if (!str) return [];
+  // 支持逗号分隔的多个值
+  return str.split(",").map(s => s.trim()).filter(Boolean);
 }
 
 // 飞书字段 → 看板字段
@@ -87,7 +105,7 @@ function mapFromFeishu(record) {
     name: String(f["需求名称"] || ""),
     desc: String(f["需求描述"] || ""),
     type: String(f["需求类型"] || "用户需求"),
-    plan: getSingleSelect(f["所属计划"]),
+    plan: getMultiSelect(f["所属计划"]),
     priority: getSingleSelect(f["优先级"]),
     status: getSingleSelect(f["开发状态"]),
     progress,
@@ -107,8 +125,8 @@ function mapToFeishu(item) {
     "需求名称": String(item.name || ""),
     "需求描述": String(item.desc || ""),
     "需求类型": String(item.type || ""),
-    // 下拉（单选）字段：直接传字符串
-    "所属计划": String(item.plan || ""),
+    // 多选字段：传数组
+    "所属计划": toMultiSelect(item.plan),
     "优先级": String(item.priority || ""),
     "开发状态": String(item.status || "待开始"),
     // 进度条字段：飞书要求传 0~1 小数
