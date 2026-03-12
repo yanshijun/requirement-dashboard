@@ -368,14 +368,15 @@ tr:hover td{background:#fafbff}
 let allData = [];
 let curTab = 'list';
 let pendingFbId = null; // 转入需求时记录来源 feedback id
+let _fbLoaded = false; // 今日收集是否已加载过
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
 const COLS = ['待开始','开发中','联调中','测试中','已上线','已暂缓'];
 const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
 
 // ===== API =====
-async function api(action, body) {
-  const url = action === 'get' ? '/.netlify/functions/feishu' : `/.netlify/functions/feishu?action=${action}`;
+async function api(action, body, qs = '') {
+  const url = action === 'get' ? `/.netlify/functions/feishu${qs}` : `/.netlify/functions/feishu?action=${action}`;
   const opt = action === 'get'
     ? { method: 'GET' }
     : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
@@ -389,10 +390,12 @@ async function api(action, body) {
 }
 
 // ===== 加载数据 =====
-async function loadData() {
-  document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+async function loadData(silent = false) {
+  if (!silent) document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
   try {
-    allData = await api('get');
+    const res = await api('get', null, '?table=all');
+    allData = res.requirements || res; // 兼容旧接口
+    if (res.feedback) { feedbackData = res.feedback; _fbLoaded = true; }
     document.getElementById('lastUpdate').textContent = '更新 ' + new Date().toLocaleTimeString();
     buildPersonFilter();
     render();
@@ -556,8 +559,13 @@ function switchTab(tab,el) {
   const toolbar = document.querySelector('.toolbar');
   if (tab === 'feedback') {
     if (toolbar) toolbar.style.display = 'none';
-    document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
-    loadFeedback();
+    if (_fbLoaded) {
+      renderFeedback(); // 有缓存直接渲染，后台静默刷新
+      loadFeedback(true);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+      loadFeedback();
+    }
   } else {
     if (toolbar) toolbar.style.display = '';
     render();
@@ -627,6 +635,13 @@ async function saveItem() {
   };
   try{
     const res = await api(item.id?'update':'add',item);
+    // 乐观更新本地数据，避免等待全量刷新
+    if (item.id) {
+      const idx = allData.findIndex(x => x.id === item.id);
+      if (idx !== -1) allData[idx] = { ...allData[idx], ...item };
+    } else if (res && res.item) {
+      allData.unshift(res.item);
+    }
     // 如果是从今日收集转入的需求，把新需求 ID 写回反馈记录
     if (!item.id && pendingFbId && res && res.item && res.item.id) {
       const fbItem = feedbackData.find(x => x.id === pendingFbId);
@@ -635,8 +650,9 @@ async function saveItem() {
       }
       pendingFbId = null;
     }
-    await loadData();
+    buildPersonFilter(); render();
     closeModal();
+    loadData(true); // 后台静默同步真实数据
   }
   catch(e){alert('保存失败：'+e.message);}
   btn.disabled=false;btn.textContent='💾 保存';
@@ -644,8 +660,11 @@ async function saveItem() {
 
 async function deleteItem(id,name) {
   if(!confirm(`确认删除需求「${name}」？`))return;
-  try{await api('delete',{id});await loadData();}
-  catch(e){alert('删除失败：'+e.message);}
+  // 乐观删除
+  allData = allData.filter(x => x.id !== id);
+  buildPersonFilter(); render();
+  try{ await api('delete',{id}); loadData(true); }
+  catch(e){ alert('删除失败：'+e.message); loadData(); }
 }
 
 // ===== 认领 =====
@@ -720,8 +739,10 @@ async function releaseClaim(id) {
   const persons = (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
   const label = persons.length > 1 ? `全部 ${persons.length} 位认领人（${persons.join('、')}）` : `「${persons[0]}」`;
   if (!confirm(`确认释放 ${label} 的认领？需求将回到待认领状态。`)) return;
-  try { await api('update', { ...d, person: '' }); await loadData(); }
-  catch(e) { alert('释放失败：' + e.message); }
+  d.person = '';
+  buildPersonFilter(); render();
+  try { await api('update', { ...d, person: '' }); loadData(true); }
+  catch(e) { alert('释放失败：' + e.message); loadData(); }
 }
 
 async function doClaim() {
@@ -730,11 +751,13 @@ async function doClaim() {
   const btn = document.getElementById('claimBtn');
   btn.disabled = true; btn.textContent = '提交中...';
   const person = [..._claimSelected].join(',');
+  d.person = person;
+  buildPersonFilter(); render();
+  closeClaim();
   try {
     await api('update', { ...d, person });
-    await loadData();
-    closeClaim();
-  } catch(e) { alert('认领失败：' + e.message); }
+    loadData(true);
+  } catch(e) { alert('认领失败：' + e.message); loadData(); }
   btn.disabled = false; btn.textContent = '✅ 确认认领';
 }
 
@@ -877,11 +900,12 @@ async function fbApi(action, body) {
   return res.json();
 }
 
-async function loadFeedback() {
+async function loadFeedback(silent = false) {
   try {
     feedbackData = await fbApi('list');
+    _fbLoaded = true;
   } catch(e) {
-    feedbackData = [];
+    if (!silent) { feedbackData = []; }
     console.error('加载今日收集失败', e);
   }
   renderFeedback();
@@ -973,11 +997,15 @@ async function quickAddFb() {
   const title = titleEl.value.trim();
   if (!title) { titleEl.focus(); return; }
   const source = document.getElementById('fbQuickSource').value;
+  const newItem = { id: '_tmp_' + Date.now(), title, source, priority: '中🟡', reporter: '', customerId: '', desc: '', note: '', status: '待跟进', createTime: fbTodayStr() };
+  feedbackData.unshift(newItem);
+  titleEl.value = '';
+  renderFeedback();
   try {
-    await fbApi('add', { title, source, priority: '中🟡', reporter: '', customerId: '', desc: '', note: '', status: '待跟进', createTime: fbTodayStr() });
-    titleEl.value = '';
-    await loadFeedback();
-  } catch(e) { alert('添加失败：' + e.message); }
+    const res = await fbApi('add', newItem);
+    if (res && res.item) { const idx = feedbackData.findIndex(x => x.id === newItem.id); if (idx !== -1) feedbackData[idx] = res.item; }
+    loadFeedback(true);
+  } catch(e) { alert('添加失败：' + e.message); loadFeedback(); }
 }
 
 function openFbModal(id) {
@@ -1016,40 +1044,47 @@ async function saveFbItem() {
   try {
     if (_fbEditId) {
       const existing = feedbackData.find(x => x.id === _fbEditId);
-      await fbApi('update', { ...item, id: _fbEditId, reqId: existing?.reqId || '' });
+      const full = { ...item, id: _fbEditId, reqId: existing?.reqId || '' };
+      const idx = feedbackData.findIndex(x => x.id === _fbEditId);
+      if (idx !== -1) feedbackData[idx] = full;
+      closeFbModal(); renderFeedback();
+      await fbApi('update', full);
     } else {
-      await fbApi('add', item);
+      const newItem = { id: '_tmp_' + Date.now(), ...item };
+      feedbackData.unshift(newItem);
+      closeFbModal(); renderFeedback();
+      const res = await fbApi('add', item);
+      if (res && res.item) { const idx = feedbackData.findIndex(x => x.id === newItem.id); if (idx !== -1) feedbackData[idx] = res.item; }
     }
-    closeFbModal();
-    await loadFeedback();
-  } catch(e) { alert('保存失败：' + e.message); }
+    loadFeedback(true);
+  } catch(e) { alert('保存失败：' + e.message); loadFeedback(); }
   btn.disabled = false; btn.textContent = '保存';
 }
 
 async function deleteFbItem(id) {
   if (!confirm('确认删除该反馈？')) return;
-  try {
-    await fbApi('delete', { id });
-    await loadFeedback();
-  } catch(e) { alert('删除失败：' + e.message); }
+  feedbackData = feedbackData.filter(x => x.id !== id);
+  renderFeedback();
+  try { await fbApi('delete', { id }); loadFeedback(true); }
+  catch(e) { alert('删除失败：' + e.message); loadFeedback(); }
 }
 
 async function fbMoveTo(id, status) {
   const item = feedbackData.find(x => x.id === id);
   if (!item) return;
-  try {
-    await fbApi('update', { ...item, status });
-    await loadFeedback();
-  } catch(e) { alert('操作失败：' + e.message); }
+  item.status = status;
+  renderFeedback();
+  try { await fbApi('update', { ...item, status }); loadFeedback(true); }
+  catch(e) { alert('操作失败：' + e.message); loadFeedback(); }
 }
 
 async function fbTransfer(id) {
   const item = feedbackData.find(x => x.id === id);
   if (!item) return;
-  try {
-    await fbApi('update', { ...item, status: '已转需求' });
-    await loadFeedback();
-  } catch(e) { alert('操作失败：' + e.message); return; }
+  item.status = '已转需求';
+  renderFeedback();
+  try { await fbApi('update', { ...item, status: '已转需求' }); loadFeedback(true); }
+  catch(e) { alert('操作失败：' + e.message); loadFeedback(); return; }
   pendingFbId = id;
   openAdd();
   setTimeout(() => {

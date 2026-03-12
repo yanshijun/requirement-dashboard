@@ -39,8 +39,10 @@ function fromFeishuDate(val) {
   }
 }
 
-// 获取飞书 token
+// 获取飞书 token（内存缓存，有效期 1.5 小时）
+let _tokenCache = null, _tokenExpiry = 0;
 async function getToken() {
+  if (_tokenCache && Date.now() < _tokenExpiry) return _tokenCache;
   const res = await fetch(`${BASE}/auth/v3/tenant_access_token/internal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -48,7 +50,9 @@ async function getToken() {
   });
   const data = await res.json();
   if (!data.tenant_access_token) throw new Error("获取飞书Token失败: " + JSON.stringify(data));
-  return data.tenant_access_token;
+  _tokenCache = data.tenant_access_token;
+  _tokenExpiry = Date.now() + 90 * 60 * 1000; // 1.5小时
+  return _tokenCache;
 }
 
 // 读取飞书所有记录
@@ -188,6 +192,14 @@ exports.handler = async function (event) {
       if (table === "feedback") {
         const records = await getAllRecords(token, APP_TOKEN_FB, TABLE_ID_FB);
         return ok(records.map(mapFromFeedback));
+      }
+      if (table === "all") {
+        // 并行拉取两张表
+        const [req, fb] = await Promise.all([
+          getAllRecords(token, APP_TOKEN, TABLE_ID),
+          getAllRecords(token, APP_TOKEN_FB, TABLE_ID_FB)
+        ]);
+        return ok({ requirements: req.map(mapFromFeishu), feedback: fb.map(mapFromFeedback) });
       }
       const records = await getAllRecords(token, APP_TOKEN, TABLE_ID);
       return ok(records.map(mapFromFeishu));
