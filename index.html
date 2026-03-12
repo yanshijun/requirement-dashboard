@@ -764,7 +764,7 @@ function openDetail(id) {
     </div>
     <div style="margin-bottom:12px">
       <div style="font-size:12px;color:#888;margin-bottom:8px">需求描述</div>
-      <div class="md-body" style="background:#f7f8fa;padding:14px 16px;border-radius:8px;min-height:60px">${d.desc ? marked.parse(d.desc) : '<span style="color:#ccc">暂无描述</span>'}</div>
+      <div class="md-body" style="background:#f7f8fa;padding:14px 16px;border-radius:8px;min-height:60px">${d.desc ? (() => { try { return (typeof marked !== 'undefined' ? marked.parse(d.desc) : d.desc.replace(/\n/g,'<br>')); } catch(e) { return d.desc.replace(/\n/g,'<br>'); } })() : '<span style="color:#ccc">暂无描述</span>'}</div>
     </div>
     ${d.note?`<div><div style="font-size:12px;color:#888;margin-bottom:4px">备注</div><div style="font-size:13px;color:#666;line-height:1.7">${d.note}</div></div>`:''}`;
   document.getElementById('detailEditBtn').onclick=()=>openEdit(id);
@@ -793,7 +793,7 @@ function switchDescTab(tab) {
 }
 function renderDescPreview() {
   const md = document.getElementById('fDesc').value;
-  document.getElementById('descPreview').innerHTML = md ? marked.parse(md) : '<span style="color:#ccc">暂无内容</span>';
+  try { document.getElementById('descPreview').innerHTML = md ? (typeof marked !== 'undefined' ? marked.parse(md) : md.replace(/\n/g,'<br>')) : '<span style="color:#ccc">暂无内容</span>'; } catch(e) { document.getElementById('descPreview').innerHTML = md.replace(/\n/g,'<br>'); }
 }
 
 // ===== 导入 =====
