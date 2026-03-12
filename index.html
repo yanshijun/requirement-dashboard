@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>需求池看板</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
@@ -81,9 +82,79 @@ tr:hover td{background:#fafbff}
 .form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:#3370ff;box-shadow:0 0 0 2px rgba(51,112,255,.1)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .actions{display:flex;gap:6px;white-space:nowrap}
+.btn-claim{background:#e6fffb;color:#08979c;border:1px solid #87e8de}.btn-claim:hover{background:#b5f5ec}
+.btn-switch{background:#f0f5ff;color:#3370ff;border:1px solid #adc6ff}.btn-switch:hover{background:#d6e4ff}
+.btn-release{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}.btn-release:hover{background:#ffe4e4}
+.tag-claimed{display:inline-flex;align-items:center;gap:4px;background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.tag-unclaimed{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:#f5f5f5;color:#bfbfbf;font-weight:500}
+.claim-selected{display:flex;flex-wrap:wrap;gap:4px;min-height:28px;margin-bottom:8px}
+.claim-selected-tag{display:inline-flex;align-items:center;gap:4px;background:#e6f4ff;color:#1677ff;border:1px solid #91caff;padding:2px 8px;border-radius:12px;font-size:12px}
+.claim-selected-tag .rm{cursor:pointer;color:#999;font-size:14px;line-height:1}.claim-selected-tag .rm:hover{color:#ff4d4f}
+.person-picker{border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;width:100%;box-sizing:border-box}
+.person-list{max-height:150px;overflow-y:auto;overflow-x:hidden;padding:4px 0}
+.person-list-item{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:13px;user-select:none;cursor:pointer;box-sizing:border-box;width:100%}.person-list-item:hover{background:#f5f5f5}
+.person-list-item input{cursor:pointer;accent-color:#3370ff;flex-shrink:0;width:14px;height:14px}
+.person-list-item .pname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-del{cursor:pointer;color:#ccc;font-size:15px;line-height:1;flex-shrink:0}.member-del:hover{color:#ff4d4f}
+.person-add-row{display:flex;gap:6px;padding:8px;border-top:1px solid #f0f0f0;background:#fafafa}
+.person-add-row input{flex:1;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;outline:none}.person-add-row input:focus{border-color:#3370ff}
+.person-add-row button{padding:4px 10px;background:#f0f5ff;color:#3370ff;border:1px solid #adc6ff;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}.person-add-row button:hover{background:#d6e4ff}
+.desc-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.desc-toolbar label{font-size:13px;font-weight:600;color:#444}
+.desc-actions{display:flex;gap:6px;align-items:center}
+.desc-tab{padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#666}
+.desc-tab.active{background:#3370ff;color:#fff;border-color:#3370ff}
+.md-preview{display:none;padding:10px 12px;border:1px solid #d9d9d9;border-radius:7px;min-height:80px;background:#fff;font-size:13px}
+.md-body{font-size:14px;line-height:1.8;color:#333}
+.md-body h1,.md-body h2,.md-body h3,.md-body h4{font-weight:700;margin:16px 0 8px;color:#1a1a2e}
+.md-body h1{font-size:20px;border-bottom:2px solid #e8e8e8;padding-bottom:6px}
+.md-body h2{font-size:17px;border-bottom:1px solid #f0f0f0;padding-bottom:4px}
+.md-body h3{font-size:15px}.md-body h4{font-size:14px}
+.md-body p{margin:8px 0}
+.md-body ul,.md-body ol{padding-left:22px;margin:8px 0}
+.md-body li{margin:4px 0}
+.md-body code{background:#f0f2f5;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:#c7254e}
+.md-body pre{background:#282c34;color:#abb2bf;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0}
+.md-body pre code{background:none;color:inherit;padding:0;font-size:13px}
+.md-body blockquote{border-left:4px solid #3370ff;margin:10px 0;padding:8px 14px;background:#f0f5ff;color:#555;border-radius:0 6px 6px 0}
+.md-body table{border-collapse:collapse;width:100%;margin:10px 0}
+.md-body th{background:#f7f8fa;padding:8px 12px;border:1px solid #e8e8e8;font-weight:600;text-align:left}
+.md-body td{padding:7px 12px;border:1px solid #e8e8e8}
+.md-body tr:hover td{background:#fafbff}
+.md-body hr{border:none;border-top:2px solid #e8e8e8;margin:14px 0}
+.md-body strong{font-weight:700;color:#1a1a2e}
+.md-body a{color:#3370ff;text-decoration:none}.md-body a:hover{text-decoration:underline}
 .empty{text-align:center;padding:60px;color:#aaa;font-size:14px}
 .loading-mask{text-align:center;padding:60px;color:#888;font-size:15px}
 .err-box{background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:16px 20px;color:#cf1322;font-size:13px;line-height:1.8}
+/* ===== 今日收集 ===== */
+.fb-quick-add{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 16px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.fb-quick-add input,.fb-quick-add select{padding:7px 10px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;outline:none}.fb-quick-add input:focus,.fb-quick-add select:focus{border-color:#3370ff}
+.fb-quick-add input.fb-title{flex:1}
+.fb-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.fb-col{background:#f7f8fa;border-radius:10px;padding:12px;min-height:200px}
+.fb-col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.fb-col-head .fb-col-title{font-size:13px;font-weight:700;color:#444}
+.fb-col-head .fb-col-count{background:#e8e8e8;color:#888;border-radius:10px;padding:1px 8px;font-size:12px}
+.fb-col-s0 .fb-col-head .fb-col-count{background:#f0f0f0;color:#999}
+.fb-col-s1 .fb-col-head .fb-col-count{background:#e6f4ff;color:#1677ff}
+.fb-col-s2 .fb-col-head .fb-col-count{background:#f6ffed;color:#389e0d}
+.fb-col-s3 .fb-col-head .fb-col-count{background:#f5f5f5;color:#bfbfbf}
+.fb-card{background:#fff;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid #efefef;cursor:pointer;transition:box-shadow .15s}
+.fb-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.09);border-color:#d0d0d0}
+.fb-card-head{display:flex;align-items:flex-start;gap:6px;margin-bottom:6px}
+.fb-card-title{font-size:13px;font-weight:600;color:#222;flex:1;line-height:1.4}
+.fb-card-desc{font-size:12px;color:#888;line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fb-card-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fb-card-time{font-size:11px;color:#bbb;margin-left:auto}
+.fb-tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.fb-tag-sales{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.fb-tag-online{background:#e6f4ff;color:#0958d9;border:1px solid #91caff}
+.fb-tag-other{background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7}
+.fb-tag-urgent{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.fb-card-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.fb-card-actions .btn{font-size:11px;padding:2px 8px}
+.fb-note{font-size:11px;color:#aaa;font-style:italic;margin-top:4px;padding-top:4px;border-top:1px dashed #f0f0f0;white-space:pre-wrap;word-break:break-all}
 </style>
 </head>
 <body>
@@ -111,6 +182,7 @@ tr:hover td{background:#fafbff}
   <div class="tab active" onclick="switchTab('list',this)">📋 需求列表</div>
   <div class="tab" onclick="switchTab('kanban',this)">🗂 开发看板</div>
   <div class="tab" onclick="switchTab('person',this)">👤 人员任务</div>
+  <div class="tab" onclick="switchTab('feedback',this)">🗒 今日收集</div>
 </div>
 
 <div class="content" id="mainContent">
@@ -132,7 +204,19 @@ tr:hover td{background:#fafbff}
           <select id="fFType"><option>用户需求</option><option>研发需求</option></select></div>
       </div>
       <div class="form-row"><label>需求名称 <span style="color:red">*</span></label><input id="fName" placeholder="请输入需求名称"></div>
-      <div class="form-row"><label>需求描述</label><textarea id="fDesc" placeholder="请详细描述需求背景、目标和预期效果"></textarea></div>
+      <div class="form-row">
+        <div class="desc-toolbar">
+          <label>需求描述 <span style="color:#aaa;font-weight:400;font-size:11px">支持 Markdown</span></label>
+          <div class="desc-actions">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mdUpload').click()">📎 上传 .md 文件</button>
+            <input type="file" id="mdUpload" accept=".md,.txt" style="display:none" onchange="handleMdUpload(this)">
+            <button type="button" class="desc-tab active" id="tabEdit" onclick="switchDescTab('edit')">编辑</button>
+            <button type="button" class="desc-tab" id="tabPrev" onclick="switchDescTab('preview')">预览</button>
+          </div>
+        </div>
+        <textarea id="fDesc" placeholder="支持 Markdown 格式，例如：# 背景\n描述背景...\n\n## 目标\n- 目标1" oninput="if(document.getElementById('tabPrev').classList.contains('active'))renderDescPreview()"></textarea>
+        <div class="md-preview md-body" id="descPreview"></div>
+      </div>
       <div class="form-grid">
         <div class="form-row"><label>所属计划</label>
           <select id="fFPlan"><option>SAE2.3.3</option><option>1688商贸版</option></select></div>
@@ -143,6 +227,7 @@ tr:hover td{background:#fafbff}
         <div class="form-row"><label>开发进度 (%)</label><input id="fFProg" type="number" min="0" max="100" value="0"></div>
         <div class="form-row"><label>需求认领人</label><input id="fFPerson" placeholder="姓名"></div>
         <div class="form-row"><label>预计上线日期</label><input id="fFDate" type="date"></div>
+        <div class="form-row"><label>提出时间</label><input id="fFCreateTime" type="date"></div>
         <div class="form-row"><label>是否需要设计</label>
           <select id="fFDesign"><option>待设计</option><option>需要设计</option><option>不需要设计</option><option>设计完成</option></select></div>
         <div class="form-row"><label>评审是否通过</label>
@@ -159,7 +244,7 @@ tr:hover td{background:#fafbff}
 
 <!-- 详情 -->
 <div class="modal-bg" id="detailModal" style="display:none" onclick="if(event.target===this)closeDetail()">
-  <div class="modal">
+  <div class="modal" style="max-width:780px">
     <div class="modal-head">
       <h2 id="detailTitle">需求详情</h2>
       <button class="modal-close" onclick="closeDetail()">×</button>
@@ -168,6 +253,66 @@ tr:hover td{background:#fafbff}
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeDetail()">关闭</button>
       <button class="btn btn-primary" id="detailEditBtn">✏️ 编辑</button>
+    </div>
+  </div>
+</div>
+
+<!-- 认领 -->
+<div class="modal-bg" id="claimModal" style="display:none" onclick="if(event.target===this)closeClaim()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <h2>🙋 认领需求</h2>
+      <button class="modal-close" onclick="closeClaim()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="claimReqName" style="font-size:13px;color:#555;margin-bottom:16px;background:#f7f8fa;padding:10px 12px;border-radius:6px;line-height:1.6"></div>
+      <div class="form-row">
+        <label>认领人 <span style="color:red">*</span></label>
+        <div id="claimSelectedTags" class="claim-selected"></div>
+        <div class="person-picker">
+          <div id="claimPersonList" class="person-list"></div>
+          <div class="person-add-row">
+            <input type="text" id="claimNewName" placeholder="新增成员姓名..." onkeydown="if(event.key==='Enter')addNewMember()">
+            <button onclick="addNewMember()">+ 新增</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeClaim()">取消</button>
+      <button class="btn btn-primary" id="claimBtn" onclick="doClaim()">✅ 确认认领</button>
+    </div>
+  </div>
+</div>
+
+<!-- 反馈编辑 -->
+<div class="modal-bg" id="fbModal" style="display:none" onclick="if(event.target===this)closeFbModal()">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h2 id="fbModalTitle">📝 新增反馈</h2>
+      <button class="modal-close" onclick="closeFbModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>标题 <span style="color:red">*</span></label><input id="fbTitle" placeholder="一句话描述问题或需求"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>来源</label>
+          <select id="fbSource"><option>销售反馈</option><option>线上客户</option><option>其他</option></select></div>
+        <div class="form-row"><label>优先级</label>
+          <select id="fbPriority"><option>紧急🔴</option><option>高🟠</option><option>中🟡</option><option>低🟢</option></select></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label>反馈人</label><input id="fbReporter" placeholder="谁反馈的"></div>
+        <div class="form-row"><label>反馈客户ID</label><input id="fbCustomerId" placeholder="选填"></div>
+      </div>
+      <div class="form-row"><label>提出时间</label><input id="fbCreateTime" type="date"></div>
+      <div class="form-row"><label>描述</label><textarea id="fbDesc" rows="3" placeholder="详细描述..."></textarea></div>
+      <div class="form-row"><label>跟进备注</label><textarea id="fbNote" rows="2" placeholder="记录跟进进展..."></textarea></div>
+      <div class="form-row"><label>状态</label>
+        <select id="fbStatus"><option>待跟进</option><option>跟进中</option><option>已确认</option><option>已关闭</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeFbModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveFbItem()">保存</button>
     </div>
   </div>
 </div>
@@ -222,6 +367,9 @@ tr:hover td{background:#fafbff}
 <script>
 let allData = [];
 let curTab = 'list';
+let pendingFbId = null; // 转入需求时记录来源 feedback id
+let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
+const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
 const COLS = ['待开始','开发中','联调中','测试中','已上线','已暂缓'];
 const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
 
@@ -256,7 +404,7 @@ async function loadData() {
 function buildPersonFilter() {
   const sel = document.getElementById('fPerson');
   const cur = sel.value;
-  const persons = [...new Set(allData.map(d => d.person).filter(Boolean))].sort();
+  const persons = [...new Set(allData.flatMap(d => (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson)))].sort();
   sel.innerHTML = '<option value="">全部认领人</option>' + persons.map(p => `<option>${p}</option>`).join('');
   sel.value = cur;
 }
@@ -273,7 +421,7 @@ function filtered() {
     if (type && d.type !== type) return false;
     if (pri && d.priority !== pri) return false;
     if (stat && (d.status || '待开始') !== stat) return false;
-    if (person && d.person !== person) return false;
+    if (person && !(d.person||'').split(',').map(p=>p.trim()).includes(person)) return false;
     if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
     return true;
   });
@@ -282,10 +430,16 @@ function filtered() {
 // ===== 标签 =====
 const priMap = {'紧急🔴':'tag-p1','高🟠':'tag-p2','中🟡':'tag-p3','低🟢':'tag-p4'};
 const statMap = {'待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','已上线':'tag-s4','已暂缓':'tag-s5'};
+const hasPerson = p => p && p !== '待认领';
 const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
 const statTag = s => `<span class="tag ${statMap[s||'待开始']||'tag-s0'}">${s||'待开始'}</span>`;
 const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
+
+function togglePriSort() {
+  sortPri = sortPri === null ? 'desc' : sortPri === 'desc' ? 'asc' : null;
+  render();
+}
 
 function render() {
   const data = filtered();
@@ -307,6 +461,31 @@ function renderList(data) {
     <div class="stat-card"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
     <div class="stat-card"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
   </div>`;
+  if (sortPri) {
+    const rank = p => {
+      if (!p) return 99;
+      if (PRI_ORDER[p] !== undefined) return PRI_ORDER[p];
+      if (p.includes('紧急')) return 0;
+      if (p.includes('高')) return 1;
+      if (p.includes('中')) return 2;
+      if (p.includes('低')) return 3;
+      return 99;
+    };
+    data = [...data].sort((a,b) => {
+      const ao = rank(a.priority), bo = rank(b.priority);
+      return sortPri === 'desc' ? ao - bo : bo - ao;
+    });
+  }
+  // 默认按提出时间降序（最新在前），优先级排序时不覆盖
+  if (!sortPri) {
+    data = [...data].sort((a,b) => {
+      const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
+      const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
+      return tb - ta;
+    });
+  }
+  const priSortIcon = sortPri === 'desc' ? '↑' : sortPri === 'asc' ? '↓' : '↕';
+  const priSortStyle = sortPri ? 'color:#3370ff;font-weight:700' : 'color:#aaa';
   if (!data.length) { document.getElementById('mainContent').innerHTML = stats+'<div class="tbl-wrap"><div class="empty">暂无匹配需求</div></div>'; return; }
   const rows = data.map(d=>`<tr>
     <td style="color:#aaa;font-size:12px;white-space:nowrap">${d.no||''}</td>
@@ -314,10 +493,15 @@ function renderList(data) {
     <td>${typeTag(d.type)}</td><td>${priTag(d.priority)}</td>
     <td style="white-space:nowrap;font-size:12px">${d.plan||''}</td>
     <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
-    <td style="white-space:nowrap;font-size:13px">${d.person||'<span style="color:#ccc">待认领</span>'}</td>
+    <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td>${statTag(d.status)}</td><td>${progBar(d.progress)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
+    <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.createTime||''}</td>
     <td><div class="actions">
+      ${hasPerson(d.person)
+        ? `<button class="btn btn-switch btn-sm" onclick="openClaim('${d.id}')">换人</button><button class="btn btn-release btn-sm" onclick="releaseClaim('${d.id}')">释放</button>`
+        : `<button class="btn btn-claim btn-sm" onclick="openClaim('${d.id}')">认领</button>`
+      }
       <button class="btn btn-ghost btn-sm" onclick="openEdit('${d.id}')">编辑</button>
       <button class="btn btn-danger btn-sm" onclick="deleteItem('${d.id}','${(d.name||'').replace(/'/g,'')}')">删除</button>
     </div></td>
@@ -325,7 +509,7 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<total?' （已筛选）':''}</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th>优先级</th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
 }
@@ -345,7 +529,7 @@ function renderKanban(data) {
 
 function renderPerson(data) {
   const map = {};
-  data.forEach(d=>{ const p=d.person||'未认领'; if(!map[p])map[p]=[]; map[p].push(d); });
+  data.forEach(d=>{ const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); const keys=ps.length?ps:['未认领']; keys.forEach(p=>{ if(!map[p])map[p]=[]; map[p].push(d); }); });
   const cards = Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([name,tasks])=>{
     const done=tasks.filter(t=>t.status==='已上线').length;
     const doing=tasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
@@ -369,7 +553,15 @@ function switchTab(tab,el) {
   curTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  render();
+  const toolbar = document.querySelector('.toolbar');
+  if (tab === 'feedback') {
+    if (toolbar) toolbar.style.display = 'none';
+    document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+    loadFeedback();
+  } else {
+    if (toolbar) toolbar.style.display = '';
+    render();
+  }
 }
 
 // ===== 新增/编辑 =====
@@ -383,8 +575,10 @@ function openAdd() {
   document.getElementById('fFStatus').value='待开始';
   document.getElementById('fFProg').value='0';
   document.getElementById('fFDate').value='';
+  document.getElementById('fFCreateTime').value='';
   document.getElementById('fFDesign').value='待设计';
   document.getElementById('fFReview').value='待确认';
+  switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
 }
 function openEdit(id) {
@@ -401,13 +595,15 @@ function openEdit(id) {
   document.getElementById('fFProg').value=d.progress||0;
   document.getElementById('fFPerson').value=d.person||'';
   document.getElementById('fFDate').value=d.deadline||'';
+  document.getElementById('fFCreateTime').value=d.createTime||'';
   document.getElementById('fFDesign').value=d.design||'待设计';
   document.getElementById('fFReview').value=d.review||'待确认';
   document.getElementById('fFNote').value=d.note||'';
+  switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
   closeDetail();
 }
-function closeModal(){document.getElementById('modal').style.display='none';}
+function closeModal(){document.getElementById('modal').style.display='none'; pendingFbId = null;}
 async function saveItem() {
   const name=document.getElementById('fName').value.trim();
   if(!name){alert('需求名称不能为空');return;}
@@ -424,11 +620,24 @@ async function saveItem() {
     progress:parseInt(document.getElementById('fFProg').value)||0,
     person:document.getElementById('fFPerson').value.trim(),
     deadline:document.getElementById('fFDate').value,
+    createTime:document.getElementById('fFCreateTime').value,
     design:document.getElementById('fFDesign').value,
     review:document.getElementById('fFReview').value,
     note:document.getElementById('fFNote').value.trim()
   };
-  try{await api(item.id?'update':'add',item);await loadData();closeModal();}
+  try{
+    const res = await api(item.id?'update':'add',item);
+    // 如果是从今日收集转入的需求，把新需求 ID 写回反馈记录
+    if (!item.id && pendingFbId && res && res.item && res.item.id) {
+      const fbItem = feedbackData.find(x => x.id === pendingFbId);
+      if (fbItem) {
+        try { await fbApi('update', { ...fbItem, reqId: res.item.id }); } catch(e) {}
+      }
+      pendingFbId = null;
+    }
+    await loadData();
+    closeModal();
+  }
   catch(e){alert('保存失败：'+e.message);}
   btn.disabled=false;btn.textContent='💾 保存';
 }
@@ -437,6 +646,103 @@ async function deleteItem(id,name) {
   if(!confirm(`确认删除需求「${name}」？`))return;
   try{await api('delete',{id});await loadData();}
   catch(e){alert('删除失败：'+e.message);}
+}
+
+// ===== 认领 =====
+let _claimId = null, _claimSelected = new Set();
+
+const DEFAULT_MEMBERS = ['吴江兵','江宇岭','江鹏','潘徐莉','沈明杰','覃显华','钟万伟','周晓','颜世俊','邹晓东'];
+function getExcluded() { const s = localStorage.getItem('zhikong_members_excluded'); return new Set(s ? JSON.parse(s) : []); }
+function saveExcluded(set) { localStorage.setItem('zhikong_members_excluded', JSON.stringify([...set])); }
+function getMembers() {
+  const stored = localStorage.getItem('zhikong_members');
+  const extra = stored ? JSON.parse(stored) : [];
+  const fromData = allData.flatMap(d => (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson));
+  const excluded = getExcluded();
+  return [...new Set([...DEFAULT_MEMBERS, ...extra, ...fromData])].filter(p => !excluded.has(p)).sort();
+}
+function saveMembers(list) { localStorage.setItem('zhikong_members', JSON.stringify(list)); }
+function deleteMember(name) {
+  const ex = getExcluded(); ex.add(name); saveExcluded(ex);
+  const stored = localStorage.getItem('zhikong_members');
+  if (stored) saveMembers(JSON.parse(stored).filter(p => p !== name));
+  _claimSelected.delete(name);
+  refreshClaimList();
+}
+
+function addNewMember() {
+  const input = document.getElementById('claimNewName');
+  const name = input.value.trim();
+  if (!name) return;
+  const ex = getExcluded(); ex.delete(name); saveExcluded(ex);
+  const stored = localStorage.getItem('zhikong_members');
+  const extra = stored ? JSON.parse(stored) : [];
+  if (!extra.includes(name)) saveMembers([...extra, name].sort());
+  _claimSelected.add(name);
+  input.value = '';
+  refreshClaimList();
+}
+
+function toggleClaimPerson(name) {
+  if (_claimSelected.has(name)) _claimSelected.delete(name);
+  else _claimSelected.add(name);
+  refreshClaimList();
+}
+
+function refreshClaimList() {
+  const members = getMembers();
+  document.getElementById('claimSelectedTags').innerHTML = [..._claimSelected].map(p =>
+    `<span class="claim-selected-tag">👤 ${p} <span class="rm" onclick="toggleClaimPerson('${p}')">×</span></span>`
+  ).join('');
+  document.getElementById('claimPersonList').innerHTML = members.length
+    ? members.map(p => `<div class="person-list-item" onclick="toggleClaimPerson('${p}')"><input type="checkbox" ${_claimSelected.has(p)?'checked':''} onclick="event.stopPropagation();toggleClaimPerson('${p}')"><span class="pname">${p}</span><span class="member-del" onclick="event.stopPropagation();deleteMember('${p}')" title="从列表移除">×</span></div>`).join('')
+    : '<div style="padding:8px 12px;font-size:12px;color:#aaa">暂无成员，在下方新增</div>';
+}
+
+function openClaim(id) {
+  const d = allData.find(x => x.id === id); if (!d) return;
+  _claimId = id;
+  const current = (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+  _claimSelected = new Set(current);
+  document.getElementById('claimReqName').innerHTML =
+    (d.no ? `<span style="color:#aaa">${d.no}</span> · ` : '') +
+    `<strong>${d.name || ''}</strong>` +
+    (current.length ? `<br><span style="color:#888;font-size:12px">当前认领人：${current.join('、')}</span>` : '<br><span style="color:#faad14;font-size:12px">当前待认领</span>');
+  document.querySelector('#claimModal .modal-head h2').textContent = current.length ? '🔄 更换认领人' : '🙋 认领需求';
+  document.getElementById('claimBtn').textContent = current.length ? '✅ 确认换人' : '✅ 确认认领';
+  refreshClaimList();
+  document.getElementById('claimModal').style.display = 'flex';
+}
+function closeClaim() { document.getElementById('claimModal').style.display = 'none'; _claimId = null; _claimSelected = new Set(); }
+
+async function releaseClaim(id) {
+  const d = allData.find(x => x.id === id); if (!d) return;
+  const persons = (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+  const label = persons.length > 1 ? `全部 ${persons.length} 位认领人（${persons.join('、')}）` : `「${persons[0]}」`;
+  if (!confirm(`确认释放 ${label} 的认领？需求将回到待认领状态。`)) return;
+  try { await api('update', { ...d, person: '' }); await loadData(); }
+  catch(e) { alert('释放失败：' + e.message); }
+}
+
+async function doClaim() {
+  if (!_claimSelected.size) { alert('请至少选择一位认领人'); return; }
+  const d = allData.find(x => x.id === _claimId); if (!d) return;
+  const btn = document.getElementById('claimBtn');
+  btn.disabled = true; btn.textContent = '提交中...';
+  const person = [..._claimSelected].join(',');
+  try {
+    await api('update', { ...d, person });
+    await loadData();
+    closeClaim();
+  } catch(e) { alert('认领失败：' + e.message); }
+  btn.disabled = false; btn.textContent = '✅ 确认认领';
+}
+
+async function releaseOnePerson(id, personToRemove) {
+  const d = allData.find(x => x.id === id); if (!d) return;
+  const remaining = (d.person||'').split(',').map(p=>p.trim()).filter(p=>p && p!==personToRemove).join(',');
+  try { await api('update', { ...d, person: remaining }); await loadData(); }
+  catch(e) { alert('释放失败：' + e.message); }
 }
 
 function openDetail(id) {
@@ -450,19 +756,45 @@ function openDetail(id) {
       <div><div style="font-size:12px;color:#888">优先级</div><div style="margin-top:3px">${priTag(d.priority)}</div></div>
       <div><div style="font-size:12px;color:#888">开发状态</div><div style="margin-top:3px">${statTag(d.status)}</div></div>
       <div><div style="font-size:12px;color:#888">开发进度</div><div style="margin-top:3px">${progBar(d.progress)}</div></div>
-      <div><div style="font-size:12px;color:#888">认领人</div><div style="margin-top:3px;font-size:13px">${d.person||'待认领'}</div></div>
+      <div><div style="font-size:12px;color:#888">认领人</div><div style="margin-top:3px;font-size:13px">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.join('、') : '待认领'; })()}</div></div>
       <div><div style="font-size:12px;color:#888">预计上线</div><div style="margin-top:3px;font-size:13px">${d.deadline||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">是否需要设计</div><div style="margin-top:3px;font-size:13px">${d.design||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">评审是否通过</div><div style="margin-top:3px;font-size:13px">${d.review||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">提出时间</div><div style="margin-top:3px;font-size:13px">${d.createTime||'-'}</div></div>
     </div>
-    <div style="margin-bottom:12px"><div style="font-size:12px;color:#888">需求描述</div>
-      <div style="margin-top:5px;font-size:13px;line-height:1.8;background:#f7f8fa;padding:10px;border-radius:6px">${(d.desc||'暂无描述').replace(/\n/g,'<br>')}</div></div>
-    ${d.note?`<div><div style="font-size:12px;color:#888">备注</div><div style="margin-top:5px;font-size:13px;color:#666">${d.note}</div></div>`:''}`;
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:#888;margin-bottom:8px">需求描述</div>
+      <div class="md-body" style="background:#f7f8fa;padding:14px 16px;border-radius:8px;min-height:60px">${d.desc ? marked.parse(d.desc) : '<span style="color:#ccc">暂无描述</span>'}</div>
+    </div>
+    ${d.note?`<div><div style="font-size:12px;color:#888;margin-bottom:4px">备注</div><div style="font-size:13px;color:#666;line-height:1.7">${d.note}</div></div>`:''}`;
   document.getElementById('detailEditBtn').onclick=()=>openEdit(id);
   document.getElementById('detailModal').style.display='flex';
 }
 function closeDetail(){document.getElementById('detailModal').style.display='none';}
+
+// ===== Markdown 描述 =====
+function handleMdUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('fDesc').value = e.target.result;
+    input.value = '';
+    if (document.getElementById('tabPrev').classList.contains('active')) renderDescPreview();
+  };
+  reader.readAsText(file, 'utf-8');
+}
+function switchDescTab(tab) {
+  const isPreview = tab === 'preview';
+  document.getElementById('tabEdit').classList.toggle('active', !isPreview);
+  document.getElementById('tabPrev').classList.toggle('active', isPreview);
+  document.getElementById('fDesc').style.display = isPreview ? 'none' : '';
+  document.getElementById('descPreview').style.display = isPreview ? 'block' : 'none';
+  if (isPreview) renderDescPreview();
+}
+function renderDescPreview() {
+  const md = document.getElementById('fDesc').value;
+  document.getElementById('descPreview').innerHTML = md ? marked.parse(md) : '<span style="color:#ccc">暂无内容</span>';
+}
 
 // ===== 导入 =====
 function openImport(){
@@ -518,6 +850,215 @@ async function doImport(){
 }
 
 loadData();
+
+// ===== 今日收集 =====
+const FB_COLS = [
+  { key: 'pending',  label: '待跟进', cls: 'fb-col-s0' },
+  { key: 'progress', label: '跟进中', cls: 'fb-col-s1' },
+  { key: 'confirmed',label: '已确认', cls: 'fb-col-s2' },
+  { key: 'closed',   label: '已关闭', cls: 'fb-col-s3' }
+];
+const FB_STATUS_MAP = { '待跟进':'pending','跟进中':'progress','已确认':'confirmed','已转需求':'confirmed','已关闭':'closed' };
+let _fbEditId = null;
+let feedbackData = [];
+
+function fbTodayStr() { return new Date().toISOString().split('T')[0]; }
+
+async function fbApi(action, body) {
+  if (action === 'list') {
+    const res = await fetch('/.netlify/functions/feishu?table=feedback');
+    return res.json();
+  }
+  const res = await fetch(`/.netlify/functions/feishu?action=fb-${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function loadFeedback() {
+  try {
+    feedbackData = await fbApi('list');
+  } catch(e) {
+    feedbackData = [];
+    console.error('加载今日收集失败', e);
+  }
+  renderFeedback();
+}
+
+function fbSourceTag(src) {
+  const map = { '销售反馈': 'fb-tag-sales', '线上客户': 'fb-tag-online', '其他': 'fb-tag-other' };
+  return `<span class="fb-tag ${map[src]||'fb-tag-other'}">${src||'其他'}</span>`;
+}
+function fbPriTag(p) {
+  if (!p || p === '中🟡' || p === '低🟢') return '';
+  return priTag(p);
+}
+
+function renderFeedback() {
+  const toolbar = document.querySelector('.toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+
+  const groups = { pending: [], progress: [], confirmed: [], closed: [] };
+  feedbackData.forEach(item => {
+    const linkedReq = item.reqId ? allData.find(r => r.id === item.reqId) : null;
+    const col = (linkedReq && linkedReq.status === '已上线') ? 'closed' : (FB_STATUS_MAP[item.status] || 'pending');
+    groups[col].push(item);
+  });
+
+  const quickAdd = `
+    <div class="fb-quick-add">
+      <input class="fb-title" id="fbQuickTitle" placeholder="💬 快速录入反馈标题..." onkeydown="if(event.key==='Enter')quickAddFb()">
+      <select id="fbQuickSource"><option>销售反馈</option><option>线上客户</option><option>其他</option></select>
+      <button class="btn btn-primary" onclick="quickAddFb()">＋ 快速添加</button>
+      <button class="btn btn-ghost" onclick="openFbModal(null)">📝 详细填写</button>
+      <button class="btn btn-ghost" onclick="loadFeedback()" style="margin-left:auto">🔄 刷新</button>
+    </div>`;
+
+  const cols = FB_COLS.map(col => {
+    const items = groups[col.key];
+    const cards = items.length ? items.map(item => {
+      const isTransferred = item.status === '已转需求';
+      const linkedReq = item.reqId ? allData.find(r => r.id === item.reqId) : null;
+      const reqStatusBadge = linkedReq
+        ? `<div style="margin:4px 0;font-size:11px;color:#1677ff;background:#e6f4ff;border:1px solid #91caff;border-radius:4px;padding:2px 6px;display:inline-block">📋 需求状态：${linkedReq.status || '待开始'}${linkedReq.progress > 0 ? ' ' + linkedReq.progress + '%' : ''}</div>`
+        : '';
+      const actionBtns = col.key === 'confirmed'
+        ? (isTransferred ? '<span style="font-size:11px;color:#52c41a;font-weight:600">✅ 已转需求</span>' : `<button class="btn btn-success btn-sm" onclick="fbTransfer('${item.id}')">→ 转入需求</button>`)
+        : col.key === 'pending'
+          ? `<button class="btn btn-ghost btn-sm" onclick="fbMoveTo('${item.id}','跟进中')">开始跟进</button>`
+          : col.key === 'progress'
+            ? `<button class="btn btn-ghost btn-sm" onclick="fbMoveTo('${item.id}','已确认')">确认</button>`
+            : '';
+      return `
+        <div class="fb-card" onclick="openFbModal('${item.id}')">
+          <div class="fb-card-head">
+            ${fbSourceTag(item.source)}
+            ${fbPriTag(item.priority)}
+            ${isTransferred ? '<span class="fb-tag" style="background:#f6ffed;color:#389e0d;border-color:#b7eb8f">已转需求</span>' : ''}
+          </div>
+          <div class="fb-card-title">${item.title||''}</div>
+          ${reqStatusBadge}
+          ${item.customerId ? `<div style="font-size:11px;color:#999;margin-bottom:4px">🆔 客户ID：${item.customerId}</div>` : ''}
+          ${item.desc ? `<div class="fb-card-desc">${item.desc}</div>` : ''}
+          ${item.note ? `<div class="fb-note">💬 ${item.note}</div>` : ''}
+          <div class="fb-card-foot">
+            ${item.reporter ? `<span style="font-size:11px;color:#999">👤 ${item.reporter}</span>` : ''}
+            <span class="fb-card-time">${item.createTime||''}</span>
+          </div>
+          <div class="fb-card-actions" onclick="event.stopPropagation()">
+            ${actionBtns}
+            <button class="btn btn-ghost btn-sm" onclick="openFbModal('${item.id}')">编辑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteFbItem('${item.id}')">删除</button>
+          </div>
+        </div>`;
+    }).join('') : `<div style="text-align:center;padding:30px 0;color:#ccc;font-size:13px">暂无</div>`;
+
+    return `
+      <div class="fb-col ${col.cls}">
+        <div class="fb-col-head">
+          <span class="fb-col-title">${col.label}</span>
+          <span class="fb-col-count">${items.length}</span>
+        </div>
+        ${cards}
+      </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML = quickAdd + `<div class="fb-board">${cols}</div>`;
+}
+
+async function quickAddFb() {
+  const titleEl = document.getElementById('fbQuickTitle');
+  const title = titleEl.value.trim();
+  if (!title) { titleEl.focus(); return; }
+  const source = document.getElementById('fbQuickSource').value;
+  try {
+    await fbApi('add', { title, source, priority: '中🟡', reporter: '', customerId: '', desc: '', note: '', status: '待跟进', createTime: fbTodayStr() });
+    titleEl.value = '';
+    await loadFeedback();
+  } catch(e) { alert('添加失败：' + e.message); }
+}
+
+function openFbModal(id) {
+  _fbEditId = id;
+  const item = id ? feedbackData.find(x => x.id === id) : null;
+  document.getElementById('fbModalTitle').textContent = item ? '📝 编辑反馈' : '📝 新增反馈';
+  document.getElementById('fbTitle').value = item?.title || '';
+  document.getElementById('fbSource').value = item?.source || '销售反馈';
+  document.getElementById('fbPriority').value = item?.priority || '中🟡';
+  document.getElementById('fbReporter').value = item?.reporter || '';
+  document.getElementById('fbCustomerId').value = item?.customerId || '';
+  document.getElementById('fbCreateTime').value = item?.createTime || fbTodayStr();
+  document.getElementById('fbDesc').value = item?.desc || '';
+  document.getElementById('fbNote').value = item?.note || '';
+  document.getElementById('fbStatus').value = item?.status || '待跟进';
+  document.getElementById('fbModal').style.display = 'flex';
+}
+function closeFbModal() { document.getElementById('fbModal').style.display = 'none'; _fbEditId = null; }
+
+async function saveFbItem() {
+  const title = document.getElementById('fbTitle').value.trim();
+  if (!title) { alert('标题不能为空'); return; }
+  const item = {
+    title,
+    source: document.getElementById('fbSource').value,
+    priority: document.getElementById('fbPriority').value,
+    reporter: document.getElementById('fbReporter').value.trim(),
+    customerId: document.getElementById('fbCustomerId').value.trim(),
+    createTime: document.getElementById('fbCreateTime').value || fbTodayStr(),
+    desc: document.getElementById('fbDesc').value.trim(),
+    note: document.getElementById('fbNote').value.trim(),
+    status: document.getElementById('fbStatus').value
+  };
+  const btn = document.querySelector('#fbModal .btn-primary');
+  btn.disabled = true; btn.textContent = '保存中...';
+  try {
+    if (_fbEditId) {
+      const existing = feedbackData.find(x => x.id === _fbEditId);
+      await fbApi('update', { ...item, id: _fbEditId, reqId: existing?.reqId || '' });
+    } else {
+      await fbApi('add', item);
+    }
+    closeFbModal();
+    await loadFeedback();
+  } catch(e) { alert('保存失败：' + e.message); }
+  btn.disabled = false; btn.textContent = '保存';
+}
+
+async function deleteFbItem(id) {
+  if (!confirm('确认删除该反馈？')) return;
+  try {
+    await fbApi('delete', { id });
+    await loadFeedback();
+  } catch(e) { alert('删除失败：' + e.message); }
+}
+
+async function fbMoveTo(id, status) {
+  const item = feedbackData.find(x => x.id === id);
+  if (!item) return;
+  try {
+    await fbApi('update', { ...item, status });
+    await loadFeedback();
+  } catch(e) { alert('操作失败：' + e.message); }
+}
+
+async function fbTransfer(id) {
+  const item = feedbackData.find(x => x.id === id);
+  if (!item) return;
+  try {
+    await fbApi('update', { ...item, status: '已转需求' });
+    await loadFeedback();
+  } catch(e) { alert('操作失败：' + e.message); return; }
+  pendingFbId = id;
+  openAdd();
+  setTimeout(() => {
+    document.getElementById('fName').value = item.title || '';
+    document.getElementById('fDesc').value = item.desc || '';
+    document.getElementById('fFPri').value = item.priority || '中🟡';
+    document.getElementById('fFCreateTime').value = item.createTime || '';
+  }, 50);
+}
 </script>
 </body>
 </html>
