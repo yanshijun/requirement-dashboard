@@ -376,7 +376,7 @@ const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','pro
 
 // ===== API =====
 async function api(action, body, qs = '') {
-  const url = action === 'get' ? `/.netlify/functions/feishu${qs}` : `/.netlify/functions/feishu?action=${action}`;
+  const url = action === 'get' ? `/api/feishu${qs}` : `/api/feishu?action=${action}`;
   const opt = action === 'get'
     ? { method: 'GET' }
     : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
@@ -889,10 +889,10 @@ function fbTodayStr() { return new Date().toISOString().split('T')[0]; }
 
 async function fbApi(action, body) {
   if (action === 'list') {
-    const res = await fetch('/.netlify/functions/feishu?table=feedback');
+    const res = await fetch('/api/feishu?table=feedback');
     return res.json();
   }
-  const res = await fetch(`/.netlify/functions/feishu?action=fb-${action}`, {
+  const res = await fetch(`/api/feishu?action=fb-${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
