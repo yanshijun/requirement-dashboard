@@ -170,7 +170,7 @@ tr:hover td{background:#fafbff}
 </header>
 
 <div class="toolbar">
-  <select id="fPlan" onchange="render()"><option value="">全部计划</option><option>SAE2.3.3</option><option>1688商贸版</option></select>
+  <select id="fPlan" onchange="render()"><option value="">全部计划</option></select>
   <select id="fType" onchange="render()"><option value="">全部类型</option><option>用户需求</option><option>研发需求</option></select>
   <select id="fPri" onchange="render()"><option value="">全部优先级</option><option>紧急🔴</option><option>高🟠</option><option>中🟡</option><option>低🟢</option></select>
   <select id="fStatus" onchange="render()"><option value="">全部状态</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>已上线</option><option>已暂缓</option></select>
@@ -219,7 +219,11 @@ tr:hover td{background:#fafbff}
       </div>
       <div class="form-grid">
         <div class="form-row"><label>所属计划</label>
-          <select id="fFPlan"><option>SAE2.3.3</option><option>1688商贸版</option></select></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="fFPlan" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addNewPlan()">+ 新增</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteCurPlan()">删除</button>
+          </div></div>
         <div class="form-row"><label>优先级</label>
           <select id="fFPri"><option>中🟡</option><option>紧急🔴</option><option>高🟠</option><option>低🟢</option></select></div>
         <div class="form-row"><label>开发状态</label>
@@ -369,6 +373,44 @@ let allData = [];
 let curTab = 'list';
 let pendingFbId = null; // 转入需求时记录来源 feedback id
 let _fbLoaded = false; // 今日收集是否已加载过
+
+// ===== 计划列表管理 =====
+const DEFAULT_PLANS = ['SAE2.3.3', '1688商贸版'];
+function getPlans() {
+  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
+  return [...new Set([...DEFAULT_PLANS, ...extra])];
+}
+function addNewPlan() {
+  const name = prompt('请输入计划名称：');
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
+  if (!extra.includes(trimmed) && !DEFAULT_PLANS.includes(trimmed)) {
+    extra.push(trimmed);
+    localStorage.setItem('extraPlans', JSON.stringify(extra));
+  }
+  buildPlanSelects(trimmed);
+}
+function deleteCurPlan() {
+  const sel = document.getElementById('fFPlan');
+  const cur = sel.value;
+  if (DEFAULT_PLANS.includes(cur)) { alert('默认计划不能删除'); return; }
+  if (!confirm(`确认删除计划「${cur}」？`)) return;
+  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
+  localStorage.setItem('extraPlans', JSON.stringify(extra.filter(p => p !== cur)));
+  buildPlanSelects(getPlans()[0]);
+}
+function buildPlanSelects(selectVal) {
+  const plans = getPlans();
+  // 筛选栏
+  const fPlan = document.getElementById('fPlan');
+  const curFilter = fPlan.value;
+  fPlan.innerHTML = '<option value="">全部计划</option>' + plans.map(p => `<option${p===curFilter?' selected':''}>${p}</option>`).join('');
+  // 表单下拉
+  const fFPlan = document.getElementById('fFPlan');
+  const curForm = selectVal || fFPlan.value;
+  fFPlan.innerHTML = plans.map(p => `<option${p===curForm?' selected':''}>${p}</option>`).join('');
+}
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
 const COLS = ['待开始','开发中','联调中','测试中','已上线','已暂缓'];
@@ -392,6 +434,7 @@ async function api(action, body, qs = '') {
 // ===== 加载数据 =====
 async function loadData(silent = false) {
   if (!silent) document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+  buildPlanSelects(); // 初始化计划下拉
   try {
     const res = await api('get', null, '?table=all');
     allData = res.requirements || res; // 兼容旧接口
@@ -578,7 +621,7 @@ function openAdd() {
   document.getElementById('fId').value='';
   ['fNo','fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fFType').value='用户需求';
-  document.getElementById('fFPlan').value='SAE2.3.3';
+  buildPlanSelects(getPlans()[0]);
   document.getElementById('fFPri').value='中🟡';
   document.getElementById('fFStatus').value='待开始';
   document.getElementById('fFProg').value='0';
@@ -597,7 +640,7 @@ function openEdit(id) {
   document.getElementById('fName').value=d.name||'';
   document.getElementById('fDesc').value=d.desc||'';
   document.getElementById('fFType').value=d.type||'用户需求';
-  document.getElementById('fFPlan').value=d.plan||'SAE2.3.3';
+  buildPlanSelects(d.plan || getPlans()[0]);
   document.getElementById('fFPri').value=d.priority||'中🟡';
   document.getElementById('fFStatus').value=d.status||'待开始';
   document.getElementById('fFProg').value=d.progress||0;
