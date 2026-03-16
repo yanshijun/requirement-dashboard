@@ -67,6 +67,11 @@ tr:hover td{background:#fafbff}
 .person-stats{display:flex;gap:16px;margin:10px 0}
 .pstat{text-align:center}.pstat .pnum{font-size:22px;font-weight:700}.pstat .plbl{font-size:11px;color:#888}
 .ptask-item{padding:5px 0;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:8px;font-size:12px}
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:20px 0;user-select:none}
+.page-btn{padding:6px 12px;border:1px solid #d9d9d9;background:#fff;border-radius:6px;font-size:13px;cursor:pointer;transition:all .15s;color:#333}
+.page-btn:hover:not(:disabled){background:#f0f5ff;border-color:#3370ff;color:#3370ff}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-btn.active{background:#3370ff;color:#fff;border-color:#3370ff;font-weight:600}
 .ptask-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
@@ -371,6 +376,8 @@ tr:hover td{background:#fafbff}
 <script>
 let allData = [];
 let curTab = 'list';
+let currentPage = 1;
+const PAGE_SIZE = 20;
 let pendingFbId = null; // 转入需求时记录来源 feedback id
 let _fbLoaded = false; // 今日收集是否已加载过
 
@@ -487,6 +494,12 @@ function togglePriSort() {
   render();
 }
 
+function goToPage(page) {
+  currentPage = page;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function render() {
   const data = filtered();
   if (curTab==='list') renderList(data);
@@ -533,7 +546,15 @@ function renderList(data) {
   const priSortIcon = sortPri === 'desc' ? '↑' : sortPri === 'asc' ? '↓' : '↕';
   const priSortStyle = sortPri ? 'color:#3370ff;font-weight:700' : 'color:#aaa';
   if (!data.length) { document.getElementById('mainContent').innerHTML = stats+'<div class="tbl-wrap"><div class="empty">暂无匹配需求</div></div>'; return; }
-  const rows = data.map(d=>`<tr>
+
+  // 分页逻辑
+  const totalPages = Math.ceil(data.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pageData = data.slice(start, end);
+
+  const rows = pageData.map(d=>`<tr>
     <td style="color:#aaa;font-size:12px;white-space:nowrap">${d.no||''}</td>
     <td style="font-weight:600;min-width:140px;cursor:pointer;color:#3370ff" onclick="openDetail('${d.id}')">${d.name||''}</td>
     <td>${typeTag(d.type)}</td><td>${priTag(d.priority)}</td>
@@ -552,12 +573,43 @@ function renderList(data) {
       <button class="btn btn-danger btn-sm" onclick="deleteItem('${d.id}','${(d.name||'').replace(/'/g,'')}')">删除</button>
     </div></td>
   </tr>`).join('');
+
+  // 生成分页按钮
+  let pageButtons = '';
+  if (totalPages > 1) {
+    pageButtons = '<div class="pagination">';
+    pageButtons += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+
+    // 页码按钮逻辑：最多显示7个
+    let startPage = Math.max(1, currentPage - 3);
+    let endPage = Math.min(totalPages, currentPage + 3);
+    if (currentPage <= 4) endPage = Math.min(7, totalPages);
+    if (currentPage > totalPages - 4) startPage = Math.max(1, totalPages - 6);
+
+    if (startPage > 1) {
+      pageButtons += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+      if (startPage > 2) pageButtons += '<span style="color:#aaa;padding:0 4px">...</span>';
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageButtons += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pageButtons += '<span style="color:#aaa;padding:0 4px">...</span>';
+      pageButtons += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+
+    pageButtons += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+    pageButtons += '</div>';
+  }
+
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
-    <div class="tbl-info">共 ${data.length} 条${data.length<total?' （已筛选）':''}</div>
+    <div class="tbl-info">共 ${data.length} 条${data.length<total?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
       <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table></div></div>`;
+    </table></div>${pageButtons}</div>`;
 }
 
 function renderKanban(data) {
@@ -588,8 +640,7 @@ function renderPerson(data) {
         <div class="pstat"><div class="pnum" style="color:#8c8c8c">${todo}</div><div class="plbl">待开始</div></div>
         <div class="pstat"><div class="pnum">${tasks.length}</div><div class="plbl">总计</div></div>
       </div>
-      <div>${tasks.slice(0,6).map(t=>`<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${t.name||''}</span>${statTag(t.status)}</div>`).join('')}
-      ${tasks.length>6?`<div style="text-align:center;color:#aaa;font-size:12px;padding:4px">…还有${tasks.length-6}条</div>`:''}</div>
+      <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin">${tasks.map(t=>`<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${t.name||''}</span>${statTag(t.status)}</div>`).join('')}</div>
     </div>`;
   }).join('');
   document.getElementById('mainContent').innerHTML = `<div class="person-grid">${cards||'<div class="empty">暂无数据</div>'}</div>`;
