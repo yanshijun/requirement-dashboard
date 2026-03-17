@@ -529,7 +529,8 @@ function render() {
   const data = filtered();
   if (curTab==='list') renderList(data);
   else if (curTab==='kanban') renderKanban(data);
-  else renderPerson(data);
+  else if (curTab==='person') renderPerson(data);
+  // feedback 由 switchTab 直接调用 renderFeedback，不在这里处理
 }
 
 function renderList(data) {
@@ -684,15 +685,6 @@ function switchTab(tab,el) {
   el.classList.add('active');
   const toolbar = document.querySelector('.toolbar');
 
-  // 切回需求列表时重置筛选条件
-  if (tab === 'list') {
-    document.getElementById('fPlan').value = '';
-    document.getElementById('fType').value = '';
-    document.getElementById('fPri').value = '';
-    document.getElementById('fStatus').value = '';
-    document.getElementById('fPerson').value = '';
-  }
-
   if (tab === 'feedback') {
     if (toolbar) toolbar.style.display = 'none';
     if (_fbLoaded) {
@@ -704,6 +696,14 @@ function switchTab(tab,el) {
     }
   } else {
     if (toolbar) toolbar.style.display = '';
+    // 切回需求列表时重置筛选条件
+    if (tab === 'list') {
+      document.getElementById('fPlan').value = '';
+      document.getElementById('fType').value = '';
+      document.getElementById('fPri').value = '';
+      document.getElementById('fStatus').value = '';
+      document.getElementById('fPerson').value = '';
+    }
     render();
   }
 }
@@ -1044,7 +1044,10 @@ async function loadFeedback(silent = false) {
     if (!silent) { feedbackData = []; }
     console.error('加载今日收集失败', e);
   }
-  renderFeedback();
+  // 只有当前还在 feedback tab 时才渲染
+  if (curTab === 'feedback') {
+    renderFeedback();
+  }
 }
 
 function fbSourceTag(src) {
@@ -1057,8 +1060,8 @@ function fbPriTag(p) {
 }
 
 function renderFeedback() {
-  const toolbar = document.querySelector('.toolbar');
-  if (toolbar) toolbar.style.display = 'none';
+  // 只有当前在 feedback tab 时才渲染
+  if (curTab !== 'feedback') return;
 
   const groups = { pending: [], progress: [], confirmed: [], closed: [] };
   feedbackData.forEach(item => {
