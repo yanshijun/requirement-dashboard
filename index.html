@@ -27,7 +27,8 @@ header h1{font-size:16px;font-weight:700}
 .tab.active{color:#3370ff;border-bottom-color:#3370ff;font-weight:600}
 .content{padding:20px 24px}
 .stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px}
-.stat-card{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.stat-card{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;transition:all .15s}
+.stat-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.12);transform:translateY(-2px)}
 .stat-card .num{font-size:28px;font-weight:700;color:#3370ff}
 .stat-card .lbl{font-size:12px;color:#888;margin-top:2px}
 .tbl-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden}
@@ -500,6 +501,30 @@ function goToPage(page) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function jumpToKanban(filter) {
+  // 先清空所有筛选
+  document.getElementById('fPlan').value = '';
+  document.getElementById('fType').value = '';
+  document.getElementById('fPri').value = '';
+  document.getElementById('fStatus').value = '';
+  document.getElementById('fPerson').value = '';
+
+  // 根据点击的卡片设置筛选条件
+  if (filter === '紧急🔴') {
+    document.getElementById('fPri').value = '紧急🔴';
+  } else if (filter && filter !== '') {
+    // 其他状态直接设置状态筛选
+    document.getElementById('fStatus').value = filter;
+  }
+  // '全部需求' (filter === '') 不设置额外筛选
+
+  // 切换到开发看板并刷新
+  const kanbanTab = document.querySelectorAll('.tab')[1];
+  switchTab('kanban', kanbanTab);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function render() {
   const data = filtered();
   if (curTab==='list') renderList(data);
@@ -509,16 +534,23 @@ function render() {
 
 function renderList(data) {
   const total = allData.length;
-  const done = allData.filter(d=>d.status==='已上线').length;
-  const doing = allData.filter(d=>['开发中','联调中','测试中'].includes(d.status)).length;
-  const todo = allData.filter(d=>!d.status||d.status==='待开始').length;
   const urgent = allData.filter(d=>d.priority==='紧急🔴').length;
+  const todo = allData.filter(d=>!d.status||d.status==='待开始').length;
+  const doing = allData.filter(d=>d.status==='开发中').length;
+  const liaodiao = allData.filter(d=>d.status==='联调中').length;
+  const testing = allData.filter(d=>d.status==='测试中').length;
+  const done = allData.filter(d=>d.status==='已上线').length;
+  const paused = allData.filter(d=>d.status==='已暂缓').length;
+
   const stats = `<div class="stat-row">
-    <div class="stat-card"><div class="num">${total}</div><div class="lbl">全部需求</div></div>
-    <div class="stat-card"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
-    <div class="stat-card"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">进行中</div></div>
-    <div class="stat-card"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
-    <div class="stat-card"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
+    <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${total}</div><div class="lbl">全部需求</div></div>
+    <div class="stat-card" onclick="jumpToKanban('紧急🔴')"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
+    <div class="stat-card" onclick="jumpToKanban('待开始')"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
+    <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('联调中')"><div class="num" style="color:#13c2c2">${liaodiao}</div><div class="lbl">联调中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('测试中')"><div class="num" style="color:#faad14">${testing}</div><div class="lbl">测试中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('已上线')"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
+    <div class="stat-card" onclick="jumpToKanban('已暂缓')"><div class="num" style="color:#d9d9d9">${paused}</div><div class="lbl">已暂缓</div></div>
   </div>`;
   if (sortPri) {
     const rank = p => {
@@ -651,6 +683,16 @@ function switchTab(tab,el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   const toolbar = document.querySelector('.toolbar');
+
+  // 切回需求列表时重置筛选条件
+  if (tab === 'list') {
+    document.getElementById('fPlan').value = '';
+    document.getElementById('fType').value = '';
+    document.getElementById('fPri').value = '';
+    document.getElementById('fStatus').value = '';
+    document.getElementById('fPerson').value = '';
+  }
+
   if (tab === 'feedback') {
     if (toolbar) toolbar.style.display = 'none';
     if (_fbLoaded) {
