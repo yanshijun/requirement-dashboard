@@ -4,9 +4,26 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "playwright test",
+    "test:report": "playwright show-report"
   },
   "dependencies": {
     "express": "^4.19.2"
-  }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanshijun/requirement-dashboard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yanshijun/requirement-dashboard/issues"
+  },
+  "homepage": "https://github.com/yanshijun/requirement-dashboard#readme",
+  "description": ""
 }

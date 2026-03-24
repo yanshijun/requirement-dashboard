@@ -51,6 +51,7 @@ tr:hover td{background:#fafbff}
 .tag-s3{background:#f9f0ff;color:#722ed1}
 .tag-s4{background:#f6ffed;color:#52c41a}
 .tag-s5{background:#fafafa;color:#bfbfbf}
+.tag-s6{background:#f9f0ff;color:#722ed1}
 .prog{display:flex;align-items:center;gap:6px;min-width:90px}
 .prog-bar{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden}
 .prog-fill{height:100%;background:#3370ff;border-radius:3px;transition:width .3s}
@@ -169,6 +170,7 @@ tr:hover td{background:#fafbff}
   <h1>📋 客服GPT SAE版 · 需求池看板</h1>
   <div class="header-right">
     <span class="last-update" id="lastUpdate"></span>
+    <button class="btn btn-ghost" onclick="reorderAllNumbers()" style="color:#fff;border-color:rgba(255,255,255,.4)">🔢 重新编号</button>
     <button class="btn btn-ghost" onclick="openImport()" style="color:#fff;border-color:rgba(255,255,255,.4)">📥 导入数据</button>
     <button class="btn btn-success" onclick="openAdd()">＋ 新增需求</button>
     <button class="btn btn-primary" onclick="loadData()">🔄 刷新</button>
@@ -179,7 +181,7 @@ tr:hover td{background:#fafbff}
   <select id="fPlan" onchange="render()"><option value="">全部计划</option></select>
   <select id="fType" onchange="render()"><option value="">全部类型</option><option>用户需求</option><option>研发需求</option></select>
   <select id="fPri" onchange="render()"><option value="">全部优先级</option><option>紧急🔴</option><option>高🟠</option><option>中🟡</option><option>低🟢</option></select>
-  <select id="fStatus" onchange="render()"><option value="">全部状态</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>已上线</option><option>已暂缓</option></select>
+  <select id="fStatus" onchange="render()"><option value="">全部状态</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select>
   <select id="fPerson" onchange="render()"><option value="">全部认领人</option></select>
   <input type="text" id="fSearch" placeholder="🔍 搜索需求名称/描述" oninput="render()">
 </div>
@@ -205,7 +207,7 @@ tr:hover td{background:#fafbff}
     <div class="modal-body">
       <input type="hidden" id="fId">
       <div class="form-grid">
-        <div class="form-row"><label>需求编号</label><input id="fNo" placeholder="如 URQ-322"></div>
+        <div class="form-row"><label>需求编号</label><input id="fNo" placeholder="自动生成" readonly style="background:#f5f5f5;cursor:not-allowed"></div>
         <div class="form-row"><label>需求类型 <span style="color:red">*</span></label>
           <select id="fFType"><option>用户需求</option><option>研发需求</option></select></div>
       </div>
@@ -233,7 +235,7 @@ tr:hover td{background:#fafbff}
         <div class="form-row"><label>优先级</label>
           <select id="fFPri"><option>中🟡</option><option>紧急🔴</option><option>高🟠</option><option>低🟢</option></select></div>
         <div class="form-row"><label>开发状态</label>
-          <select id="fFStatus"><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>已上线</option><option>已暂缓</option></select></div>
+          <select id="fFStatus"><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select></div>
         <div class="form-row"><label>开发进度 (%)</label><input id="fFProg" type="number" min="0" max="100" value="0"></div>
         <div class="form-row"><label>需求认领人</label><input id="fFPerson" placeholder="姓名"></div>
         <div class="form-row"><label>预计上线日期</label><input id="fFDate" type="date"></div>
@@ -421,7 +423,7 @@ function buildPlanSelects(selectVal) {
 }
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
-const COLS = ['待开始','开发中','联调中','测试中','已上线','已暂缓'];
+const COLS = ['待开始','开发中','联调中','测试中','待上线','已上线','已暂缓'];
 const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
 
 // ===== API =====
@@ -483,7 +485,7 @@ function filtered() {
 
 // ===== 标签 =====
 const priMap = {'紧急🔴':'tag-p1','高🟠':'tag-p2','中🟡':'tag-p3','低🟢':'tag-p4'};
-const statMap = {'待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','已上线':'tag-s4','已暂缓':'tag-s5'};
+const statMap = {'待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','待上线':'tag-s6','已上线':'tag-s4','已暂缓':'tag-s5'};
 const hasPerson = p => p && p !== '待认领';
 const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
@@ -540,6 +542,7 @@ function renderList(data) {
   const doing = allData.filter(d=>d.status==='开发中').length;
   const liaodiao = allData.filter(d=>d.status==='联调中').length;
   const testing = allData.filter(d=>d.status==='测试中').length;
+  const ready = allData.filter(d=>d.status==='待上线').length;
   const done = allData.filter(d=>d.status==='已上线').length;
   const paused = allData.filter(d=>d.status==='已暂缓').length;
 
@@ -550,6 +553,7 @@ function renderList(data) {
     <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
     <div class="stat-card" onclick="jumpToKanban('联调中')"><div class="num" style="color:#13c2c2">${liaodiao}</div><div class="lbl">联调中</div></div>
     <div class="stat-card" onclick="jumpToKanban('测试中')"><div class="num" style="color:#faad14">${testing}</div><div class="lbl">测试中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('待上线')"><div class="num" style="color:#722ed1">${ready}</div><div class="lbl">待上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已上线')"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已暂缓')"><div class="num" style="color:#d9d9d9">${paused}</div><div class="lbl">已暂缓</div></div>
   </div>`;
@@ -708,18 +712,77 @@ function switchTab(tab,el) {
   }
 }
 
+// ===== 编号管理 =====
+function generateNextNumber() {
+  // 提取所有现有编号的数字部分
+  const numbers = allData
+    .map(d => d.no)
+    .filter(no => no && no.startsWith('URQ-'))
+    .map(no => parseInt(no.replace('URQ-', '')))
+    .filter(n => !isNaN(n));
+
+  const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
+  return `URQ-${maxNum + 1}`;
+}
+
+async function reorderAllNumbers() {
+  if (!confirm('确定要重新编号所有需求吗？\n\n将按创建时间顺序重新分配编号（URQ-1, URQ-2...）\n空编号会被补上，重复编号会被修正。')) return;
+
+  // 按创建时间排序
+  const sorted = [...allData].sort((a, b) => {
+    const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
+    const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
+    return ta - tb;
+  });
+
+  // 重新分配编号
+  const updates = [];
+  sorted.forEach((item, index) => {
+    const newNo = `URQ-${index + 1}`;
+    if (item.no !== newNo) {
+      updates.push({ id: item.id, no: newNo });
+    }
+  });
+
+  if (updates.length === 0) {
+    alert('所有编号已经是正确的顺序，无需调整');
+    return;
+  }
+
+  // 批量更新
+  document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 正在重新编号...</div>';
+  try {
+    for (const update of updates) {
+      const item = allData.find(d => d.id === update.id);
+      if (item) {
+        item.no = update.no;
+        await api('update', item);
+      }
+    }
+    alert(`✅ 重新编号完成！共更新 ${updates.length} 条需求`);
+    await loadData();
+  } catch(e) {
+    alert('❌ 重新编号失败：' + e.message);
+    await loadData();
+  }
+}
+
 // ===== 新增/编辑 =====
 function openAdd() {
   document.getElementById('modalTitle').textContent='新增需求';
   document.getElementById('fId').value='';
-  ['fNo','fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
+  ['fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
+  // 自动生成编号
+  document.getElementById('fNo').value = generateNextNumber();
   document.getElementById('fFType').value='用户需求';
   buildPlanSelects(getPlans()[0]);
   document.getElementById('fFPri').value='中🟡';
   document.getElementById('fFStatus').value='待开始';
   document.getElementById('fFProg').value='0';
   document.getElementById('fFDate').value='';
-  document.getElementById('fFCreateTime').value='';
+  // 默认当前日期
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fFCreateTime').value=today;
   document.getElementById('fFDesign').value='待设计';
   document.getElementById('fFReview').value='待确认';
   switchDescTab('edit');
