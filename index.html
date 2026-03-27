@@ -854,11 +854,11 @@ function renderPerson(data) {
         const isExpanded = expandedParents.has(t.id);
         const arrow = hasChildren ? `<span class="expand-arrow ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggleExpand('${t.id}')" style="margin-right:4px;font-size:8px">&#9654;</span>` : '';
         const noTag = t.no ? `<span style="font-size:10px;color:#bbb;margin-right:4px">${t.no}</span>` : '';
-        let html = `<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${arrow}${noTag}${t.name||''}</span>${statTag(t.status)}</div>`;
+        let html = `<div class="ptask-item" style="cursor:pointer" onclick="openDetail('${t.id}')"><span class="ptask-name" title="${t.name||''}">${arrow}${noTag}<span style="color:#3370ff">${t.name||''}</span></span>${statTag(t.status)}</div>`;
         if (hasChildren && isExpanded) {
           html += children.map(c=>{
             const cNoTag = c.no ? `<span style="font-size:10px;color:#bbb;margin-right:4px">${c.no}</span>` : '';
-            return `<div class="ptask-item" style="padding-left:20px;background:#fafcff"><span class="ptask-name" title="${c.name||''}">↳ ${cNoTag}${c.name||''}</span>${statTag(c.status)}</div>`;
+            return `<div class="ptask-item" style="padding-left:20px;background:#fafcff;cursor:pointer" onclick="openDetail('${c.id}')"><span class="ptask-name" title="${c.name||''}">↳ ${cNoTag}<span style="color:#3370ff">${c.name||''}</span></span>${statTag(c.status)}</div>`;
           }).join('');
         }
         return html;
