@@ -41,8 +41,8 @@ function fromFeishuDate(val) {
 
 // 获取飞书 token（内存缓存，有效期 1.5 小时）
 let _tokenCache = null, _tokenExpiry = 0;
-async function getToken() {
-  if (_tokenCache && Date.now() < _tokenExpiry) return _tokenCache;
+async function getToken(forceRefresh = false) {
+  if (!forceRefresh && _tokenCache && Date.now() < _tokenExpiry) return _tokenCache;
   const res = await fetch(`${BASE}/auth/v3/tenant_access_token/internal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -56,12 +56,17 @@ async function getToken() {
 }
 
 // 读取飞书所有记录
-async function getAllRecords(token, appToken, tableId) {
+async function getAllRecords(token, appToken, tableId, retry = true) {
   let records = [], pageToken = "";
   do {
     const url = `${BASE}/bitable/v1/apps/${appToken}/tables/${tableId}/records?page_size=500${pageToken ? "&page_token=" + pageToken : ""}`;
     const res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
     const data = await res.json();
+    if (data.code === 99991663 && retry) {
+      // Token 失效，刷新后重试
+      const newToken = await getToken(true);
+      return getAllRecords(newToken, appToken, tableId, false);
+    }
     if (data.code !== 0) throw new Error("读取飞书记录失败: " + JSON.stringify(data));
     records = records.concat(data.data.items || []);
     pageToken = data.data.has_more ? data.data.page_token : "";
