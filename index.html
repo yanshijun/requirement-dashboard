@@ -74,6 +74,13 @@ tr:hover td{background:#fafbff}
 .page-btn:hover:not(:disabled){background:#f0f5ff;border-color:#3370ff;color:#3370ff}
 .page-btn:disabled{opacity:.4;cursor:not-allowed}
 .page-btn.active{background:#3370ff;color:#fff;border-color:#3370ff;font-weight:600}
+.expand-arrow{display:inline-block;width:16px;font-size:10px;color:#aaa;cursor:pointer;transition:transform .15s;user-select:none}
+.expand-arrow.expanded{transform:rotate(90deg)}
+.expand-arrow:hover{color:#3370ff}
+.child-row td{background:#fafcff;border-bottom:1px solid #f0f5ff}
+.child-row:hover td{background:#f0f5ff}
+.k-parent-badge{font-size:10px;color:#999;margin-bottom:3px;background:#f5f5f5;padding:1px 6px;border-radius:3px;display:inline-block}
+.k-card.child-card{margin-left:12px;border-left:3px solid #3370ff}
 .ptask-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
@@ -206,6 +213,7 @@ tr:hover td{background:#fafbff}
     </div>
     <div class="modal-body">
       <input type="hidden" id="fId">
+      <input type="hidden" id="fParentId">
       <div class="form-grid">
         <div class="form-row"><label>需求编号</label><input id="fNo" placeholder="自动生成" readonly style="background:#f5f5f5;cursor:not-allowed"></div>
         <div class="form-row"><label>需求类型 <span style="color:red">*</span></label>
@@ -381,8 +389,53 @@ let allData = [];
 let curTab = 'list';
 let currentPage = 1;
 const PAGE_SIZE = 20;
-let pendingFbId = null; // 转入需求时记录来源 feedback id
-let _fbLoaded = false; // 今日收集是否已加载过
+let pendingFbId = null;
+let _fbLoaded = false;
+let expandedParents = new Set();
+
+// ===== 子需求助手函数 =====
+function getChildren(parentId) {
+  return allData.filter(d => d.parentId === parentId);
+}
+function isParent(item) {
+  return allData.some(d => d.parentId === item.id);
+}
+function isChild(item) {
+  return !!item.parentId;
+}
+function topLevel(data) {
+  return data.filter(d => !d.parentId);
+}
+function calcParentProgress(parentId) {
+  const children = getChildren(parentId);
+  if (children.length === 0) return null;
+  return Math.round(children.reduce((s, c) => s + (parseInt(c.progress) || 0), 0) / children.length);
+}
+function getStatsItems() {
+  return allData.filter(d => {
+    if (d.parentId) return true;
+    if (isParent(d)) return false;
+    return true;
+  });
+}
+
+// 获取人员任务统计用的需求项（处理父子关系）
+function getPersonItems() {
+  const result = [];
+  allData.forEach(d => {
+    if (d.parentId) {
+      // 子需求直接加入
+      result.push(d);
+    } else if (isParent(d)) {
+      // 父需求有子需求时，只加入父需求（用于统计认领人）
+      result.push(d);
+    } else {
+      // 独立需求加入
+      result.push(d);
+    }
+  });
+  return result;
+}
 
 // ===== 计划列表管理 =====
 const DEFAULT_PLANS = ['SAE2.3.3', '1688商贸版'];
@@ -424,7 +477,7 @@ function buildPlanSelects(selectVal) {
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
 const COLS = ['待开始','开发中','联调中','测试中','待上线','已上线','已暂缓'];
-const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note'];
+const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note','parentId'];
 
 // ===== API =====
 async function api(action, body, qs = '') {
@@ -472,7 +525,13 @@ function filtered() {
   const stat = document.getElementById('fStatus').value;
   const person = document.getElementById('fPerson').value;
   const kw = document.getElementById('fSearch').value.trim().toLowerCase();
-  return allData.filter(d => {
+
+  // 如果没有任何筛选条件，返回所有顶级需求
+  if (!plan && !type && !pri && !stat && !person && !kw) {
+    return allData.filter(d => !d.parentId);
+  }
+
+  const matching = allData.filter(d => {
     if (plan && d.plan !== plan) return false;
     if (type && d.type !== type) return false;
     if (pri && d.priority !== pri) return false;
@@ -480,6 +539,19 @@ function filtered() {
     if (person && !(d.person||'').split(',').map(p=>p.trim()).includes(person)) return false;
     if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
     return true;
+  });
+
+  // 只返回顶级需求，如果子需求匹配则显示其父需求
+  const parentIds = new Set();
+  matching.forEach(d => {
+    if (d.parentId) parentIds.add(d.parentId);
+  });
+
+  return allData.filter(d => {
+    if (d.parentId) return false;
+    if (matching.some(m => m.id === d.id)) return true;
+    if (parentIds.has(d.id)) return true;
+    return false;
   });
 }
 
@@ -491,6 +563,15 @@ const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
 const statTag = s => `<span class="tag ${statMap[s||'待开始']||'tag-s0'}">${s||'待开始'}</span>`;
 const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
+
+function toggleExpand(parentId) {
+  if (expandedParents.has(parentId)) {
+    expandedParents.delete(parentId);
+  } else {
+    expandedParents.add(parentId);
+  }
+  render();
+}
 
 function togglePriSort() {
   sortPri = sortPri === null ? 'desc' : sortPri === 'desc' ? 'asc' : null;
@@ -527,27 +608,48 @@ function jumpToKanban(filter) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function filteredAll() {
+  const plan = document.getElementById('fPlan').value;
+  const type = document.getElementById('fType').value;
+  const pri = document.getElementById('fPri').value;
+  const stat = document.getElementById('fStatus').value;
+  const person = document.getElementById('fPerson').value;
+  const kw = document.getElementById('fSearch').value.trim().toLowerCase();
+  if (!plan && !type && !pri && !stat && !person && !kw) return allData;
+  return allData.filter(d => {
+    if (plan && d.plan !== plan) return false;
+    if (type && d.type !== type) return false;
+    if (pri && d.priority !== pri) return false;
+    if (stat && (d.status || '待开始') !== stat) return false;
+    if (person && !(d.person||'').split(',').map(p=>p.trim()).includes(person)) return false;
+    if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
+    return true;
+  });
+}
+
 function render() {
   const data = filtered();
   if (curTab==='list') renderList(data);
-  else if (curTab==='kanban') renderKanban(data);
-  else if (curTab==='person') renderPerson(data);
+  else if (curTab==='kanban') renderKanban(filteredAll());
+  else if (curTab==='person') renderPerson(filteredAll());
   // feedback 由 switchTab 直接调用 renderFeedback，不在这里处理
 }
 
 function renderList(data) {
-  const total = allData.length;
-  const urgent = allData.filter(d=>d.priority==='紧急🔴').length;
-  const todo = allData.filter(d=>!d.status||d.status==='待开始').length;
-  const doing = allData.filter(d=>d.status==='开发中').length;
-  const liaodiao = allData.filter(d=>d.status==='联调中').length;
-  const testing = allData.filter(d=>d.status==='测试中').length;
-  const ready = allData.filter(d=>d.status==='待上线').length;
-  const done = allData.filter(d=>d.status==='已上线').length;
-  const paused = allData.filter(d=>d.status==='已暂缓').length;
+  const statsData = getStatsItems();
+  const totalParent = allData.filter(d=>!d.parentId).length;
+  const totalChild = allData.filter(d=>!!d.parentId).length;
+  const urgent = statsData.filter(d=>d.priority==='紧急🔴').length;
+  const todo = statsData.filter(d=>!d.status||d.status==='待开始').length;
+  const doing = statsData.filter(d=>d.status==='开发中').length;
+  const liaodiao = statsData.filter(d=>d.status==='联调中').length;
+  const testing = statsData.filter(d=>d.status==='测试中').length;
+  const ready = statsData.filter(d=>d.status==='待上线').length;
+  const done = statsData.filter(d=>d.status==='已上线').length;
+  const paused = statsData.filter(d=>d.status==='已暂缓').length;
 
   const stats = `<div class="stat-row">
-    <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${total}</div><div class="lbl">全部需求</div></div>
+    <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${totalParent}<span style="font-size:14px;color:#999;font-weight:400"> + ${totalChild}子</span></div><div class="lbl">全部需求</div></div>
     <div class="stat-card" onclick="jumpToKanban('紧急🔴')"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
     <div class="stat-card" onclick="jumpToKanban('待开始')"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
     <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
@@ -591,14 +693,23 @@ function renderList(data) {
   const end = start + PAGE_SIZE;
   const pageData = data.slice(start, end);
 
-  const rows = pageData.map(d=>`<tr>
-    <td style="color:#aaa;font-size:12px;white-space:nowrap">${d.no||''}</td>
+  const rows = pageData.map(d=>{
+    const children = getChildren(d.id);
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedParents.has(d.id);
+    const displayProgress = hasChildren ? calcParentProgress(d.id) : d.progress;
+    const arrow = hasChildren
+      ? `<span class="expand-arrow ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggleExpand('${d.id}')" style="margin-right:4px">&#9654;</span>`
+      : '<span style="display:inline-block;width:16px"></span>';
+
+    let html = `<tr class="parent-row">
+    <td style="color:#aaa;font-size:12px;white-space:nowrap">${arrow}${d.no||''}${hasChildren?` <span style="font-size:10px;color:#999">(${children.length})</span>`:''}</td>
     <td style="font-weight:600;min-width:140px;cursor:pointer;color:#3370ff" onclick="openDetail('${d.id}')">${d.name||''}</td>
     <td>${typeTag(d.type)}</td><td>${priTag(d.priority)}</td>
     <td style="white-space:nowrap;font-size:12px">${d.plan||''}</td>
     <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
-    <td>${statTag(d.status)}</td><td>${progBar(d.progress)}</td>
+    <td>${statTag(d.status)}</td><td>${progBar(displayProgress)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.createTime||''}</td>
     <td><div class="actions">
@@ -607,9 +718,35 @@ function renderList(data) {
         : `<button class="btn btn-claim btn-sm" onclick="openClaim('${d.id}')">认领</button>`
       }
       <button class="btn btn-ghost btn-sm" onclick="openEdit('${d.id}')">编辑</button>
+      <button class="btn btn-ghost btn-sm" style="color:#722ed1;border-color:#d3adf7" onclick="openAddChild('${d.id}')">+子</button>
       <button class="btn btn-danger btn-sm" onclick="deleteItem('${d.id}','${(d.name||'').replace(/'/g,'')}')">删除</button>
     </div></td>
+  </tr>`;
+
+    if (hasChildren && isExpanded) {
+      html += children.map(c=>`<tr class="child-row">
+    <td style="color:#bbb;font-size:11px;white-space:nowrap;padding-left:32px">↳ ${c.no||''}</td>
+    <td style="font-weight:500;min-width:140px;cursor:pointer;color:#555;padding-left:8px" onclick="openDetail('${c.id}')">${c.name||''}</td>
+    <td>${typeTag(c.type)}</td><td>${priTag(c.priority)}</td>
+    <td style="white-space:nowrap;font-size:12px">${c.plan||''}</td>
+    <td style="color:#666;font-size:12px;max-width:260px">${(c.desc||'').substring(0,60)}${(c.desc||'').length>60?'…':''}</td>
+    <td style="white-space:nowrap">${(() => { const ps=(c.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${c.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
+    <td>${statTag(c.status)}</td><td>${progBar(c.progress)}</td>
+    <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.deadline||''}</td>
+    <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.createTime||''}</td>
+    <td><div class="actions">
+      ${hasPerson(c.person)
+        ? `<button class="btn btn-switch btn-sm" onclick="openClaim('${c.id}')">换人</button><button class="btn btn-release btn-sm" onclick="releaseClaim('${c.id}')">释放</button>`
+        : `<button class="btn btn-claim btn-sm" onclick="openClaim('${c.id}')">认领</button>`
+      }
+      <button class="btn btn-ghost btn-sm" onclick="openEdit('${c.id}')">编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteItem('${c.id}','${(c.name||'').replace(/'/g,'')}')">删除</button>
+    </div></td>
   </tr>`).join('');
+    }
+
+    return html;
+  }).join('');
 
   // 生成分页按钮
   let pageButtons = '';
@@ -642,7 +779,7 @@ function renderList(data) {
   }
 
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
-    <div class="tbl-info">共 ${data.length} 条${data.length<total?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
+    <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
       <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -652,32 +789,80 @@ function renderList(data) {
 function renderKanban(data) {
   const cols = COLS.map(col=>{
     const cards = data.filter(d=>(d.status||'待开始')===col);
+    const rendered = [];
+    const parentIds = new Set();
+
+    cards.forEach(d => {
+      if (d.parentId) {
+        const parent = allData.find(x => x.id === d.parentId);
+        if (parent && !parentIds.has(parent.id)) {
+          rendered.push(`<div class="k-card" style="background:#f5f5f5;opacity:0.7;cursor:pointer" onclick="openDetail('${parent.id}')">
+            <div class="k-card-name" style="color:#999">📦 ${parent.no} ${parent.name}</div>
+            ${parent.person?`<div style="font-size:11px;color:#888;margin-top:4px">👤 ${parent.person}</div>`:''}
+          </div>`);
+          parentIds.add(parent.id);
+        }
+        rendered.push(`<div class="k-card child-card" onclick="openDetail('${d.id}')">
+          <div class="k-card-name">↳ ${d.name||''}</div>
+          <div class="k-card-meta">${typeTag(d.type)}${priTag(d.priority)}${d.person?`<span style="font-size:11px;color:#888">👤${d.person}</span>`:''}${progBar(d.progress)}</div>
+        </div>`);
+      } else {
+        rendered.push(`<div class="k-card" onclick="openDetail('${d.id}')">
+          <div class="k-card-name">${d.name||''}</div>
+          <div class="k-card-meta">${typeTag(d.type)}${priTag(d.priority)}${d.person?`<span style="font-size:11px;color:#888">👤${d.person}</span>`:''}${progBar(d.progress)}</div>
+        </div>`);
+      }
+    });
+
     return `<div class="k-col"><div class="k-col-head">${col}<span class="k-count">${cards.length}</span></div>
-      ${cards.map(d=>`<div class="k-card" onclick="openDetail('${d.id}')">
-        <div class="k-card-name">${d.name||''}</div>
-        <div class="k-card-meta">${typeTag(d.type)}${priTag(d.priority)}${d.person?`<span style="font-size:11px;color:#888">👤${d.person}</span>`:''}${progBar(d.progress)}</div>
-      </div>`).join('')||'<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0">暂无</div>'}
+      ${rendered.join('')||'<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0">暂无</div>'}
     </div>`;
   }).join('');
   document.getElementById('mainContent').innerHTML = `<div class="kanban">${cols}</div>`;
 }
 
 function renderPerson(data) {
+  const personData = data.length > 0 ? data : getPersonItems();
   const map = {};
-  data.forEach(d=>{ const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); const keys=ps.length?ps:['未认领']; keys.forEach(p=>{ if(!map[p])map[p]=[]; map[p].push(d); }); });
-  const cards = Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([name,tasks])=>{
-    const done=tasks.filter(t=>t.status==='已上线').length;
-    const doing=tasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
-    const todo=tasks.filter(t=>!t.status||t.status==='待开始').length;
-    const avg=Math.round(tasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/tasks.length);
+  personData.forEach(d=>{
+    const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+    const keys=ps.length?ps:['未认领'];
+    keys.forEach(p=>{
+      if(!map[p])map[p]={tasks:[],parents:new Set()};
+      map[p].tasks.push(d);
+      if(isParent(d)) map[p].parents.add(d.id);
+    });
+  });
+  const cards = Object.entries(map).sort((a,b)=>b[1].tasks.length-a[1].tasks.length).map(([name,{tasks,parents}])=>{
+    // 统计时排除有子需求的父需求，只计算子需求或独立需求
+    const countTasks = tasks.filter(t => !parents.has(t.id));
+    const done=countTasks.filter(t=>t.status==='已上线').length;
+    const doing=countTasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
+    const todo=countTasks.filter(t=>!t.status||t.status==='待开始').length;
+    const avg=countTasks.length>0?Math.round(countTasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/countTasks.length):0;
     return `<div class="person-card"><div class="pname">👤 ${name}</div>${progBar(avg)}
       <div class="person-stats">
         <div class="pstat"><div class="pnum" style="color:#52c41a">${done}</div><div class="plbl">已上线</div></div>
         <div class="pstat"><div class="pnum" style="color:#1677ff">${doing}</div><div class="plbl">进行中</div></div>
         <div class="pstat"><div class="pnum" style="color:#8c8c8c">${todo}</div><div class="plbl">待开始</div></div>
-        <div class="pstat"><div class="pnum">${tasks.length}</div><div class="plbl">总计</div></div>
+        <div class="pstat"><div class="pnum">${countTasks.length}</div><div class="plbl">总计</div></div>
       </div>
-      <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin">${tasks.map(t=>`<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${t.name||''}</span>${statTag(t.status)}</div>`).join('')}</div>
+      <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin">${tasks.map(t=>{
+        if (t.parentId) return ''; // 子需求先跳过，由父需求展开显示
+        const children = getChildren(t.id);
+        const hasChildren = children.length > 0;
+        const isExpanded = expandedParents.has(t.id);
+        const arrow = hasChildren ? `<span class="expand-arrow ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggleExpand('${t.id}')" style="margin-right:4px;font-size:8px">&#9654;</span>` : '';
+        const noTag = t.no ? `<span style="font-size:10px;color:#bbb;margin-right:4px">${t.no}</span>` : '';
+        let html = `<div class="ptask-item"><span class="ptask-name" title="${t.name||''}">${arrow}${noTag}${t.name||''}</span>${statTag(t.status)}</div>`;
+        if (hasChildren && isExpanded) {
+          html += children.map(c=>{
+            const cNoTag = c.no ? `<span style="font-size:10px;color:#bbb;margin-right:4px">${c.no}</span>` : '';
+            return `<div class="ptask-item" style="padding-left:20px;background:#fafcff"><span class="ptask-name" title="${c.name||''}">↳ ${cNoTag}${c.name||''}</span>${statTag(c.status)}</div>`;
+          }).join('');
+        }
+        return html;
+      }).join('')}</div>
     </div>`;
   }).join('');
   document.getElementById('mainContent').innerHTML = `<div class="person-grid">${cards||'<div class="empty">暂无数据</div>'}</div>`;
@@ -714,10 +899,10 @@ function switchTab(tab,el) {
 
 // ===== 编号管理 =====
 function generateNextNumber() {
-  // 提取所有现有编号的数字部分
+  // 只提取父需求编号（URQ-N 格式，不含 -)
   const numbers = allData
     .map(d => d.no)
-    .filter(no => no && no.startsWith('URQ-'))
+    .filter(no => no && /^URQ-\d+$/.test(no))
     .map(no => parseInt(no.replace('URQ-', '')))
     .filter(n => !isNaN(n));
 
@@ -726,10 +911,11 @@ function generateNextNumber() {
 }
 
 async function reorderAllNumbers() {
-  if (!confirm('确定要重新编号所有需求吗？\n\n将按创建时间顺序重新分配编号（URQ-1, URQ-2...）\n空编号会被补上，重复编号会被修正。')) return;
+  if (!confirm('确定要重新编号所有需求吗？\n\n将按创建时间顺序重新分配编号（URQ-1, URQ-2...）\n子需求编号也会同步更新。')) return;
 
-  // 按创建时间排序
-  const sorted = [...allData].sort((a, b) => {
+  // 按创建时间排序，只处理顶级需求
+  const topLevelItems = allData.filter(d => !d.parentId);
+  const sorted = [...topLevelItems].sort((a, b) => {
     const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
     const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
     return ta - tb;
@@ -742,6 +928,18 @@ async function reorderAllNumbers() {
     if (item.no !== newNo) {
       updates.push({ id: item.id, no: newNo });
     }
+    // 更新子需求编号
+    const children = getChildren(item.id).sort((a, b) => {
+      const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
+      const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
+      return ta - tb;
+    });
+    children.forEach((child, childIdx) => {
+      const newChildNo = `${newNo}-${childIdx + 1}`;
+      if (child.no !== newChildNo) {
+        updates.push({ id: child.id, no: newChildNo });
+      }
+    });
   });
 
   if (updates.length === 0) {
@@ -771,6 +969,7 @@ async function reorderAllNumbers() {
 function openAdd() {
   document.getElementById('modalTitle').textContent='新增需求';
   document.getElementById('fId').value='';
+  document.getElementById('fParentId').value='';
   ['fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
   // 自动生成编号
   document.getElementById('fNo').value = generateNextNumber();
@@ -806,10 +1005,36 @@ function openEdit(id) {
   document.getElementById('fFDesign').value=d.design||'待设计';
   document.getElementById('fFReview').value=d.review||'待确认';
   document.getElementById('fFNote').value=d.note||'';
+  document.getElementById('fParentId').value=d.parentId||'';
   switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
   closeDetail();
 }
+
+function openAddChild(parentId) {
+  const parent = allData.find(x => x.id === parentId);
+  if (!parent) return;
+  document.getElementById('modalTitle').textContent=`新增子需求 (${parent.no})`;
+  document.getElementById('fId').value='';
+  document.getElementById('fParentId').value=parentId;
+  ['fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
+  const children = getChildren(parentId);
+  const childIndex = children.length + 1;
+  document.getElementById('fNo').value = `${parent.no}-${childIndex}`;
+  document.getElementById('fFType').value='用户需求';
+  buildPlanSelects(parent.plan || getPlans()[0]);
+  document.getElementById('fFPri').value=parent.priority||'中🟡';
+  document.getElementById('fFStatus').value='待开始';
+  document.getElementById('fFProg').value='0';
+  document.getElementById('fFDate').value='';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fFCreateTime').value=today;
+  document.getElementById('fFDesign').value='待设计';
+  document.getElementById('fFReview').value='待确认';
+  switchDescTab('edit');
+  document.getElementById('modal').style.display='flex';
+}
+
 function closeModal(){document.getElementById('modal').style.display='none'; pendingFbId = null;}
 async function saveItem() {
   const name=document.getElementById('fName').value.trim();
@@ -830,7 +1055,8 @@ async function saveItem() {
     createTime:document.getElementById('fFCreateTime').value,
     design:document.getElementById('fFDesign').value,
     review:document.getElementById('fFReview').value,
-    note:document.getElementById('fFNote').value.trim()
+    note:document.getElementById('fFNote').value.trim(),
+    parentId:document.getElementById('fParentId').value||''
   };
   try{
     const res = await api(item.id?'update':'add',item);
@@ -858,9 +1084,15 @@ async function saveItem() {
 }
 
 async function deleteItem(id,name) {
-  if(!confirm(`确认删除需求「${name}」？`))return;
+  const item = allData.find(x => x.id === id);
+  const children = item ? getChildren(id) : [];
+  if (children.length > 0) {
+    if (!confirm(`该需求有 ${children.length} 个子需求，删除后子需求也会被删除，确认删除吗？`)) return;
+  } else {
+    if (!confirm(`确认删除需求「${name}」？`)) return;
+  }
   // 乐观删除
-  allData = allData.filter(x => x.id !== id);
+  allData = allData.filter(x => x.id !== id && x.parentId !== id);
   buildPersonFilter(); render();
   try{ await api('delete',{id}); loadData(true); }
   catch(e){ alert('删除失败：'+e.message); loadData(); }
@@ -951,6 +1183,21 @@ async function doClaim() {
   btn.disabled = true; btn.textContent = '提交中...';
   const person = [..._claimSelected].join(',');
   d.person = person;
+
+  // 如果是子需求，同步认领人到父需求（合并，不覆盖）
+  if (d.parentId) {
+    const parent = allData.find(x => x.id === d.parentId);
+    if (parent) {
+      const parentPersons = (parent.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+      const childPersons = person.split(',').map(p=>p.trim()).filter(hasPerson);
+      const merged = [...new Set([...parentPersons, ...childPersons])].join(',');
+      if (merged !== parent.person) {
+        parent.person = merged;
+        try { await api('update', { ...parent, person: merged }); } catch(e) {}
+      }
+    }
+  }
+
   buildPersonFilter(); render();
   closeClaim();
   try {
@@ -970,14 +1217,56 @@ async function releaseOnePerson(id, personToRemove) {
 function openDetail(id) {
   const d=allData.find(x=>x.id===id);if(!d)return;
   document.getElementById('detailTitle').textContent=d.name||'需求详情';
-  document.getElementById('detailBody').innerHTML=`
+
+  // 父需求链接
+  let parentHtml = '';
+  if (d.parentId) {
+    const parent = allData.find(x => x.id === d.parentId);
+    if (parent) {
+      parentHtml = `<div style="margin-bottom:12px;background:#f0f5ff;padding:8px 12px;border-radius:6px;font-size:12px">
+        父需求：<span style="color:#3370ff;cursor:pointer" onclick="openDetail('${parent.id}')">${parent.no} ${parent.name}</span>
+      </div>`;
+    }
+  }
+
+  const children = getChildren(d.id);
+  const displayProgress = children.length > 0 ? calcParentProgress(d.id) : d.progress;
+
+  let childrenHtml = '';
+  if (children.length > 0) {
+    childrenHtml = `
+    <div style="margin-top:16px;border-top:1px solid #f0f0f0;padding-top:12px">
+      <div style="font-size:13px;font-weight:600;color:#444;margin-bottom:8px">子需求 (${children.length})</div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="background:#f7f8fa">
+          <th style="padding:6px 8px;text-align:left">编号</th>
+          <th style="padding:6px 8px;text-align:left">名称</th>
+          <th style="padding:6px 8px;text-align:left">状态</th>
+          <th style="padding:6px 8px;text-align:left">进度</th>
+          <th style="padding:6px 8px;text-align:left">认领人</th>
+        </tr></thead>
+        <tbody>${children.map(c => `<tr style="cursor:pointer" onclick="openDetail('${c.id}')">
+          <td style="padding:5px 8px;color:#aaa">${c.no||''}</td>
+          <td style="padding:5px 8px;color:#3370ff">${c.name||''}</td>
+          <td style="padding:5px 8px">${statTag(c.status)}</td>
+          <td style="padding:5px 8px">${progBar(c.progress)}</td>
+          <td style="padding:5px 8px;font-size:11px">${c.person||'待认领'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div style="margin-top:8px">
+        <button class="btn btn-ghost btn-sm" onclick="closeDetail();openAddChild('${d.id}')">+ 添加子需求</button>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('detailBody').innerHTML= parentHtml + `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div><div style="font-size:12px;color:#888">编号</div><div style="margin-top:3px">${d.no||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">类型</div><div style="margin-top:3px">${typeTag(d.type)}</div></div>
       <div><div style="font-size:12px;color:#888">所属计划</div><div style="margin-top:3px;font-size:13px">${d.plan||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">优先级</div><div style="margin-top:3px">${priTag(d.priority)}</div></div>
       <div><div style="font-size:12px;color:#888">开发状态</div><div style="margin-top:3px">${statTag(d.status)}</div></div>
-      <div><div style="font-size:12px;color:#888">开发进度</div><div style="margin-top:3px">${progBar(d.progress)}</div></div>
+      <div><div style="font-size:12px;color:#888">开发进度</div><div style="margin-top:3px">${progBar(displayProgress)}</div></div>
       <div><div style="font-size:12px;color:#888">认领人</div><div style="margin-top:3px;font-size:13px">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.join('、') : '待认领'; })()}</div></div>
       <div><div style="font-size:12px;color:#888">预计上线</div><div style="margin-top:3px;font-size:13px">${d.deadline||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">是否需要设计</div><div style="margin-top:3px;font-size:13px">${d.design||'-'}</div></div>
@@ -988,7 +1277,7 @@ function openDetail(id) {
       <div style="font-size:12px;color:#888;margin-bottom:8px">需求描述</div>
       <div class="md-body" style="background:#f7f8fa;padding:14px 16px;border-radius:8px;min-height:60px">${d.desc ? (() => { try { return (typeof marked !== 'undefined' ? marked.parse(d.desc) : d.desc.replace(/\n/g,'<br>')); } catch(e) { return d.desc.replace(/\n/g,'<br>'); } })() : '<span style="color:#ccc">暂无描述</span>'}</div>
     </div>
-    ${d.note?`<div><div style="font-size:12px;color:#888;margin-bottom:4px">备注</div><div style="font-size:13px;color:#666;line-height:1.7">${d.note}</div></div>`:''}`;
+    ${d.note?`<div><div style="font-size:12px;color:#888;margin-bottom:4px">备注</div><div style="font-size:13px;color:#666;line-height:1.7">${d.note}</div></div>`:''}` + childrenHtml;
   document.getElementById('detailEditBtn').onclick=()=>openEdit(id);
   document.getElementById('detailModal').style.display='flex';
 }

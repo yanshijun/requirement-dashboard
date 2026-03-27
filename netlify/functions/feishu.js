@@ -117,7 +117,8 @@ function mapFromFeishu(record) {
     design: getSingleSelect(f["是否需要设计"]),
     review: getSingleSelect(f["评审是否通过"]),
     createTime: fromFeishuDate(f["提出时间"]),
-    note: String(f["备注"] || "")
+    note: String(f["备注"] || ""),
+    parentId: String(f["父需求ID"] || "")
   };
 }
 
@@ -134,7 +135,8 @@ function mapToFeishu(item) {
     "需求认领人": toMultiSelect(item.person),
     "是否需要设计": String(item.design || ""),
     "评审是否通过": String(item.review || ""),
-    "备注": String(item.note || "")
+    "备注": String(item.note || ""),
+    "父需求ID": String(item.parentId || "")
   };
   const deadline = toFeishuDate(item.deadline);
   if (deadline) fields["预计上线日期"] = deadline;
