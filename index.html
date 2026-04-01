@@ -837,12 +837,14 @@ function renderPerson(data) {
     // 统计时排除有子需求的父需求，只计算子需求或独立需求
     const countTasks = tasks.filter(t => !parents.has(t.id));
     const done=countTasks.filter(t=>t.status==='已上线').length;
+    const ready=countTasks.filter(t=>t.status==='待上线').length;
     const doing=countTasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
     const todo=countTasks.filter(t=>!t.status||t.status==='待开始').length;
     const avg=countTasks.length>0?Math.round(countTasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/countTasks.length):0;
     return `<div class="person-card"><div class="pname">👤 ${name}</div>${progBar(avg)}
       <div class="person-stats">
         <div class="pstat"><div class="pnum" style="color:#52c41a">${done}</div><div class="plbl">已上线</div></div>
+        <div class="pstat"><div class="pnum" style="color:#722ed1">${ready}</div><div class="plbl">待上线</div></div>
         <div class="pstat"><div class="pnum" style="color:#1677ff">${doing}</div><div class="plbl">进行中</div></div>
         <div class="pstat"><div class="pnum" style="color:#8c8c8c">${todo}</div><div class="plbl">待开始</div></div>
         <div class="pstat"><div class="pnum">${countTasks.length}</div><div class="plbl">总计</div></div>
