@@ -4,6 +4,10 @@ const APP_TOKEN = "XCgIb7NnwaAQq3sf1mjcQtdyned";
 const TABLE_ID = "tblgnpLLYI2JGQH0";
 const APP_TOKEN_FB = "YkThbXE9Gaa5O1s3FXDcjBX7nIb";
 const TABLE_ID_FB = "tblO09dkYu2lRSE1";
+const APP_TOKEN_SCH = "HUblb37mDah9Yfsb8VncqyYFnsd";
+const TABLE_ID_SCH = "tbl3mddd8HhEWnMK";
+const APP_TOKEN_ISS = "LdVobWw4BaVcsms2ZHdcL2Ccnyg";
+const TABLE_ID_ISS = "tblsSPrURo45Yr2h";
 const BASE = "https://open.feishu.cn/open-apis";
 
 const cors = {
@@ -185,6 +189,52 @@ function mapToFeedback(item) {
   return fields;
 }
 
+// ===== 排班表 映射 =====
+function mapFromSchedule(record) {
+  const f = record.fields || {};
+  return {
+    id: record.record_id,
+    date: String(f["日期"] || ""),
+    weekday: String(f["星期"] || ""),
+    group: String(f["组别"] || ""),
+    onDuty: String(f["值班人"] || ""),
+    backup: String(f["备班人"] || "")
+  };
+}
+function mapToSchedule(item) {
+  return {
+    "日期": String(item.date || ""),
+    "星期": String(item.weekday || ""),
+    "组别": String(item.group || ""),
+    "值班人": String(item.onDuty || ""),
+    "备班人": String(item.backup || "")
+  };
+}
+
+// ===== 客户问题记录 映射 =====
+function mapFromIssue(record) {
+  const f = record.fields || {};
+  return {
+    id: record.record_id,
+    date: String(f["日期"] || ""),
+    customerId: String(f["客户id"] || ""),
+    packageType: String(f["套餐类型"] || ""),
+    desc: String(f["问题描述"] || ""),
+    person: String(f["责任人"] || ""),
+    status: String(f["处理状态"] || "未解决")
+  };
+}
+function mapToIssue(item) {
+  return {
+    "日期": String(item.date || ""),
+    "客户id": String(item.customerId || ""),
+    "套餐类型": String(item.packageType || ""),
+    "问题描述": String(item.desc || ""),
+    "责任人": String(item.person || ""),
+    "处理状态": String(item.status || "未解决")
+  };
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: cors, body: "" };
 
@@ -200,8 +250,15 @@ exports.handler = async function (event) {
         const records = await getAllRecords(token, APP_TOKEN_FB, TABLE_ID_FB);
         return ok(records.map(mapFromFeedback));
       }
+      if (table === "schedule") {
+        const records = await getAllRecords(token, APP_TOKEN_SCH, TABLE_ID_SCH);
+        return ok(records.map(mapFromSchedule));
+      }
+      if (table === "issues") {
+        const records = await getAllRecords(token, APP_TOKEN_ISS, TABLE_ID_ISS);
+        return ok(records.map(mapFromIssue));
+      }
       if (table === "all") {
-        // 并行拉取两张表
         const [req, fb] = await Promise.all([
           getAllRecords(token, APP_TOKEN, TABLE_ID),
           getAllRecords(token, APP_TOKEN_FB, TABLE_ID_FB)
@@ -317,6 +374,97 @@ exports.handler = async function (event) {
       });
       const data = await res.json();
       if (data.code !== 0) throw new Error("删除反馈失败: " + JSON.stringify(data));
+      return ok({ ok: true });
+    }
+
+    // ===== 排班表：新增 =====
+    if (action === "sch-add") {
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_SCH}/tables/${TABLE_ID_SCH}/records`, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: mapToSchedule(body) })
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("新增排班失败: " + JSON.stringify(data));
+      return ok({ ok: true, item: mapFromSchedule(data.data.record) });
+    }
+
+    // ===== 排班表：批量新增 =====
+    if (action === "sch-batch-add") {
+      const items = Array.isArray(body) ? body : [];
+      if (!items.length) return err("数据为空", 400);
+      for (let i = 0; i < items.length; i += 500) {
+        const batch = items.slice(i, i + 500).map(item => ({ fields: mapToSchedule(item) }));
+        const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_SCH}/tables/${TABLE_ID_SCH}/records/batch_create`, {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ records: batch })
+        });
+        const data = await res.json();
+        if (data.code !== 0) throw new Error("批量新增排班失败: " + JSON.stringify(data));
+      }
+      return ok({ ok: true, count: items.length });
+    }
+
+    // ===== 排班表：更新 =====
+    if (action === "sch-update") {
+      if (!body.id) return err("缺少记录ID", 400);
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_SCH}/tables/${TABLE_ID_SCH}/records/${body.id}`, {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: mapToSchedule(body) })
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("更新排班失败: " + JSON.stringify(data));
+      return ok({ ok: true });
+    }
+
+    // ===== 排班表：删除 =====
+    if (action === "sch-delete") {
+      if (!body.id) return err("缺少记录ID", 400);
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_SCH}/tables/${TABLE_ID_SCH}/records/${body.id}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("删除排班失败: " + JSON.stringify(data));
+      return ok({ ok: true });
+    }
+
+    // ===== 客户问题：新增 =====
+    if (action === "iss-add") {
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_ISS}/tables/${TABLE_ID_ISS}/records`, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: mapToIssue(body) })
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("新增问题记录失败: " + JSON.stringify(data));
+      return ok({ ok: true, item: mapFromIssue(data.data.record) });
+    }
+
+    // ===== 客户问题：更新 =====
+    if (action === "iss-update") {
+      if (!body.id) return err("缺少记录ID", 400);
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_ISS}/tables/${TABLE_ID_ISS}/records/${body.id}`, {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: mapToIssue(body) })
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("更新问题记录失败: " + JSON.stringify(data));
+      return ok({ ok: true });
+    }
+
+    // ===== 客户问题：删除 =====
+    if (action === "iss-delete") {
+      if (!body.id) return err("缺少记录ID", 400);
+      const res = await fetch(`${BASE}/bitable/v1/apps/${APP_TOKEN_ISS}/tables/${TABLE_ID_ISS}/records/${body.id}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error("删除问题记录失败: " + JSON.stringify(data));
       return ok({ ok: true });
     }
 

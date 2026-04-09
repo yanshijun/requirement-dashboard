@@ -81,6 +81,16 @@ tr:hover td{background:#fafbff}
 .child-row:hover td{background:#f0f5ff}
 .k-parent-badge{font-size:10px;color:#999;margin-bottom:3px;background:#f5f5f5;padding:1px 6px;border-radius:3px;display:inline-block}
 .k-card.child-card{margin-left:12px;border-left:3px solid #3370ff}
+.sch-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sch-month{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.sch-month button{background:none;border:1px solid #d9d9d9;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
+.sch-month button:hover{background:#f0f5ff;border-color:#3370ff;color:#3370ff}
+.iss-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.iss-toolbar select,.iss-toolbar input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px}
+.iss-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.iss-stat{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.iss-stat .iss-num{font-size:24px;font-weight:700}
+.iss-stat .iss-lbl{font-size:11px;color:#888;margin-top:2px}
 .ptask-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
@@ -198,6 +208,8 @@ tr:hover td{background:#fafbff}
   <div class="tab" onclick="switchTab('kanban',this)">🗂 开发看板</div>
   <div class="tab" onclick="switchTab('person',this)">👤 人员任务</div>
   <div class="tab" onclick="switchTab('feedback',this)">🗒 今日收集</div>
+  <div class="tab" onclick="switchTab('schedule',this)">📅 排班表</div>
+  <div class="tab" onclick="switchTab('issues',this)">📝 问题记录</div>
 </div>
 
 <div class="content" id="mainContent">
@@ -245,7 +257,12 @@ tr:hover td{background:#fafbff}
         <div class="form-row"><label>开发状态</label>
           <select id="fFStatus"><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select></div>
         <div class="form-row"><label>开发进度 (%)</label><input id="fFProg" type="number" min="0" max="100" value="0"></div>
-        <div class="form-row"><label>需求认领人</label><input id="fFPerson" placeholder="姓名"></div>
+        <div class="form-row"><label>需求认领人</label>
+          <div style="position:relative">
+            <input id="fFPerson" placeholder="选择或输入姓名" autocomplete="off" onclick="showPersonDropdown()" oninput="filterPersonDropdown()">
+            <div id="personDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d9d9d9;border-radius:6px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+          </div>
+        </div>
         <div class="form-row"><label>预计上线日期</label><input id="fFDate" type="date"></div>
         <div class="form-row"><label>提出时间</label><input id="fFCreateTime" type="date"></div>
         <div class="form-row"><label>是否需要设计</label>
@@ -392,6 +409,11 @@ const PAGE_SIZE = 20;
 let pendingFbId = null;
 let _fbLoaded = false;
 let expandedParents = new Set();
+let scheduleData = [];
+let _schLoaded = false;
+let _schMonth = new Date().toISOString().slice(0,7); // YYYY-MM
+let issuesData = [];
+let _issLoaded = false;
 
 // ===== 子需求助手函数 =====
 function getChildren(parentId) {
@@ -879,15 +901,32 @@ function switchTab(tab,el) {
   if (tab === 'feedback') {
     if (toolbar) toolbar.style.display = 'none';
     if (_fbLoaded) {
-      renderFeedback(); // 有缓存直接渲染，后台静默刷新
+      renderFeedback();
       loadFeedback(true);
     } else {
       document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
       loadFeedback();
     }
+  } else if (tab === 'schedule') {
+    if (toolbar) toolbar.style.display = 'none';
+    if (_schLoaded) {
+      renderSchedule();
+      loadSchedule(true);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+      loadSchedule();
+    }
+  } else if (tab === 'issues') {
+    if (toolbar) toolbar.style.display = 'none';
+    if (_issLoaded) {
+      renderIssues();
+      loadIssues(true);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+      loadIssues();
+    }
   } else {
     if (toolbar) toolbar.style.display = '';
-    // 切回需求列表时重置筛选条件
     if (tab === 'list') {
       document.getElementById('fPlan').value = '';
       document.getElementById('fType').value = '';
@@ -1035,6 +1074,37 @@ function openAddChild(parentId) {
   document.getElementById('fFReview').value='待确认';
   switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
+}
+
+function showPersonDropdown() {
+  const dropdown = document.getElementById('personDropdown');
+  dropdown.style.display = 'block';
+  filterPersonDropdown();
+  // 点击外部关闭
+  setTimeout(() => document.addEventListener('click', _closePersonDropdown), 0);
+}
+function _closePersonDropdown(e) {
+  const dropdown = document.getElementById('personDropdown');
+  const input = document.getElementById('fFPerson');
+  if (!dropdown.contains(e.target) && e.target !== input) {
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', _closePersonDropdown);
+  }
+}
+function filterPersonDropdown() {
+  const input = document.getElementById('fFPerson');
+  const kw = input.value.trim().toLowerCase();
+  const members = getMembers();
+  const filtered = kw ? members.filter(m => m.toLowerCase().includes(kw)) : members;
+  const dropdown = document.getElementById('personDropdown');
+  dropdown.innerHTML = filtered.map(m =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f5f5f5" onmousedown="selectPerson('${m}')" onmouseover="this.style.background='#f0f5ff'" onmouseout="this.style.background=''">${m}</div>`
+  ).join('') || '<div style="padding:8px 12px;color:#aaa;font-size:12px">无匹配成员</div>';
+}
+function selectPerson(name) {
+  document.getElementById('fFPerson').value = name;
+  document.getElementById('personDropdown').style.display = 'none';
+  document.removeEventListener('click', _closePersonDropdown);
 }
 
 function closeModal(){document.getElementById('modal').style.display='none'; pendingFbId = null;}
@@ -1586,6 +1656,455 @@ async function fbTransfer(id) {
     document.getElementById('fFPri').value = item.priority || '中🟡';
     document.getElementById('fFCreateTime').value = item.createTime || '';
   }, 50);
+}
+
+// ===== 排班表 =====
+async function schApi(action, body) {
+  if (action === 'list') {
+    const res = await fetch('/api/feishu?table=schedule');
+    return res.json();
+  }
+  const res = await fetch(`/api/feishu?action=sch-${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function loadSchedule(silent = false) {
+  try {
+    scheduleData = await schApi('list');
+    _schLoaded = true;
+  } catch(e) {
+    if (!silent) scheduleData = [];
+    console.error('加载排班表失败', e);
+  }
+  if (curTab === 'schedule') renderSchedule();
+}
+
+function schChangeMonth(delta) {
+  const [y, m] = _schMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  _schMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  renderSchedule();
+}
+
+function renderSchedule() {
+  if (curTab !== 'schedule') return;
+  const [y, m] = _schMonth.split('-').map(Number);
+  const monthLabel = `${y}年${m}月`;
+  const monthData = scheduleData.filter(d => d.date && d.date.startsWith(_schMonth)).sort((a, b) => a.date.localeCompare(b.date));
+
+  const toolbar = `<div class="sch-toolbar">
+    <div class="sch-month">
+      <button onclick="schChangeMonth(-1)">◀</button>
+      <span>${monthLabel}</span>
+      <button onclick="schChangeMonth(1)">▶</button>
+    </div>
+    <button class="btn btn-primary" onclick="openSchGenerate()">⚡ 快速生成排班</button>
+    <button class="btn btn-success" onclick="openSchAdd()">＋ 新增排班</button>
+    <button class="btn btn-ghost" onclick="exportSchHtml()">📄 导出网页</button>
+    <button class="btn btn-ghost" onclick="loadSchedule()">🔄 刷新</button>
+  </div>`;
+
+  const rows = monthData.length ? monthData.map(d => `<tr>
+    <td style="white-space:nowrap">${d.date||''}</td>
+    <td>${d.weekday||''}</td>
+    <td>${d.group||''}</td>
+    <td style="font-weight:600">${d.onDuty||''}</td>
+    <td style="color:#666">${d.backup||''}</td>
+    <td><div class="actions">
+      <button class="btn btn-ghost btn-sm" onclick="openSchEdit('${d.id}')">编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSchItem('${d.id}')">删除</button>
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa">本月暂无排班数据</td></tr>';
+
+  document.getElementById('mainContent').innerHTML = toolbar + `<div class="tbl-wrap">
+    <div class="tbl-info">本月共 ${monthData.length} 条排班</div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>日期</th><th>星期</th><th>组别</th><th>值班人</th><th>备班人</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+let _schEditId = null;
+function openSchAdd() {
+  _schEditId = null;
+  const today = new Date().toISOString().split('T')[0];
+  const html = `<div class="modal-bg" id="schModal" style="display:flex" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal" style="max-width:450px">
+      <div class="modal-head"><h2>新增排班</h2><button class="modal-close" onclick="document.getElementById('schModal').style.display='none'">×</button></div>
+      <div class="modal-body">
+        <div class="form-row"><label>日期</label><input id="schDate" type="date" value="${today}"></div>
+        <div class="form-row"><label>星期</label><input id="schWeekday" placeholder="如：周六"></div>
+        <div class="form-row"><label>组别</label><input id="schGroup" placeholder="如：第一组"></div>
+        <div class="form-row"><label>值班人</label><input id="schOnDuty" placeholder="值班人姓名"></div>
+        <div class="form-row"><label>备班人</label><input id="schBackup" placeholder="备班人姓名，逗号分隔"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="document.getElementById('schModal').style.display='none'">取消</button>
+        <button class="btn btn-primary" onclick="saveSchItem()">保存</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function openSchEdit(id) {
+  const d = scheduleData.find(x => x.id === id); if (!d) return;
+  _schEditId = id;
+  openSchAdd();
+  document.querySelector('#schModal .modal-head h2').textContent = '编辑排班';
+  document.getElementById('schDate').value = d.date || '';
+  document.getElementById('schWeekday').value = d.weekday || '';
+  document.getElementById('schGroup').value = d.group || '';
+  document.getElementById('schOnDuty').value = d.onDuty || '';
+  document.getElementById('schBackup').value = d.backup || '';
+}
+
+async function saveSchItem() {
+  const item = {
+    date: document.getElementById('schDate').value,
+    weekday: document.getElementById('schWeekday').value.trim(),
+    group: document.getElementById('schGroup').value.trim(),
+    onDuty: document.getElementById('schOnDuty').value.trim(),
+    backup: document.getElementById('schBackup').value.trim()
+  };
+  if (!item.date) { alert('请选择日期'); return; }
+  const modal = document.getElementById('schModal');
+  try {
+    if (_schEditId) {
+      await schApi('update', { ...item, id: _schEditId });
+    } else {
+      await schApi('add', item);
+    }
+    modal.remove();
+    await loadSchedule();
+  } catch(e) { alert('保存失败：' + e.message); }
+}
+
+async function deleteSchItem(id) {
+  if (!confirm('确认删除该排班？')) return;
+  scheduleData = scheduleData.filter(x => x.id !== id);
+  renderSchedule();
+  try { await schApi('delete', { id }); loadSchedule(true); }
+  catch(e) { alert('删除失败：' + e.message); loadSchedule(); }
+}
+
+function openSchGenerate() {
+  const html = `<div class="modal-bg" id="schGenModal" style="display:flex" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-head"><h2>⚡ 快速生成排班</h2><button class="modal-close" onclick="document.getElementById('schGenModal').style.display='none'">×</button></div>
+      <div class="modal-body">
+        <div class="form-row"><label>生成月份</label><input id="schGenMonth" type="month" value="${_schMonth}"></div>
+        <div class="form-row"><label>第一组成员（逗号分隔）</label><input id="schGenG1" placeholder="张三,李四,王五"></div>
+        <div class="form-row"><label>第二组成员（逗号分隔）</label><input id="schGenG2" placeholder="赵六,钱七,孙八"></div>
+        <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.8;margin-top:8px">
+          <strong>规则：</strong>两组按周轮换，组内成员轮流值班，每个周末（周六/周日）各出1人值班。
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="document.getElementById('schGenModal').style.display='none'">取消</button>
+        <button class="btn btn-primary" onclick="doSchGenerate()">生成</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function doSchGenerate() {
+  const month = document.getElementById('schGenMonth').value;
+  const g1 = document.getElementById('schGenG1').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const g2 = document.getElementById('schGenG2').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if (!month || !g1.length || !g2.length) { alert('请填写完整信息'); return; }
+
+  const [y, m] = month.split('-').map(Number);
+  const items = [];
+  let g1Idx = 0, g2Idx = 0;
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const weekNames = ['周日','周一','周二','周三','周四','周五','周六'];
+
+  // 计算第一个周末属于第几周来决定起始组
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(y, m - 1, day);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) continue;
+
+    const weekNum = Math.ceil(day / 7);
+    const isG1Week = weekNum % 2 === 1;
+    const group = isG1Week ? g1 : g2;
+    const groupName = isG1Week ? '第一组' : '第二组';
+    const idx = isG1Week ? g1Idx : g2Idx;
+    const onDuty = group[idx % group.length];
+    const backup = group.filter((_, i) => i !== idx % group.length).join(',');
+
+    items.push({
+      date: d.toISOString().split('T')[0],
+      weekday: weekNames[dow],
+      group: groupName,
+      onDuty,
+      backup
+    });
+
+    if (isG1Week) g1Idx++; else g2Idx++;
+  }
+
+  if (!items.length) { alert('该月没有周末'); return; }
+  if (!confirm(`将生成 ${items.length} 条排班记录，确认？`)) return;
+
+  document.getElementById('schGenModal').remove();
+  document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 正在生成排班...</div>';
+  try {
+    await schApi('batch-add', items);
+    await loadSchedule();
+  } catch(e) { alert('生成失败：' + e.message); loadSchedule(); }
+}
+
+function exportSchHtml() {
+  const [y, m] = _schMonth.split('-').map(Number);
+  const monthLabel = `${y}年${m}月`;
+  const monthData = scheduleData.filter(d => d.date && d.date.startsWith(_schMonth)).sort((a, b) => a.date.localeCompare(b.date));
+  if (!monthData.length) { alert('本月暂无排班数据'); return; }
+
+  // 按周分组
+  const weeks = {};
+  monthData.forEach(d => {
+    const dt = new Date(d.date);
+    const weekStart = new Date(dt);
+    weekStart.setDate(dt.getDate() - dt.getDay());
+    const weekKey = weekStart.toISOString().split('T')[0];
+    if (!weeks[weekKey]) weeks[weekKey] = [];
+    weeks[weekKey].push(d);
+  });
+
+  const weekBlocks = Object.entries(weeks).map(([, items]) => {
+    const rows = items.map(d => {
+      const isSat = d.weekday === '周六';
+      const bgColor = isSat ? '#f0f5ff' : '#fff7e6';
+      return `<tr style="background:${bgColor}">
+        <td style="padding:12px 16px;border:1px solid #e8e8e8;font-weight:600;white-space:nowrap">${d.date}</td>
+        <td style="padding:12px 16px;border:1px solid #e8e8e8;text-align:center">${d.weekday}</td>
+        <td style="padding:12px 16px;border:1px solid #e8e8e8;text-align:center">
+          <span style="background:${d.group==='第一组'?'#e6f4ff':'#f0f5ff'};color:${d.group==='第一组'?'#1677ff':'#722ed1'};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">${d.group}</span>
+        </td>
+        <td style="padding:12px 16px;border:1px solid #e8e8e8;font-weight:700;color:#1a1a2e;font-size:15px">👤 ${d.onDuty}</td>
+        <td style="padding:12px 16px;border:1px solid #e8e8e8;color:#888">${d.backup||'-'}</td>
+      </tr>`;
+    }).join('');
+    return rows;
+  }).join('');
+
+  // 统计
+  const dutyCount = {};
+  monthData.forEach(d => { dutyCount[d.onDuty] = (dutyCount[d.onDuty]||0) + 1; });
+  const statRows = Object.entries(dutyCount).sort((a,b)=>b[1]-a[1]).map(([name, count]) =>
+    `<div style="display:inline-flex;align-items:center;gap:6px;background:#f7f8fa;padding:6px 14px;border-radius:20px;margin:4px">
+      <span style="font-weight:600">👤 ${name}</span>
+      <span style="background:#3370ff;color:#fff;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600">${count}次</span>
+    </div>`
+  ).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${monthLabel} 值班排班表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;padding:30px;color:#1a1a2e}
+.container{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
+.header{background:linear-gradient(135deg,#1d2b4f,#3370ff);color:#fff;padding:30px 40px;text-align:center}
+.header h1{font-size:24px;font-weight:700;margin-bottom:6px}
+.header p{font-size:13px;opacity:.7}
+.body{padding:30px 40px}
+table{width:100%;border-collapse:collapse;margin-bottom:24px}
+th{background:#f7f8fa;padding:10px 16px;text-align:left;font-weight:600;color:#555;border:1px solid #e8e8e8;font-size:13px}
+.stats{margin-bottom:20px}
+.stats-title{font-size:14px;font-weight:600;color:#444;margin-bottom:10px}
+.footer{text-align:center;padding:20px;color:#bbb;font-size:11px;border-top:1px solid #f0f0f0}
+@media print{body{background:#fff;padding:10px}.container{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📅 ${monthLabel} 值班排班表</h1>
+    <p>客服部门 · 周末值班安排</p>
+  </div>
+  <div class="body">
+    <table>
+      <thead><tr>
+        <th>日期</th><th style="text-align:center">星期</th><th style="text-align:center">组别</th><th>值班人</th><th>备班人</th>
+      </tr></thead>
+      <tbody>${weekBlocks}</tbody>
+    </table>
+    <div class="stats">
+      <div class="stats-title">📊 本月值班统计</div>
+      <div>${statRows}</div>
+    </div>
+  </div>
+  <div class="footer">生成时间：${new Date().toLocaleString('zh-CN')} · 客服GPT SAE版 需求池看板</div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `排班表_${_schMonth}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== 客户问题记录 =====
+async function issApi(action, body) {
+  if (action === 'list') {
+    const res = await fetch('/api/feishu?table=issues');
+    return res.json();
+  }
+  const res = await fetch(`/api/feishu?action=iss-${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function loadIssues(silent = false) {
+  try {
+    issuesData = await issApi('list');
+    _issLoaded = true;
+  } catch(e) {
+    if (!silent) issuesData = [];
+    console.error('加载问题记录失败', e);
+  }
+  if (curTab === 'issues') renderIssues();
+}
+
+function renderIssues() {
+  if (curTab !== 'issues') return;
+  const unsolved = issuesData.filter(d => d.status === '未解决').length;
+  const processing = issuesData.filter(d => d.status === '处理中').length;
+  const solved = issuesData.filter(d => d.status === '已解决').length;
+  const closed = issuesData.filter(d => d.status === '已关闭').length;
+
+  const stats = `<div class="iss-stats">
+    <div class="iss-stat"><div class="iss-num" style="color:#f5222d">${unsolved}</div><div class="iss-lbl">未解决</div></div>
+    <div class="iss-stat"><div class="iss-num" style="color:#faad14">${processing}</div><div class="iss-lbl">处理中</div></div>
+    <div class="iss-stat"><div class="iss-num" style="color:#52c41a">${solved}</div><div class="iss-lbl">已解决</div></div>
+    <div class="iss-stat"><div class="iss-num" style="color:#d9d9d9">${closed}</div><div class="iss-lbl">已关闭</div></div>
+  </div>`;
+
+  const toolbar = `<div class="iss-toolbar">
+    <button class="btn btn-success" onclick="openIssAdd()">＋ 新增记录</button>
+    <button class="btn btn-ghost" onclick="loadIssues()">🔄 刷新</button>
+  </div>`;
+
+  const sorted = [...issuesData].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const issStatMap = {'未解决':'tag-p1','处理中':'tag-p2','已解决':'tag-p4','已关闭':'tag-s5'};
+  const issStatTag = s => `<span class="tag ${issStatMap[s]||'tag-s0'}">${s||'未解决'}</span>`;
+
+  const rows = sorted.length ? sorted.map(d => `<tr>
+    <td style="white-space:nowrap;font-size:12px">${d.date||''}</td>
+    <td style="font-weight:500">${d.customerId||''}</td>
+    <td>${d.packageType||''}</td>
+    <td style="max-width:300px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
+    <td>${d.person||''}</td>
+    <td>${issStatTag(d.status)}</td>
+    <td><div class="actions">
+      <button class="btn btn-ghost btn-sm" onclick="openIssEdit('${d.id}')">编辑</button>
+      ${d.status!=='已解决'&&d.status!=='已关闭'?`<button class="btn btn-success btn-sm" onclick="issResolve('${d.id}')">已解决</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}')">删除</button>
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
+
+  document.getElementById('mainContent').innerHTML = toolbar + stats + `<div class="tbl-wrap">
+    <div class="tbl-info">共 ${issuesData.length} 条记录</div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>问题描述</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+let _issEditId = null;
+function openIssAdd() {
+  _issEditId = null;
+  const today = new Date().toISOString().split('T')[0];
+  const html = `<div class="modal-bg" id="issModal" style="display:flex" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-head"><h2>新增问题记录</h2><button class="modal-close" onclick="document.getElementById('issModal').style.display='none'">×</button></div>
+      <div class="modal-body">
+        <div class="form-row"><label>日期</label><input id="issDate" type="date" value="${today}"></div>
+        <div class="form-grid">
+          <div class="form-row"><label>客户ID</label><input id="issCustomerId" placeholder="客户ID"></div>
+          <div class="form-row"><label>套餐类型</label>
+            <select id="issPackageType"><option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option></select></div>
+        </div>
+        <div class="form-row"><label>问题描述</label><textarea id="issDesc" rows="3" placeholder="描述问题..."></textarea></div>
+        <div class="form-grid">
+          <div class="form-row"><label>责任人</label><input id="issPerson" placeholder="跟进人"></div>
+          <div class="form-row"><label>处理状态</label>
+            <select id="issStatus"><option>未解决</option><option>处理中</option><option>已解决</option><option>已关闭</option></select></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="document.getElementById('issModal').style.display='none'">取消</button>
+        <button class="btn btn-primary" onclick="saveIssItem()">保存</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function openIssEdit(id) {
+  const d = issuesData.find(x => x.id === id); if (!d) return;
+  _issEditId = id;
+  openIssAdd();
+  document.querySelector('#issModal .modal-head h2').textContent = '编辑问题记录';
+  document.getElementById('issDate').value = d.date || '';
+  document.getElementById('issCustomerId').value = d.customerId || '';
+  document.getElementById('issPackageType').value = d.packageType || '专业版';
+  document.getElementById('issDesc').value = d.desc || '';
+  document.getElementById('issPerson').value = d.person || '';
+  document.getElementById('issStatus').value = d.status || '未解决';
+}
+
+async function saveIssItem() {
+  const item = {
+    date: document.getElementById('issDate').value,
+    customerId: document.getElementById('issCustomerId').value.trim(),
+    packageType: document.getElementById('issPackageType').value,
+    desc: document.getElementById('issDesc').value.trim(),
+    person: document.getElementById('issPerson').value.trim(),
+    status: document.getElementById('issStatus').value
+  };
+  if (!item.desc) { alert('请填写问题描述'); return; }
+  const modal = document.getElementById('issModal');
+  try {
+    if (_issEditId) {
+      await issApi('update', { ...item, id: _issEditId });
+    } else {
+      await issApi('add', item);
+    }
+    modal.remove();
+    await loadIssues();
+  } catch(e) { alert('保存失败：' + e.message); }
+}
+
+async function issResolve(id) {
+  const d = issuesData.find(x => x.id === id); if (!d) return;
+  d.status = '已解决';
+  renderIssues();
+  try { await issApi('update', { ...d, status: '已解决' }); loadIssues(true); }
+  catch(e) { alert('操作失败：' + e.message); loadIssues(); }
+}
+
+async function deleteIssItem(id) {
+  if (!confirm('确认删除该记录？')) return;
+  issuesData = issuesData.filter(x => x.id !== id);
+  renderIssues();
+  try { await issApi('delete', { id }); loadIssues(true); }
+  catch(e) { alert('删除失败：' + e.message); loadIssues(); }
 }
 </script>
 </body>
