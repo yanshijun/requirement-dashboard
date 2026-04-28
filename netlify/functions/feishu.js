@@ -126,6 +126,7 @@ function mapFromFeishu(record) {
     design: getSingleSelect(f["是否需要设计"]),
     review: getSingleSelect(f["评审是否通过"]),
     createTime: fromFeishuDate(f["提出时间"]),
+    submitter: String(f["提出人"] || ""),
     note: String(f["备注"] || ""),
     parentId: String(f["父需求ID"] || "")
   };
@@ -144,6 +145,7 @@ function mapToFeishu(item) {
     "需求认领人": toMultiSelect(item.person),
     "是否需要设计": String(item.design || ""),
     "评审是否通过": String(item.review || ""),
+    "提出人": String(item.submitter || ""),
     "备注": String(item.note || ""),
     "父需求ID": String(item.parentId || "")
   };
@@ -221,18 +223,33 @@ function mapFromIssue(record) {
     packageType: String(f["套餐类型"] || ""),
     desc: String(f["问题描述"] || ""),
     person: String(f["责任人"] || ""),
-    status: String(f["处理状态"] || "未解决")
+    status: String(f["处理状态"] || "未解决"),
+    solution: String(f["解决方案"] || ""),
+    tags: String(f["问题标签"] || ""),
+    inKb: f["是否入库"] !== false,
+    attachments: Array.isArray(f["问题附件"]) ? f["问题附件"].map(a => ({
+      file_token: a.file_token || "",
+      name: a.name || "附件",
+      type: a.type || ""
+    })) : []
   };
 }
 function mapToIssue(item) {
-  return {
+  const fields = {
     "日期": String(item.date || ""),
     "客户id": String(item.customerId || ""),
     "套餐类型": String(item.packageType || ""),
     "问题描述": String(item.desc || ""),
     "责任人": String(item.person || ""),
-    "处理状态": String(item.status || "未解决")
+    "处理状态": String(item.status || "未解决"),
+    "解决方案": String(item.solution || ""),
+    "问题标签": String(item.tags || ""),
+    "是否入库": item.inKb !== false
   };
+  if (Array.isArray(item.attachments) && item.attachments.length > 0) {
+    fields["问题附件"] = item.attachments.map(a => ({ file_token: a.file_token }));
+  }
+  return fields;
 }
 
 exports.handler = async function (event) {
@@ -466,6 +483,49 @@ exports.handler = async function (event) {
       const data = await res.json();
       if (data.code !== 0) throw new Error("删除问题记录失败: " + JSON.stringify(data));
       return ok({ ok: true });
+    }
+
+    // ===== 附件：上传文件到飞书（base64 multipart） =====
+    if (action === "iss-upload") {
+      const { filename, mimetype, base64 } = body;
+      if (!base64 || !filename) return err("缺少文件数据", 400);
+      const buf = Buffer.from(base64, "base64");
+      const boundary = "----FormBoundary" + Date.now();
+      const parts = [
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${mimetype || "application/octet-stream"}\r\n\r\n`,
+      ];
+      const header = Buffer.from(parts[0]);
+      const footer = Buffer.from(`\r\n--${boundary}--`);
+      const combined = Buffer.concat([header, buf, footer]);
+      const uploadRes = await fetch(`${BASE}/drive/v1/medias/upload_all`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": `multipart/form-data; boundary=${boundary}`
+        },
+        body: combined
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.code !== 0) throw new Error("上传失败: " + JSON.stringify(uploadData));
+      return ok({ file_token: uploadData.data.file_token, name: filename, type: mimetype || "" });
+    }
+
+    // ===== 附件：获取预览/下载 URL =====
+    if (action === "iss-file-url") {
+      const { file_token } = body;
+      if (!file_token) return err("缺少 file_token", 400);
+      const urlRes = await fetch(`${BASE}/drive/v1/medias/${file_token}/download`, {
+        method: "GET",
+        headers: { Authorization: "Bearer " + token }
+      });
+      const buf = await urlRes.arrayBuffer();
+      const contentType = urlRes.headers.get("content-type") || "application/octet-stream";
+      return {
+        statusCode: 200,
+        headers: { ...cors, "Content-Type": contentType },
+        body: Buffer.from(buf).toString("base64"),
+        isBase64Encoded: true
+      };
     }
 
     return err("未知操作: " + action, 400);

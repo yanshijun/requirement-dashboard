@@ -9,7 +9,8 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mysql2": "^3.22.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2"

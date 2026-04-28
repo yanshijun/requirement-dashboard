@@ -8,6 +8,11 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[[redirects]]
+  from = "/api/upload"
+  to = "/.netlify/functions/upload"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

@@ -17,6 +17,7 @@ header h1{font-size:16px;font-weight:700}
 .btn-success{background:#52c41a;color:#fff}.btn-success:hover{background:#3ea80e}
 .btn-danger{background:#ff4d4f;color:#fff}.btn-danger:hover{background:#d9363e}
 .btn-ghost{background:transparent;color:#3370ff;border:1px solid #3370ff}.btn-ghost:hover{background:#f0f5ff}
+.btn-optimize{background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7}.btn-optimize:hover{background:#efdbff}
 .btn-sm{padding:4px 10px;font-size:12px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .toolbar{background:#fff;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #e8e8e8}
@@ -178,7 +179,15 @@ tr:hover td{background:#fafbff}
 .fb-tag-urgent{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
 .fb-card-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
 .fb-card-actions .btn{font-size:11px;padding:2px 8px}
-.fb-note{font-size:11px;color:#aaa;font-style:italic;margin-top:4px;padding-top:4px;border-top:1px dashed #f0f0f0;white-space:pre-wrap;word-break:break-all}
+.iss-attach-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.iss-attach-item{position:relative;cursor:pointer;text-align:center;width:68px}
+.iss-attach-thumb{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e8;display:block}
+.iss-attach-icon{width:64px;height:64px;background:#f0f2f5;border-radius:6px;border:1px solid #e8e8e8;display:flex;align-items:center;justify-content:center;font-size:24px}
+.iss-attach-name{font-size:10px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:64px;margin-top:2px}
+.iss-attach-del{position:absolute;top:-5px;right:-5px;background:#ff4d4f;color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:11px;cursor:pointer;line-height:16px;padding:0;text-align:center}
+.iss-attach-uploading{position:absolute;inset:0;background:rgba(255,255,255,.7);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#faad14}
+.iss-preview-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.iss-preview-img{max-width:90vw;max-height:85vh;border-radius:8px;display:block}
 </style>
 </head>
 <body>
@@ -238,6 +247,7 @@ tr:hover td{background:#fafbff}
           <div class="desc-actions">
             <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mdUpload').click()">📎 上传 .md 文件</button>
             <input type="file" id="mdUpload" accept=".md,.txt" style="display:none" onchange="handleMdUpload(this)">
+            <button type="button" class="btn btn-optimize btn-sm" onclick="optimizeDesc()" title="将文字描述自动整理为 Markdown 格式">✨ 优化格式</button>
             <button type="button" class="desc-tab active" id="tabEdit" onclick="switchDescTab('edit')">编辑</button>
             <button type="button" class="desc-tab" id="tabPrev" onclick="switchDescTab('preview')">预览</button>
           </div>
@@ -265,6 +275,7 @@ tr:hover td{background:#fafbff}
         </div>
         <div class="form-row"><label>预计上线日期</label><input id="fFDate" type="date"></div>
         <div class="form-row"><label>提出时间</label><input id="fFCreateTime" type="date"></div>
+        <div class="form-row"><label>提出人 <span style="color:red">*</span></label><input id="fSubmitter" placeholder="请输入提出人姓名"></div>
         <div class="form-row"><label>是否需要设计</label>
           <select id="fFDesign"><option>待设计</option><option>需要设计</option><option>不需要设计</option><option>设计完成</option></select></div>
         <div class="form-row"><label>评审是否通过</label>
@@ -732,6 +743,7 @@ function renderList(data) {
     <td style="white-space:nowrap;font-size:12px">${d.plan||''}</td>
     <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
+    <td style="font-size:12px;color:#666;white-space:nowrap">${d.submitter||''}</td>
     <td>${statTag(d.status)}</td><td>${progBar(displayProgress)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.createTime||''}</td>
@@ -804,7 +816,7 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>${pageButtons}</div>`;
 }
@@ -1012,7 +1024,7 @@ function openAdd() {
   document.getElementById('modalTitle').textContent='新增需求';
   document.getElementById('fId').value='';
   document.getElementById('fParentId').value='';
-  ['fName','fDesc','fFPerson','fFNote'].forEach(id=>document.getElementById(id).value='');
+  ['fName','fDesc','fFPerson','fFNote','fSubmitter'].forEach(id=>document.getElementById(id).value='');
   // 自动生成编号
   document.getElementById('fNo').value = generateNextNumber();
   document.getElementById('fFType').value='用户需求';
@@ -1044,6 +1056,7 @@ function openEdit(id) {
   document.getElementById('fFPerson').value=d.person||'';
   document.getElementById('fFDate').value=d.deadline||'';
   document.getElementById('fFCreateTime').value=d.createTime||'';
+  document.getElementById('fSubmitter').value=d.submitter||'';
   document.getElementById('fFDesign').value=d.design||'待设计';
   document.getElementById('fFReview').value=d.review||'待确认';
   document.getElementById('fFNote').value=d.note||'';
@@ -1112,6 +1125,8 @@ function closeModal(){document.getElementById('modal').style.display='none'; pen
 async function saveItem() {
   const name=document.getElementById('fName').value.trim();
   if(!name){alert('需求名称不能为空');return;}
+  const submitter=document.getElementById('fSubmitter').value.trim();
+  if(!submitter){alert('提出人不能为空');return;}
   const btn=document.getElementById('saveBtn');
   btn.disabled=true;btn.textContent='保存中...';
   const item={
@@ -1126,6 +1141,7 @@ async function saveItem() {
     person:document.getElementById('fFPerson').value.trim(),
     deadline:document.getElementById('fFDate').value,
     createTime:document.getElementById('fFCreateTime').value,
+    submitter,
     design:document.getElementById('fFDesign').value,
     review:document.getElementById('fFReview').value,
     note:document.getElementById('fFNote').value.trim(),
@@ -1345,6 +1361,7 @@ function openDetail(id) {
       <div><div style="font-size:12px;color:#888">是否需要设计</div><div style="margin-top:3px;font-size:13px">${d.design||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">评审是否通过</div><div style="margin-top:3px;font-size:13px">${d.review||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">提出时间</div><div style="margin-top:3px;font-size:13px">${d.createTime||'-'}</div></div>
+      <div><div style="font-size:12px;color:#888">提出人</div><div style="margin-top:3px;font-size:13px">${d.submitter||'-'}</div></div>
     </div>
     <div style="margin-bottom:12px">
       <div style="font-size:12px;color:#888;margin-bottom:8px">需求描述</div>
@@ -1379,6 +1396,89 @@ function renderDescPreview() {
   const md = document.getElementById('fDesc').value;
   try { document.getElementById('descPreview').innerHTML = md ? (typeof marked !== 'undefined' ? marked.parse(md) : md.replace(/\n/g,'<br>')) : '<span style="color:#ccc">暂无内容</span>'; } catch(e) { document.getElementById('descPreview').innerHTML = md.replace(/\n/g,'<br>'); }
 }
+
+// ===== 一键优化 Markdown 格式 =====
+function optimizeDesc() {
+  const ta = document.getElementById('fDesc');
+  const raw = ta.value.trim();
+  if (!raw) return;
+
+  const hasMd = /^#{1,3}\s|^\s*[-*]\s|^\s*\d+\.\s|\*\*/m.test(raw);
+  if (hasMd) {
+    if (!confirm('检测到已有 Markdown 格式，是否重新整理？原内容将被替换。')) return;
+  }
+
+  ta.value = formatToMd(raw);
+  switchDescTab('preview');
+}
+
+function formatToMd(text) {
+  const rawLines = text.split('\n').map(l => l.trim());
+  const out = [];
+  let prevWasBlank = true;
+
+  function pushBlank() {
+    if (out.length && out[out.length - 1] !== '') out.push('');
+  }
+  function pushLine(l) { out.push(l); prevWasBlank = false; }
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+
+    if (!line) { pushBlank(); prevWasBlank = true; continue; }
+
+    if (/^#{1,3}\s/.test(line)) {
+      pushBlank(); pushLine(line); pushBlank(); continue;
+    }
+
+    if (/^[一二三四五六七八九十百]+[、．.]\s*\S/.test(line)) {
+      const title = line.replace(/^[一二三四五六七八九十百]+[、．.]\s*/, '');
+      pushBlank(); pushLine('## ' + title); pushBlank(); continue;
+    }
+
+    if (/^\d+\.\d+(\.\d+)?\s+\S/.test(line)) {
+      pushBlank(); pushLine('### ' + line); pushBlank(); continue;
+    }
+
+    if (/^[1-9]\d*[.、]\s*[\u4e00-\u9fa5A-Za-z]/.test(line) && line.length <= 30 && !/[，。；：,.;]$/.test(line)) {
+      const title = line.replace(/^[1-9]\d*[.、]\s*/, '');
+      pushBlank(); pushLine('## ' + title); pushBlank(); continue;
+    }
+
+    if (/^[•·◆▶►→]\s/.test(line)) {
+      pushLine('- ' + line.replace(/^[•·◆▶►→]\s*/, '')); continue;
+    }
+    if (/^[-*]\s/.test(line)) { pushLine(line.replace(/^\*\s/, '- ')); continue; }
+
+    const circled = '①②③④⑤⑥⑦⑧⑨⑩';
+    const ci = circled.indexOf(line[0]);
+    if (ci >= 0) { pushLine(`${ci + 1}. ` + line.slice(1).trimStart()); continue; }
+
+    if (/^[1-9]\d*[.、。)）]\s+\S/.test(line)) {
+      pushLine(line.replace(/^([1-9]\d*)[.、。)）]\s+/, '$1. ')); continue;
+    }
+
+    if (line.length <= 20 && !/[，。；：,.;!！?？]$/.test(line) && /[\u4e00-\u9fa5]/.test(line)) {
+      pushBlank(); pushLine('**' + line + '**'); pushBlank(); continue;
+    }
+
+    const cm = line.match(/^([^：:]{2,10})[：:]\s*(.+)/);
+    if (cm) { pushLine(`**${cm[1]}：** ${cm[2].trim()}`); pushBlank(); continue; }
+
+    pushLine(line);
+    pushBlank();
+  }
+
+  const cleaned = [];
+  let blankCount = 0;
+  for (const l of out) {
+    if (l === '') { if (++blankCount <= 1) cleaned.push(l); }
+    else { blankCount = 0; cleaned.push(l); }
+  }
+  return cleaned.join('\n').trim();
+}
+
+
 
 // ===== 导入 =====
 function openImport(){
@@ -1966,21 +2066,20 @@ th{background:#f7f8fa;padding:10px 16px;text-align:left;font-weight:600;color:#5
 
 // ===== 客户问题记录 =====
 async function issApi(action, body) {
-  if (action === 'list') {
-    const res = await fetch(`/api/feishu?table=issues&_t=${Date.now()}`);
-    return res.json();
-  }
-  const res = await fetch(`/api/feishu?action=iss-${action}`, {
+  const res = await fetch(`/api/kb?action=iss-${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body || {})
   });
-  return res.json();
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
 async function loadIssues(silent = false) {
   try {
     issuesData = await issApi('list');
+    console.log('[loadIssues] 第一条记录 attachments:', issuesData[0]?.attachments);
     _issLoaded = true;
   } catch(e) {
     if (!silent) issuesData = [];
@@ -2003,20 +2102,40 @@ function renderIssues() {
     <div class="iss-stat"><div class="iss-num" style="color:#d9d9d9">${closed}</div><div class="iss-lbl">已关闭</div></div>
   </div>`;
 
+  const issSearchVal = document.getElementById('issSearch') ? document.getElementById('issSearch').value : (window._issSearchVal || '');
+  window._issSearchVal = issSearchVal;
+
   const toolbar = `<div class="iss-toolbar">
     <button class="btn btn-success" onclick="openIssAdd()">＋ 新增记录</button>
     <button class="btn btn-ghost" onclick="loadIssues()">🔄 刷新</button>
+    <input id="issSearch" type="text" placeholder="🔍 搜索问题描述…" value="${issSearchVal.replace(/"/g,'&quot;')}" oninput="window._issSearchVal=this.value;renderIssues()" style="width:220px">
+    <button class="btn btn-primary" onclick="openKbPanel()" style="margin-left:auto">🤖 AI 售后助手</button>
   </div>`;
 
-  const sorted = [...issuesData].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const kw = issSearchVal.trim().toLowerCase();
+  const sorted = [...issuesData]
+    .filter(d => !kw || (d.desc || '').toLowerCase().includes(kw) || (d.customerId || '').toLowerCase().includes(kw))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const issStatMap = {'未解决':'tag-p1','处理中':'tag-p2','已解决':'tag-p4','已关闭':'tag-s5'};
   const issStatTag = s => `<span class="tag ${issStatMap[s]||'tag-s0'}">${s||'未解决'}</span>`;
+
+  const attachCell = (attachments) => {
+    if (!attachments || !attachments.length) return '<span style="color:#ccc">—</span>';
+    return attachments.map(a => {
+      const isImg = a.type && a.type.startsWith('image/');
+      const icon = isImg ? '🖼️' : '📎';
+      const shortName = (a.name || '附件').substring(0, 10);
+      const safeName = (a.name||'附件').replace(/'/g,'').replace(/"/g,'');
+      return `<span style="cursor:pointer;color:#1677ff;font-size:12px;margin-right:4px;display:inline-block" title="${safeName}" onclick="issPreviewAttach('${a.file_token}','${a.type||''}','${safeName}')">${icon} ${shortName}</span>`;
+    }).join('');
+  };
 
   const rows = sorted.length ? sorted.map(d => `<tr>
     <td style="white-space:nowrap;font-size:12px">${d.date||''}</td>
     <td style="font-weight:500">${d.customerId||''}</td>
     <td>${d.packageType||''}</td>
     <td style="max-width:300px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
+    <td style="max-width:160px">${attachCell(d.attachments)}</td>
     <td>${d.person||''}</td>
     <td>${issStatTag(d.status)}</td>
     <td><div class="actions">
@@ -2024,19 +2143,22 @@ function renderIssues() {
       ${d.status!=='已解决'&&d.status!=='已关闭'?`<button class="btn btn-success btn-sm" onclick="issResolve('${d.id}')">已解决</button>`:''}
       <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}')">删除</button>
     </div></td>
-  </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
+  </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
 
   document.getElementById('mainContent').innerHTML = toolbar + stats + `<div class="tbl-wrap">
-    <div class="tbl-info">共 ${issuesData.length} 条记录</div>
+    <div class="tbl-info">${kw ? `搜索到 ${sorted.length} / ${issuesData.length} 条记录` : `共 ${issuesData.length} 条记录`}</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>问题描述</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>问题描述</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
 }
 
 let _issEditId = null;
+let _issAttachments = []; // [{file_token, name, type, localUrl, uploading, error}]
+
 function openIssAdd() {
   _issEditId = null;
+  _issAttachments = [];
   closeIssModal();
   const today = new Date().toISOString().split('T')[0];
   const html = `<div class="modal-bg" id="issModal" style="display:flex" onclick="if(event.target===this)closeIssModal()">
@@ -2050,10 +2172,21 @@ function openIssAdd() {
             <select id="issPackageType"><option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option></select></div>
         </div>
         <div class="form-row"><label>问题描述</label><textarea id="issDesc" rows="3" placeholder="描述问题..."></textarea></div>
+        <div class="form-row"><label>解决方案</label><textarea id="issSolution" rows="3" placeholder="填写处理步骤或方案（已解决后填写，有助于知识库积累）..."></textarea></div>
+        <div class="form-row"><label>问题标签</label><input id="issTags" placeholder="如：登录异常、退款、套餐升级（逗号分隔）"></div>
+        <div class="form-row">
+          <label>附件 <span style="color:#aaa;font-weight:400;font-size:11px">图片/文件，点击预览</span></label>
+          <div class="iss-attach-list" id="issAttachList"></div>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">📎 上传附件<input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none" onchange="issHandleFiles(this.files)"></label>
+        </div>
         <div class="form-grid">
           <div class="form-row"><label>责任人</label><input id="issPerson" placeholder="跟进人"></div>
           <div class="form-row"><label>处理状态</label>
             <select id="issStatus"><option>未解决</option><option>处理中</option><option>已解决</option><option>已关闭</option></select></div>
+        </div>
+        <div class="form-row" style="align-items:center;flex-direction:row;gap:8px">
+          <input type="checkbox" id="issInKb" checked style="width:auto">
+          <label for="issInKb" style="margin:0;font-weight:400">加入售后知识库（已解决的记录会被 AI 学习）</label>
         </div>
       </div>
       <div class="modal-foot">
@@ -2068,24 +2201,116 @@ function openIssEdit(id) {
   const d = issuesData.find(x => x.id === id); if (!d) return;
   openIssAdd();
   _issEditId = id;
+  _issAttachments = (d.attachments || []).map(a => ({ ...a, uploading: false }));
   document.querySelector('#issModal .modal-head h2').textContent = '编辑问题记录';
   document.getElementById('issDate').value = d.date || '';
   document.getElementById('issCustomerId').value = d.customerId || '';
   document.getElementById('issPackageType').value = d.packageType || '专业版';
   document.getElementById('issDesc').value = d.desc || '';
+  document.getElementById('issSolution').value = d.solution || '';
+  document.getElementById('issTags').value = d.tags || '';
   document.getElementById('issPerson').value = d.person || '';
   document.getElementById('issStatus').value = d.status || '未解决';
+  document.getElementById('issInKb').checked = d.inKb !== false;
+  renderIssAttachList();
+}
+
+function renderIssAttachList() {
+  const el = document.getElementById('issAttachList');
+  if (!el) return;
+  el.innerHTML = _issAttachments.map((a, i) => {
+    const isImg = a.type && a.type.startsWith('image/');
+    const preview = a.localUrl ? `<img src="${a.localUrl}" style="height:40px;border-radius:4px;margin-right:6px;vertical-align:middle">` : '📎 ';
+    const status = a.uploading ? '<span style="color:#f90;font-size:11px"> 上传中…</span>'
+      : a.error ? `<span style="color:red;font-size:11px"> 失败</span>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      ${isImg && a.localUrl ? preview : '📎 '}
+      <span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}${status}</span>
+      <button type="button" class="btn btn-ghost btn-sm" style="padding:0 6px" onclick="_issAttachments.splice(${i},1);renderIssAttachList()">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function _compressImage(file, maxPx = 1920, quality = 0.82) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width: w, height: h } = img;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => blob ? res(blob) : rej(new Error('压缩失败')), 'image/jpeg', quality);
+    };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
+async function issHandleFiles(files) {
+  for (const file of Array.from(files)) {
+    const idx = _issAttachments.length;
+    const isImg = file.type.startsWith('image/');
+    const localUrl = isImg ? URL.createObjectURL(file) : null;
+    console.log('[upload] 开始上传', file.name, file.type, 'isImg:', isImg);
+    _issAttachments.push({ name: file.name, type: file.type, localUrl, uploading: true, error: false });
+    renderIssAttachList();
+    try {
+      let uploadFile = file;
+      let mimetype = file.type;
+      let filename = file.name;
+      if (isImg) {
+        const compressed = await _compressImage(file);
+        uploadFile = compressed;
+        mimetype = 'image/jpeg';
+        filename = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+      }
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(uploadFile);
+      });
+      const resp = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, mimetype, base64 })
+      });
+      const data = await resp.json();
+      console.log('[upload] 服务端返回', data);
+      if (!data.file_token) throw new Error(data.error || '上传失败');
+      _issAttachments[idx] = { file_token: data.file_token, name: data.name, type: data.type, localUrl, uploading: false };
+      console.log('[upload] _issAttachments[', idx, ']', _issAttachments[idx]);
+    } catch(e) {
+      _issAttachments[idx].uploading = false;
+      _issAttachments[idx].error = true;
+      alert('上传失败：' + e.message);
+    }
+    renderIssAttachList();
+  }
 }
 
 async function saveIssItem() {
+  if (_issAttachments.some(a => a.uploading)) { alert('附件上传中，请稍候'); return; }
   const item = {
     date: document.getElementById('issDate').value,
     customerId: document.getElementById('issCustomerId').value.trim(),
     packageType: document.getElementById('issPackageType').value,
     desc: document.getElementById('issDesc').value.trim(),
+    solution: document.getElementById('issSolution').value.trim(),
+    tags: document.getElementById('issTags').value.trim(),
     person: document.getElementById('issPerson').value.trim(),
-    status: document.getElementById('issStatus').value
+    status: document.getElementById('issStatus').value,
+    inKb: document.getElementById('issInKb').checked,
+    attachments: _issAttachments.filter(a => a.file_token).map(a => ({ file_token: a.file_token, name: a.name, type: a.type }))
   };
+  console.log('[save] attachments:', item.attachments, '_issAttachments:', _issAttachments);
   if (!item.desc) { alert('请填写问题描述'); return; }
   const modal = document.getElementById('issModal');
   try {
@@ -2107,12 +2332,207 @@ async function issResolve(id) {
   catch(e) { alert('操作失败：' + e.message); loadIssues(); }
 }
 
+async function issPreviewAttach(fileToken, type, name) {
+  const isImg = type && type.startsWith('image/');
+  const existing = document.getElementById('issPreviewModal');
+  if (existing) existing.remove();
+  const loadingHtml = `<div id="issPreviewModal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column" onclick="if(event.target===this)this.remove()">
+    <div style="background:#fff;border-radius:10px;padding:20px;min-width:320px;max-width:90vw;max-height:90vh;overflow:auto;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-weight:600;font-size:14px">${name}</span>
+        <button onclick="document.getElementById('issPreviewModal').remove()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#999">✕</button>
+      </div>
+      <div id="issPreviewBody" style="text-align:center;padding:20px;color:#aaa">⏳ 加载中…</div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', loadingHtml);
+  try {
+    const proxyUrl = `/api/feishu?action=iss-file-url`;
+    const body = document.getElementById('issPreviewBody');
+    if (!body) return;
+    if (isImg) {
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_token: fileToken })
+      });
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const data = await res.json();
+        if (data.url) body.innerHTML = `<img src="${data.url}" style="max-width:100%;max-height:70vh;border-radius:6px">`;
+        else body.innerHTML = `<span style="color:red">获取图片失败</span>`;
+      } else {
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        body.innerHTML = `<img src="${objectUrl}" style="max-width:100%;max-height:70vh;border-radius:6px">`;
+      }
+    } else {
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_token: fileToken })
+      });
+      const ct = res.headers.get('content-type') || '';
+      let downloadUrl = proxyUrl;
+      if (ct.includes('application/json')) {
+        const data = await res.json();
+        downloadUrl = data.url || proxyUrl;
+      }
+      body.innerHTML = `<a href="${downloadUrl}" target="_blank" class="btn btn-ghost" style="margin-top:8px">📥 点击下载 ${name}</a>`;
+    }
+  } catch(e) {
+    const body = document.getElementById('issPreviewBody');
+    if (body) body.innerHTML = `<span style="color:red">加载失败：${e.message}</span>`;
+  }
+}
+
 async function deleteIssItem(id) {
   if (!confirm('确认删除该记录？')) return;
   issuesData = issuesData.filter(x => x.id !== id);
   renderIssues();
   try { await issApi('delete', { id }); loadIssues(true); }
   catch(e) { alert('删除失败：' + e.message); loadIssues(); }
+}
+
+// ===== AI 售后助手面板 =====
+let _kbSessionId = 'sess_' + Date.now();
+let _kbHistory = [];
+let _kbLoading = false;
+
+async function openKbPanel() {
+  const existing = document.getElementById('kbPanel');
+  if (existing) { existing.style.display = 'flex'; return; }
+  const html = `<div id="kbPanel" style="position:fixed;inset:0;z-index:9000;display:flex;align-items:flex-end;justify-content:flex-end;pointer-events:none">
+    <div style="pointer-events:auto;width:500px;max-width:96vw;height:84vh;background:#fff;border-radius:14px 14px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;margin:0 24px">
+      <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <span style="font-weight:700;font-size:15px">🤖 AI 售后助手</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span id="kbStatusBadge" style="font-size:11px;color:#aaa">加载中…</span>
+          <button class="btn btn-ghost btn-sm" onclick="_kbHistory=[];_kbSessionId='sess_'+Date.now();renderKbHistory()">🗑</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('kbPanel').style.display='none'">收起</button>
+          <button class="btn btn-ghost btn-sm" style="color:#f00;border-color:#ffa0a0" onclick="document.getElementById('kbPanel').remove()">✕</button>
+        </div>
+      </div>
+      <div id="kbHistory" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px"></div>
+      <div style="padding:12px 16px;border-top:1px solid #f0f0f0;flex-shrink:0">
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <textarea id="kbInput" placeholder="描述遇到的售后问题，AI 将根据历史案例给出处理方案..." rows="3"
+            style="flex:1;border:1px solid #d9d9d9;border-radius:8px;padding:8px 10px;font-size:13px;resize:none;font-family:inherit;outline:none"
+            onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))kbAsk()"></textarea>
+          <button id="kbSendBtn" class="btn btn-primary" onclick="kbAsk()" style="height:72px;flex-shrink:0">发送</button>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:6px">Ctrl+Enter 发送 · 基于历史已解决案例向量检索</div>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  renderKbHistory();
+  kbLoadStatus();
+}
+
+async function kbLoadStatus() {
+  try {
+    const res = await fetch('/api/kb?action=kb-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json();
+    const badge = document.getElementById('kbStatusBadge');
+    if (!badge) return;
+    if (data.error) { badge.textContent = '未同步'; return; }
+    const last = data.lastSync ? new Date(data.lastSync).toLocaleDateString('zh-CN') : '从未';
+    badge.textContent = `知识库 ${data.withEmbedding} 条 · ${last}`;
+  } catch(e) {
+    const badge = document.getElementById('kbStatusBadge');
+    if (badge) badge.textContent = '连接失败';
+  }
+}
+
+async function kbSync() {
+  const btn = document.getElementById('kbSyncBtn');
+  const badge = document.getElementById('kbStatusBadge');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 同步中…'; }
+  if (badge) badge.textContent = '同步中…';
+  try {
+    const res = await fetch('/api/kb?action=kb-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (badge) badge.textContent = `知识库 ${data.total} 条 · 刚刚同步`;
+    alert(`同步完成：新增 ${data.added} 条，更新 ${data.updated} 条，跳过 ${data.skipped} 条`);
+  } catch(e) {
+    alert('同步失败：' + e.message);
+    if (badge) badge.textContent = '同步失败';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 同步知识库'; }
+  }
+}
+
+function renderKbHistory() {
+  const el = document.getElementById('kbHistory');
+  if (!el) return;
+  if (!_kbHistory.length) {
+    el.innerHTML = `<div style="text-align:center;color:#bbb;margin:auto;padding:40px 0">
+      <div style="font-size:32px;margin-bottom:10px">🤖</div>
+      <div>描述您遇到的售后问题</div>
+      <div style="font-size:12px;margin-top:4px">AI 将从历史已解决案例中学习并给出处理方案</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = _kbHistory.map(msg => {
+    if (msg.role === 'user') {
+      return `<div style="display:flex;justify-content:flex-end">
+        <div style="background:#3370ff;color:#fff;border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:85%;font-size:13px;line-height:1.6">${msg.content.replace(/\n/g,'<br>')}</div>
+      </div>`;
+    }
+    const casesHtml = msg.cases && msg.cases.length ? `
+      <details style="margin-top:10px;font-size:12px">
+        <summary style="cursor:pointer;color:#888">📚 引用 ${msg.cases.length} 条历史案例</summary>
+        <div style="margin-top:6px;padding:8px;background:#f9f9f9;border-radius:6px;display:flex;flex-direction:column;gap:6px">
+          ${msg.cases.map(c => `<div style="border-left:3px solid #d9d9d9;padding-left:8px">
+            <div style="color:#666">${c.date||''} · ${c.packageType||''}</div>
+            <div>${(c.desc||'').substring(0,60)}${(c.desc||'').length>60?'…':''}</div>
+            ${c.solution?`<div style="color:#52c41a;margin-top:2px">✓ ${(c.solution||'').substring(0,60)}${(c.solution||'').length>60?'…':''}</div>`:''}
+          </div>`).join('')}
+        </div>
+      </details>` : '';
+    const answerHtml = typeof marked !== 'undefined' ? marked.parse(msg.content) : msg.content.replace(/\n/g,'<br>');
+    return `<div style="display:flex;justify-content:flex-start">
+      <div style="background:#f5f5f5;border-radius:12px 12px 12px 2px;padding:12px 14px;max-width:92%;font-size:13px;line-height:1.7">
+        <div style="color:#3370ff;font-size:12px;margin-bottom:6px;font-weight:600">🤖 AI 售后助手</div>
+        <div class="ai-answer">${answerHtml}</div>
+        ${casesHtml}
+      </div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function kbAsk() {
+  if (_kbLoading) return;
+  const input = document.getElementById('kbInput');
+  const query = (input?.value || '').trim();
+  if (!query) return;
+  _kbLoading = true;
+  _kbHistory.push({ role: 'user', content: query });
+  input.value = '';
+  renderKbHistory();
+  const loadingIdx = _kbHistory.length;
+  _kbHistory.push({ role: 'ai', content: '⏳ 正在查询历史案例并生成回复…', cases: [] });
+  renderKbHistory();
+  const btn = document.getElementById('kbSendBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await fetch('/api/kb?action=kb-ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, sessionId: _kbSessionId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    _kbHistory[loadingIdx] = { role: 'ai', content: data.answer, cases: data.cases || [] };
+  } catch(e) {
+    _kbHistory[loadingIdx] = { role: 'ai', content: `❌ 出错了：${e.message}`, cases: [] };
+  }
+  _kbLoading = false;
+  if (btn) { btn.disabled = false; btn.textContent = '发送'; }
+  renderKbHistory();
 }
 </script>
 </body>
