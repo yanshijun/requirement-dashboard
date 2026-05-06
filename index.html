@@ -2090,6 +2090,21 @@ function exportAttendance() {
   const monthData = scheduleData.filter(d => d.date && d.date.startsWith(_schMonth)).sort((a, b) => a.date.localeCompare(b.date));
   if (!monthData.length) { alert('本月暂无排班数据'); return; }
 
+  // 补全当月所有周末日期（漏排检测）
+  const allWeekendDates = [];
+  const daysInMonth = new Date(y, m, 0).getDate();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dt = new Date(y, m - 1, day);
+    const dow = dt.getDay();
+    if (dow === 0 || dow === 6) {
+      const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      allWeekendDates.push(ds);
+    }
+  }
+
+  const recordedDates = new Set(monthData.map(d => d.date));
+  const missingDates = allWeekendDates.filter(d => !recordedDates.has(d));
+
   const dates = [...new Set(monthData.map(d => d.date))].sort();
 
   const personSet = new Set();
@@ -2107,24 +2122,76 @@ function exportAttendance() {
   });
 
   const weekdayMap = {};
+  const WEEKDAY_NAMES = ['周日','周一','周二','周三','周四','周五','周六'];
   monthData.forEach(d => { weekdayMap[d.date] = d.weekday || ''; });
+  // 补全漏排日期的星期
+  allWeekendDates.forEach(ds => {
+    if (!weekdayMap[ds]) {
+      const [dy2, dm2, dd2] = ds.split('-').map(Number);
+      weekdayMap[ds] = WEEKDAY_NAMES[new Date(dy2, dm2-1, dd2).getDay()];
+    }
+  });
 
+  const isWeekend = (ds) => { const [dy2,dm2,dd2] = ds.split('-').map(Number); const dow = new Date(dy2,dm2-1,dd2).getDay(); return dow===0||dow===6; };
+
+  // 表头列
   const thCells = dates.map(d => {
-    const [dy, dm, dd] = d.split('-').map(Number);
-    return `<th>${dy}/${dm}/${dd}<br><span style="font-weight:400;color:#888;font-size:11px">${weekdayMap[d]||''}</span></th>`;
+    const [,dm2,dd2] = d.split('-').map(Number);
+    const weekend = isWeekend(d);
+    const bg = weekend ? '#fff7e6' : '#f7f8fa';
+    const color = weekend ? '#d46b08' : '#444';
+    return `<th style="background:${bg};color:${color}">${y}/${dm2}/${dd2}<br><span style="font-weight:400;font-size:11px">${weekdayMap[d]||''}</span></th>`;
   }).join('');
 
+  // 统计：每人值班次数、备班次数
+  const dutyCount = {}, backupCount = {};
+  persons.forEach(n => { dutyCount[n] = 0; backupCount[n] = 0; });
+  dates.forEach(date => {
+    if (!dutyMap[date]) return;
+    dutyMap[date].onDuty.forEach(n => { if (dutyCount[n] !== undefined) dutyCount[n]++; });
+    dutyMap[date].backup.forEach(n => { if (backupCount[n] !== undefined) backupCount[n]++; });
+  });
+
+  // 数据行
   const bodyRows = persons.map(name => {
     const cells = dates.map(date => {
-      let val = '休息', color = '#aaa', bg = '';
+      let val = '休息', color = '#bbb', bg = '', fw = 400;
       if (dutyMap[date]) {
-        if (dutyMap[date].onDuty.has(name)) { val = '值班'; color = '#1677ff'; bg = '#e6f4ff'; }
-        else if (dutyMap[date].backup.has(name)) { val = '备班'; color = '#d46b08'; bg = '#fff7e6'; }
+        if (dutyMap[date].onDuty.has(name))   { val = '值班'; color = '#1677ff'; bg = '#e6f4ff'; fw = 700; }
+        else if (dutyMap[date].backup.has(name)) { val = '备班'; color = '#d46b08'; bg = '#fff7e6'; fw = 600; }
       }
-      return `<td style="text-align:center;background:${bg};color:${color};font-weight:${val!=='休息'?600:400}">${val}</td>`;
+      // 周末列底色叠加（未值班时）
+      if (val === '休息' && isWeekend(date)) bg = '#fffbf5';
+      return `<td style="text-align:center;background:${bg};color:${color};font-weight:${fw}">${val}</td>`;
     }).join('');
-    return `<tr><td style="font-weight:600;white-space:nowrap;padding:8px 14px">${name}</td>${cells}</tr>`;
+    const total = dutyCount[name] || 0;
+    const bk = backupCount[name] || 0;
+    const summaryText = total > 0 || bk > 0
+      ? `<span style="color:#1677ff;font-weight:700">${total}</span>${bk>0?`<span style="color:#aaa;font-size:11px">+${bk}备</span>`:''}`
+      : `<span style="color:#ccc">0</span>`;
+    return `<tr>
+      <td style="font-weight:600;white-space:nowrap;padding:8px 14px;background:#fafafa">${name}</td>
+      ${cells}
+      <td style="text-align:center;background:#f0f5ff;border-left:2px solid #adc6ff;white-space:nowrap">${summaryText}</td>
+    </tr>`;
   }).join('');
+
+  // 漏排提示
+  const missingHtml = missingDates.length
+    ? `<div style="margin-bottom:20px;padding:10px 16px;background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;color:#cf1322;font-size:13px">
+        ⚠️ <strong>以下周末日期暂无排班记录，请确认是否漏排：</strong>
+        ${missingDates.map(d => { const [,dm2,dd2] = d.split('-').map(Number); return `<span style="margin:0 6px;font-weight:600">${y}/${dm2}/${dd2}(${weekdayMap[d]})</span>`; }).join('')}
+      </div>`
+    : `<div style="margin-bottom:20px;padding:8px 16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;color:#389e0d;font-size:13px">✅ 本月周末排班记录完整，无漏排</div>`;
+
+  // 图例
+  const legendHtml = `<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;font-size:12px;color:#555">
+    <span style="font-weight:600">图例：</span>
+    <span><span style="display:inline-block;width:14px;height:14px;background:#e6f4ff;border:1px solid #91caff;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#1677ff;font-weight:600">值班</span> 当日主值班</span>
+    <span><span style="display:inline-block;width:14px;height:14px;background:#fff7e6;border:1px solid #ffd591;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#d46b08;font-weight:600">备班</span> 当日备班待命</span>
+    <span><span style="display:inline-block;width:14px;height:14px;background:#fff;border:1px solid #e8e8e8;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#bbb">休息</span> 当日休息</span>
+    <span><span style="display:inline-block;width:14px;height:14px;background:#fffbf5;border:1px solid #ffd591;border-radius:3px;vertical-align:middle;margin-right:4px"></span>橙色列背景为周末</span>
+  </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -2136,32 +2203,57 @@ function exportAttendance() {
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;padding:30px;color:#1a1a2e}
 .container{max-width:100%;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
-.header{background:linear-gradient(135deg,#1d2b4f,#3370ff);color:#fff;padding:24px 40px;text-align:center}
-.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
-.header p{font-size:12px;opacity:.7}
+.header{background:linear-gradient(135deg,#1d2b4f,#3370ff);color:#fff;padding:24px 40px}
+.header h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.header-meta{display:flex;gap:24px;font-size:12px;opacity:.8;margin-top:4px}
 .body{padding:24px 30px;overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th{background:#f7f8fa;padding:10px 12px;text-align:center;font-weight:600;color:#444;border:1px solid #e8e8e8;white-space:nowrap;min-width:72px}
-th:first-child{text-align:left;min-width:80px}
-td{padding:8px 12px;border:1px solid #e8e8e8;font-size:13px}
-tr:hover td{background:#fafafa}
-.footer{text-align:center;padding:16px;color:#bbb;font-size:11px;border-top:1px solid #f0f0f0}
-@media print{body{background:#fff;padding:5px}.container{box-shadow:none}}
+table{border-collapse:collapse;font-size:13px;white-space:nowrap}
+th{padding:10px 12px;text-align:center;font-weight:600;border:1px solid #e8e8e8;min-width:68px;line-height:1.4}
+th:first-child{text-align:left;min-width:80px;position:sticky;left:0;z-index:2;background:#f7f8fa}
+th:last-child{background:#f0f5ff;color:#1d39c4;border-left:2px solid #adc6ff;min-width:72px}
+td{padding:7px 10px;border:1px solid #e8e8e8;font-size:13px;text-align:center}
+td:first-child{text-align:left;position:sticky;left:0;z-index:1}
+td:last-child{border-left:2px solid #adc6ff}
+tr:hover td{filter:brightness(0.97)}
+.footer{text-align:center;padding:14px;color:#bbb;font-size:11px;border-top:1px solid #f0f0f0;line-height:1.8}
+@media print{
+  body{background:#fff;padding:4px}
+  .container{box-shadow:none;border-radius:0}
+  .header{padding:14px 20px}
+  .body{padding:12px 16px}
+  th:first-child,td:first-child{position:static}
+}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>📋 ${monthLabel} 考勤表</h1>
-    <p>客服部门 · 值班考勤记录</p>
+    <h1>📋 ${monthLabel} 值班考勤表</h1>
+    <div class="header-meta">
+      <span>📌 部门：客服部</span>
+      <span>👤 共 ${persons.length} 人</span>
+      <span>📅 排班天数：${dates.length} 天</span>
+      <span>🕐 生成时间：${new Date().toLocaleString('zh-CN')}</span>
+    </div>
   </div>
   <div class="body">
+    ${missingHtml}
+    ${legendHtml}
     <table>
-      <thead><tr><th>姓名</th>${thCells}</tr></thead>
+      <thead>
+        <tr>
+          <th style="background:#f7f8fa">姓名</th>
+          ${thCells}
+          <th style="background:#f0f5ff;color:#1d39c4;border-left:2px solid #adc6ff">合计<br><span style="font-weight:400;font-size:11px;color:#888">值班天数</span></th>
+        </tr>
+      </thead>
       <tbody>${bodyRows}</tbody>
     </table>
   </div>
-  <div class="footer">生成时间：${new Date().toLocaleString('zh-CN')} · 客服GPT SAE版 需求池看板</div>
+  <div class="footer">
+    <div>值班：当日主值班 &nbsp;|&nbsp; 备班：当日备班待命 &nbsp;|&nbsp; 休息：当日休息</div>
+    <div style="margin-top:2px">客服GPT SAE版 需求池看板 · 自动生成，如有疑问请联系排班管理员</div>
+  </div>
 </div>
 </body>
 </html>`;
