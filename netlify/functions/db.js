@@ -62,6 +62,48 @@ async function initTables() {
         INDEX idx_created (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // ===== 客户群责人表 =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS group_owners (
+        id VARCHAR(64) PRIMARY KEY,
+        customer_id VARCHAR(200) NOT NULL,
+        group_name VARCHAR(500) DEFAULT '',
+        active_status VARCHAR(200) DEFAULT '',
+        package_type VARCHAR(50) DEFAULT '',
+        owner_a VARCHAR(50) NOT NULL,
+        owner_b VARCHAR(50) NOT NULL,
+        sales VARCHAR(100) DEFAULT '',
+        note TEXT,
+        sub_group TINYINT DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS group_sub_config (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sub_group TINYINT NOT NULL,
+        owner_a VARCHAR(50) NOT NULL,
+        owner_b VARCHAR(50) NOT NULL,
+        last_assigned DATETIME DEFAULT NULL,
+        UNIQUE KEY uk_sub_group (sub_group)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // 插入初始4个子组（已存在则忽略）
+    const initSubGroups = [
+      [1, '臧东', '杨国桦'],
+      [2, '杨国桦', '臧东'],
+      [3, '李和枫', '黄科智'],
+      [4, '黄科智', '李和枫']
+    ];
+    for (const [sg, a, b] of initSubGroups) {
+      try {
+        await conn.execute(
+          "INSERT IGNORE INTO group_sub_config (sub_group, owner_a, owner_b) VALUES (?,?,?)",
+          [sg, a, b]
+        );
+      } catch(e) { /* 忽略 */ }
+    }
   } finally {
     conn.release();
   }

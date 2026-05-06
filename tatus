@@ -1,0 +1,213 @@
+[33mcommit 523845e2f6934df003aab26d037184e679f56b9e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Tue Apr 28 16:06:01 2026 +0800
+
+    feat: 问题记录搜索、AI售后助手、附件上传、排班表等功能
+    
+    - 问题记录列表新增问题描述模糊搜索
+    - 新增AI售后助手（向量语义检索+大模型回答）
+    - 问题记录支持附件上传与预览
+    - 新增排班表模块
+    - 需求表新增提出人字段
+    - 需求描述支持Markdown优化格式
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit ca1b78b14dac2be379051f17faee8670e9a5af34[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Apr 9 14:45:57 2026 +0800
+
+    修复弹窗关闭和编辑问题，排班组别改为A/B组，API防缓存
+    
+    - 修复弹窗重复打开无法关闭的问题（改用remove彻底删除DOM）
+    - 修复编辑变新增的bug（_editId赋值顺序修正）
+    - 排班组别从第一组/第二组改为A组/B组
+    - 所有GET请求添加时间戳防浏览器缓存
+    - 排班表新增HTML网页导出功能
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit fb2a9203680ed564711860d9ee78d86aa8d4e69d[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Apr 9 11:13:30 2026 +0800
+
+    新增排班表和客户问题记录模块
+    
+    - 新增排班表Tab：月份切换、快速生成排班、新增/编辑/删除、HTML网页导出
+    - 新增客户问题记录Tab：统计卡片、新增/编辑/删除、快速标记已解决
+    - 后端新增排班表和问题记录的飞书API路由和字段映射
+    - 套餐类型：专业版/团队版/臻享版/尊享版
+    - 需求认领人改为下拉选择+手动输入
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 78351c125d7bb820a7fdb2b88c899d6350afae5d[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Apr 1 10:57:25 2026 +0800
+
+    人员任务增加待上线状态统计与部署文档
+    
+    - 人员任务卡片新增待上线状态统计（紫色）
+    - 新增DEPLOY.md代码提交与部署指南
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 8caefeeaa70121917161ae7e1de87a783d35844e[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Fri Mar 27 16:37:41 2026 +0800
+
+    人员任务点击需求名称可查看详情
+
+[33mcommit edbd099ae2685749538719601265841c4ff958c1[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Fri Mar 27 16:14:38 2026 +0800
+
+    修复飞书token失效问题：自动刷新重试
+
+[33mcommit bffb8d418f27e8414d8884c27bb6472d68cc0167[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Fri Mar 27 15:10:23 2026 +0800
+
+    新增子需求功能与PRD文档
+    
+    - 支持主需求下创建子需求（URQ-N-M编号格式）
+    - 需求列表支持展开/折叠查看子需求
+    - 开发看板父需求灰色分组头+子需求蓝色边框卡片
+    - 人员任务按层级展开/折叠显示子需求
+    - 统计卡片区分主需求和子需求计数
+    - 子需求认领人自动合并同步到父需求
+    - 父需求进度自动聚合为子需求平均值
+    - 删除主需求时级联删除子需求
+    - 重新编号支持父子层级
+    - 新增PRD.md产品需求文档(v2.0)
+    - 新增skill.md功能清单文档
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit 23a5c708b0e1a1ea96594c82be9b85b5dcd9acdd[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Tue Mar 24 17:04:31 2026 +0800
+
+    新增待上线状态与Playwright自动化测试框架
+    
+    - 需求状态增加「待上线」选项（筛选、表单、看板列、统计卡片）
+    - 集成 Playwright 自动化测试，覆盖需求列表、看板、人员任务、今日收集、新增编辑、认领管理
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+[33mcommit c47fc10ca4fa18bbd11837c086fd11b10ea2800a[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Tue Mar 17 18:31:01 2026 +0800
+
+    页面跳转优化
+
+[33mcommit fd5af069e6f29697723b5b2be9435af9b72b6b2a[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Tue Mar 17 18:14:52 2026 +0800
+
+    需求列表状态统计优化与看板跳转联动
+    
+    - 状态统计卡片与开发看板状态一致（待开始、开发中、联调中、测试中、已上线、已暂缓）
+    - 点击状态卡片跳转到开发看板并自动筛选对应状态
+    - 从开发看板切回需求列表时自动重置筛选条件
+    - 状态卡片增加悬停效果提升交互体验
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 7563c8c120498b743ab56a609ccecc0f70653112[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Mon Mar 16 14:22:52 2026 +0800
+
+    需求看板列表增加分页
+
+[33mcommit 0566f66d2e7549f3a1520e2a55a34355373eca17[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Fri Mar 13 17:23:21 2026 +0800
+
+    新增所属计划动态管理：支持手动新增和删除计划
+
+[33mcommit 4666dde7d0d7ecd8723e1c2c804da2520fc6ca83[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Mar 12 18:16:09 2026 +0800
+
+    迁移到 Express 独立服务，支持部署到 Linux 服务器
+    
+    - 新增 server.js，用 Express 替代 Netlify Functions
+    - 前端 API 路径改为 /api/feishu
+    - package.json 更新依赖为 express
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit c8a95db2b7063d843f82d1b159bd8a8eab8f8993[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Mar 12 18:02:11 2026 +0800
+
+    性能优化：Token缓存、乐观更新、并行加载
+    
+    - feishu.js: Token 内存缓存1.5小时，减少每次请求额外RTT
+    - feishu.js: 新增 ?table=all 接口，并行拉取需求+今日收集两张表
+    - index.html: 初始化一次请求同时加载两张表数据
+    - index.html: 增删改做乐观更新，本地立即生效再后台同步
+    - index.html: 今日收集切Tab有缓存时直接渲染，不阻塞等待
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit f341ccf1270f7a8c849d5d4f193ca4f5a6fb10f5[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Mar 12 17:44:58 2026 +0800
+
+    修复查看需求时 marked.parse 异常导致的报错
+
+[33mcommit 6f3fd98633ec7926904b61d7ce51aba845b428a1[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Thu Mar 12 17:31:12 2026 +0800
+
+    新增今日收集飞书联动、需求关联、多人认领等功能
+    
+    - 今日收集改用飞书API存储（多人协作）
+    - 今日收集与需求列表通过 reqId 关联，转需求后自动回写
+    - 需求已上线时今日收集对应条目自动移至已关闭列
+    - 支持多人认领、认领人可删除
+    - 需求描述支持 Markdown 渲染
+    - 新增提出时间字段、反馈客户ID字段
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[33mcommit 8f02d621addbab0021c802ffc5b0eef989cd32cd[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 16:28:12 2026 +0800
+
+    修复格式问题
+
+[33mcommit 9d42aad8511bdd99a83911a2a6014e304504db76[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 16:25:31 2026 +0800
+
+    修复格式问题
+
+[33mcommit bb37ee9daa13ec5a4e0e862900ab6a780e7f9acb[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 16:10:22 2026 +0800
+
+    修复所有日期格式问题
+
+[33mcommit a6d414a57c7ef0bd0d26ef8073d2d6aa09567ed7[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 15:53:26 2026 +0800
+
+    修复日期格式问题
+
+[33mcommit 5a517bed94710f96cfc6f77cb1b6c96b760a924c[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 15:43:55 2026 +0800
+
+    解决数据展示问题
+
+[33mcommit da8cb86b8d83ec341b8d3eff7225fbc8375c8d07[m
+Author: yanshijun <yanshijun1111@163.com>
+Date:   Wed Mar 11 15:35:13 2026 +0800
+
+    解决数据展示问题
+
+[33mcommit 489a665e2e2985038f44b120e07c0e22659cc228[m
+Author: y

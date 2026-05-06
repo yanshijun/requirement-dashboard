@@ -11,7 +11,8 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@netlify/blobs@^8.1.0"
+        "npm:@playwright/test@^1.58.2",
+        "npm:express@^4.19.2"
       ]
     }
   }

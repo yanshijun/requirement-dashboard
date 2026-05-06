@@ -188,6 +188,12 @@ tr:hover td{background:#fafbff}
 .iss-attach-uploading{position:absolute;inset:0;background:rgba(255,255,255,.7);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#faad14}
 .iss-preview-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
 .iss-preview-img{max-width:90vw;max-height:85vh;border-radius:8px;display:block}
+.grp-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.grp-toolbar select,.grp-toolbar input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;color:#333}
+.grp-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.grp-stat{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.grp-stat .grp-num{font-size:24px;font-weight:700}
+.grp-stat .grp-lbl{font-size:11px;color:#888;margin-top:2px}
 </style>
 </head>
 <body>
@@ -219,6 +225,7 @@ tr:hover td{background:#fafbff}
   <div class="tab" onclick="switchTab('feedback',this)">🗒 今日收集</div>
   <div class="tab" onclick="switchTab('schedule',this)">📅 排班表</div>
   <div class="tab" onclick="switchTab('issues',this)">📝 问题记录</div>
+  <div class="tab" onclick="switchTab('groups',this)">👥 客户群责人</div>
 </div>
 
 <div class="content" id="mainContent">
@@ -425,6 +432,9 @@ let _schLoaded = false;
 let _schMonth = new Date().toISOString().slice(0,7); // YYYY-MM
 let issuesData = [];
 let _issLoaded = false;
+let groupsData = [];
+let _grpLoaded = false;
+let _grpSearchVal = '';
 
 // ===== 子需求助手函数 =====
 function getChildren(parentId) {
@@ -937,6 +947,15 @@ function switchTab(tab,el) {
     } else {
       document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
       loadIssues();
+    }
+  } else if (tab === 'groups') {
+    if (toolbar) toolbar.style.display = 'none';
+    if (_grpLoaded) {
+      renderGroups();
+      loadGroups(true);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+      loadGroups();
     }
   } else {
     if (toolbar) toolbar.style.display = '';
@@ -2534,6 +2553,317 @@ async function kbAsk() {
   if (btn) { btn.disabled = false; btn.textContent = '发送'; }
   renderKbHistory();
 }
+
+// ===== 客户群责人 =====
+async function grpApi(action, body) {
+  const isGet = !body;
+  const url = `/api/groups?action=${action}&_=${Date.now()}`;
+  const opts = isGet ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadGroups(silent = false) {
+  try {
+    groupsData = await grpApi('list');
+    _grpLoaded = true;
+    renderGroups();
+  } catch(e) {
+    if (!silent) document.getElementById('mainContent').innerHTML = `<div class="err-box">加载失败：${e.message}</div>`;
+  }
+}
+
+function renderGroups() {
+  if (curTab !== 'groups') return;
+  const kw = _grpSearchVal.trim().toLowerCase();
+  const pkgFilter = (document.getElementById('grpPkgFilter') || {}).value || '';
+  const ownerFilter = (document.getElementById('grpOwnerFilter') || {}).value || '';
+
+  const filtered = groupsData.filter(d => {
+    if (pkgFilter && d.packageType !== pkgFilter) return false;
+    if (ownerFilter && d.ownerA !== ownerFilter && d.ownerB !== ownerFilter) return false;
+    if (kw && !(
+      (d.customerId || '').toLowerCase().includes(kw) ||
+      (d.groupName || '').toLowerCase().includes(kw) ||
+      (d.ownerA || '').toLowerCase().includes(kw) ||
+      (d.ownerB || '').toLowerCase().includes(kw) ||
+      (d.sales || '').toLowerCase().includes(kw)
+    )) return false;
+    return true;
+  });
+
+  // stats
+  const total = groupsData.length;
+  const pkgCounts = {};
+  const subCounts = {};
+  groupsData.forEach(d => {
+    if (d.packageType) pkgCounts[d.packageType] = (pkgCounts[d.packageType] || 0) + 1;
+    const sg = d.subGroup || 0;
+    subCounts[sg] = (subCounts[sg] || 0) + 1;
+  });
+
+  // owner options
+  const owners = [...new Set(groupsData.flatMap(d => [d.ownerA, d.ownerB].filter(Boolean)))].sort();
+  const ownerOpts = owners.map(o => `<option value="${o}" ${ownerFilter===o?'selected':''}>${o}</option>`).join('');
+
+  // pkg options
+  const pkgs = [...new Set(groupsData.map(d => d.packageType).filter(Boolean))].sort();
+  const pkgOpts = pkgs.map(p => `<option value="${p}" ${pkgFilter===p?'selected':''}>${p}</option>`).join('');
+
+  const statsHtml = `
+    <div class="grp-stats">
+      <div class="grp-stat"><div class="grp-num" style="color:#3370ff">${total}</div><div class="grp-lbl">总群数</div></div>
+      ${Object.entries(pkgCounts).map(([k,v]) => `<div class="grp-stat"><div class="grp-num" style="color:#52c41a">${v}</div><div class="grp-lbl">${k}</div></div>`).join('')}
+      ${Object.entries(subCounts).filter(([k])=>k>0).map(([k,v]) => `<div class="grp-stat"><div class="grp-num" style="color:#722ed1">${v}</div><div class="grp-lbl">子组${k}</div></div>`).join('')}
+    </div>`;
+
+  const rows = filtered.map(d => `
+    <tr>
+      <td>${d.customerId || ''}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(d.groupName||'').replace(/"/g,'&quot;')}">${d.groupName || ''}</td>
+      <td>${d.activeStatus || ''}</td>
+      <td>${d.packageType ? `<span class="tag tag-s1">${d.packageType}</span>` : ''}</td>
+      <td><b>${d.ownerA || ''}</b></td>
+      <td>${d.ownerB || ''}</td>
+      <td>${d.sales || ''}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(d.note||'').replace(/"/g,'&quot;')}">${d.note || ''}</td>
+      <td><div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="openGrpEdit(${JSON.stringify(d).replace(/"/g,'&quot;')})">编辑</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteGrpItem('${d.id}')">删除</button>
+      </div></td>
+    </tr>`).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="grp-toolbar">
+      <input type="text" placeholder="🔍 搜索客户ID/群名/责任人/销售" value="${_grpSearchVal.replace(/"/g,'&quot;')}"
+        oninput="_grpSearchVal=this.value;renderGroups()" style="width:240px">
+      <select id="grpPkgFilter" onchange="_grpSearchVal=document.getElementById('grpSearch')?document.getElementById('grpSearch').value:_grpSearchVal;renderGroups()">
+        <option value="">全部套餐</option>${pkgOpts}
+      </select>
+      <select id="grpOwnerFilter" onchange="renderGroups()">
+        <option value="">全部责任人</option>${ownerOpts}
+      </select>
+      <button class="btn btn-primary" onclick="openGrpAdd()">＋ 新增群</button>
+      <button class="btn btn-ghost" onclick="openGrpConfig()">⚙️ 子组配置</button>
+      <button class="btn btn-ghost" onclick="loadGroups()">🔄 刷新</button>
+    </div>
+    ${statsHtml}
+    <div class="tbl-wrap">
+      <div class="tbl-info">共 ${filtered.length} 条${filtered.length < total ? `（已筛选，总 ${total} 条）` : ''}</div>
+      <table>
+        <thead><tr>
+          <th>客户ID</th><th>群名</th><th>活跃情况</th><th>套餐类型</th>
+          <th>责任人A</th><th>责任人B</th><th>对应销售</th><th>备注</th><th>操作</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="9" class="empty">暂无数据</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+async function openGrpAdd() {
+  let nextOwner = { ownerA: '', ownerB: '', subGroup: '' };
+  try { nextOwner = await grpApi('next-owner', {}); } catch(e) {}
+  _grpEditId = null;
+  _grpNextSubGroup = nextOwner.subGroup || null;
+  document.getElementById('grpModal').style.display = 'flex';
+  document.getElementById('grpModalTitle').textContent = '新增群';
+  document.getElementById('gfCustomerId').value = '';
+  document.getElementById('gfGroupName').value = '';
+  document.getElementById('gfActiveStatus').value = '';
+  document.getElementById('gfPackageType').value = '';
+  document.getElementById('gfOwnerA').value = nextOwner.ownerA || '';
+  document.getElementById('gfOwnerB').value = nextOwner.ownerB || '';
+  document.getElementById('gfSales').value = '';
+  document.getElementById('gfNote').value = '';
+  document.getElementById('gfNextHint').textContent = nextOwner.ownerA ? `轮转分配：子组${nextOwner.subGroup}（${nextOwner.ownerA} / ${nextOwner.ownerB}）` : '';
+}
+
+function openGrpEdit(d) {
+  _grpEditId = d.id;
+  document.getElementById('grpModal').style.display = 'flex';
+  document.getElementById('grpModalTitle').textContent = '编辑群';
+  document.getElementById('gfCustomerId').value = d.customerId || '';
+  document.getElementById('gfGroupName').value = d.groupName || '';
+  document.getElementById('gfActiveStatus').value = d.activeStatus || '';
+  document.getElementById('gfPackageType').value = d.packageType || '';
+  document.getElementById('gfOwnerA').value = d.ownerA || '';
+  document.getElementById('gfOwnerB').value = d.ownerB || '';
+  document.getElementById('gfSales').value = d.sales || '';
+  document.getElementById('gfNote').value = d.note || '';
+  document.getElementById('gfNextHint').textContent = '';
+}
+
+async function saveGrpItem() {
+  const customerId = document.getElementById('gfCustomerId').value.trim();
+  if (!customerId) { alert('客户ID不能为空'); return; }
+  const body = {
+    customerId,
+    groupName: document.getElementById('gfGroupName').value.trim(),
+    activeStatus: document.getElementById('gfActiveStatus').value.trim(),
+    packageType: document.getElementById('gfPackageType').value,
+    ownerA: document.getElementById('gfOwnerA').value.trim(),
+    ownerB: document.getElementById('gfOwnerB').value.trim(),
+    sales: document.getElementById('gfSales').value.trim(),
+    note: document.getElementById('gfNote').value.trim()
+  };
+  // 新增时把轮转预填的子组编号一起传，确保 last_assigned 被更新
+  if (!_grpEditId && _grpNextSubGroup) body.autoSubGroup = _grpNextSubGroup;
+  const btn = document.getElementById('grpSaveBtn');
+  btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    if (_grpEditId) {
+      await grpApi('update', { ...body, id: _grpEditId });
+    } else {
+      await grpApi('add', body);
+    }
+    document.getElementById('grpModal').style.display = 'none';
+    _grpNextSubGroup = null;
+    await loadGroups(true);
+  } catch(e) {
+    alert('保存失败：' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '保存';
+}
+
+async function deleteGrpItem(id) {
+  if (!confirm('确认删除该群记录？')) return;
+  try {
+    await grpApi('delete', { id });
+    await loadGroups(true);
+  } catch(e) {
+    alert('删除失败：' + e.message);
+  }
+}
+
+let _grpEditId = null;
+let _grpNextSubGroup = null;
+let _grpConfigData = [];
+
+async function openGrpConfig() {
+  try {
+    _grpConfigData = await grpApi('config-list', {});
+  } catch(e) {
+    alert('加载子组配置失败：' + e.message); return;
+  }
+  renderGrpConfig();
+  document.getElementById('grpConfigModal').style.display = 'flex';
+}
+
+function renderGrpConfig() {
+  const rows = _grpConfigData.map((c, i) => `
+    <tr>
+      <td style="text-align:center;font-weight:700">子组${c.subGroup}</td>
+      <td><input class="grp-cfg-a" data-idx="${i}" value="${c.ownerA||''}" style="width:100%;padding:5px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px"></td>
+      <td><input class="grp-cfg-b" data-idx="${i}" value="${c.ownerB||''}" style="width:100%;padding:5px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px"></td>
+      <td style="font-size:12px;color:#aaa">${c.lastAssigned ? new Date(c.lastAssigned).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '未分配'}</td>
+    </tr>`).join('');
+  document.getElementById('grpConfigBody').innerHTML = rows;
+}
+
+async function saveGrpConfig() {
+  const aInputs = document.querySelectorAll('.grp-cfg-a');
+  const bInputs = document.querySelectorAll('.grp-cfg-b');
+  const configs = _grpConfigData.map((c, i) => ({
+    id: c.id,
+    ownerA: aInputs[i]?.value.trim() || c.ownerA,
+    ownerB: bInputs[i]?.value.trim() || c.ownerB
+  }));
+  const btn = document.getElementById('grpCfgSaveBtn');
+  btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    await grpApi('config-update', { configs });
+    document.getElementById('grpConfigModal').style.display = 'none';
+    await loadGroups(true);
+  } catch(e) {
+    alert('保存失败：' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '保存';
+}
+
+async function addGrpSubGroup() {
+  const ownerA = document.getElementById('gfNewOwnerA').value.trim();
+  const ownerB = document.getElementById('gfNewOwnerB').value.trim();
+  if (!ownerA || !ownerB) { alert('责任人A和B不能为空'); return; }
+  try {
+    await grpApi('config-add', { ownerA, ownerB });
+    _grpConfigData = await grpApi('config-list', {});
+    renderGrpConfig();
+    document.getElementById('gfNewOwnerA').value = '';
+    document.getElementById('gfNewOwnerB').value = '';
+  } catch(e) {
+    alert('添加失败：' + e.message);
+  }
+}
 </script>
+
+<!-- 客户群责人 新增/编辑 弹窗 -->
+<div class="modal-bg" id="grpModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="grpModalTitle">新增群</h2>
+      <button class="modal-close" onclick="document.getElementById('grpModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="gfNextHint" style="font-size:12px;color:#3370ff;margin-bottom:12px;min-height:18px"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>客户ID <span style="color:red">*</span></label><input id="gfCustomerId" placeholder="请输入客户ID"></div>
+        <div class="form-row"><label>套餐类型</label>
+          <select id="gfPackageType">
+            <option value="">请选择</option>
+            <option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row"><label>群名</label><input id="gfGroupName" placeholder="客户群名称"></div>
+      <div class="form-row"><label>活跃情况</label><input id="gfActiveStatus" placeholder="如：活跃/沉默/流失风险"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>责任人A（主责）</label><input id="gfOwnerA" placeholder="自动填入，可修改"></div>
+        <div class="form-row"><label>责任人B（副责）</label><input id="gfOwnerB" placeholder="自动填入，可修改"></div>
+      </div>
+      <div class="form-row"><label>对应销售</label><input id="gfSales" placeholder="销售姓名"></div>
+      <div class="form-row"><label>备注</label><textarea id="gfNote" placeholder="备注信息" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('grpModal').style.display='none'">取消</button>
+      <button class="btn btn-primary" id="grpSaveBtn" onclick="saveGrpItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 子组配置弹窗 -->
+<div class="modal-bg" id="grpConfigModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h2>子组配置</h2>
+      <button class="modal-close" onclick="document.getElementById('grpConfigModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:#888;margin-bottom:12px">配置每个子组的责任人A/B，新增群时按最久未分配的子组轮转。</p>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr>
+          <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8;width:70px">子组</th>
+          <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8">责任人A</th>
+          <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8">责任人B</th>
+          <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8;width:100px">最后分配</th>
+        </tr></thead>
+        <tbody id="grpConfigBody"></tbody>
+      </table>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#444">新增子组</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="gfNewOwnerA" placeholder="责任人A" style="flex:1;padding:6px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px">
+          <input id="gfNewOwnerB" placeholder="责任人B" style="flex:1;padding:6px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px">
+          <button class="btn btn-ghost btn-sm" onclick="addGrpSubGroup()">＋ 添加</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('grpConfigModal').style.display='none'">取消</button>
+      <button class="btn btn-primary" id="grpCfgSaveBtn" onclick="saveGrpConfig()">保存</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

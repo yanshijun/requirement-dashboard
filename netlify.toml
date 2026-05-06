@@ -9,8 +9,23 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "/api/feishu"
+  to = "/.netlify/functions/feishu"
+  status = 200
+
+[[redirects]]
+  from = "/api/kb"
+  to = "/.netlify/functions/kb"
+  status = 200
+
+[[redirects]]
   from = "/api/upload"
   to = "/.netlify/functions/upload"
+  status = 200
+
+[[redirects]]
+  from = "/api/groups"
+  to = "/.netlify/functions/groups"
   status = 200
 
 [[headers]]
