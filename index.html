@@ -1825,6 +1825,7 @@ function renderSchedule() {
     <button class="btn btn-primary" onclick="openSchGenerate()">⚡ 快速生成排班</button>
     <button class="btn btn-success" onclick="openSchAdd()">＋ 新增排班</button>
     <button class="btn btn-ghost" onclick="exportSchHtml()">📄 导出网页</button>
+    <button class="btn btn-ghost" onclick="exportAttendance()">📊 考勤导出</button>
     <button class="btn btn-ghost" onclick="loadSchedule()">🔄 刷新</button>
   </div>`;
 
@@ -2079,6 +2080,97 @@ th{background:#f7f8fa;padding:10px 16px;text-align:left;font-weight:600;color:#5
   const a = document.createElement('a');
   a.href = url;
   a.download = `排班表_${_schMonth}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAttendance() {
+  const [y, m] = _schMonth.split('-').map(Number);
+  const monthLabel = `${y}年${m}月`;
+  const monthData = scheduleData.filter(d => d.date && d.date.startsWith(_schMonth)).sort((a, b) => a.date.localeCompare(b.date));
+  if (!monthData.length) { alert('本月暂无排班数据'); return; }
+
+  const dates = [...new Set(monthData.map(d => d.date))].sort();
+
+  const personSet = new Set();
+  monthData.forEach(d => {
+    if (d.onDuty) d.onDuty.split(/[,，、]/).map(n => n.trim()).filter(Boolean).forEach(n => personSet.add(n));
+    if (d.backup) d.backup.split(/[,，、]/).map(n => n.trim()).filter(Boolean).forEach(n => personSet.add(n));
+  });
+  const persons = [...personSet];
+
+  const dutyMap = {};
+  monthData.forEach(d => {
+    if (!dutyMap[d.date]) dutyMap[d.date] = { onDuty: new Set(), backup: new Set() };
+    if (d.onDuty) d.onDuty.split(/[,，、]/).map(n => n.trim()).filter(Boolean).forEach(n => dutyMap[d.date].onDuty.add(n));
+    if (d.backup) d.backup.split(/[,，、]/).map(n => n.trim()).filter(Boolean).forEach(n => dutyMap[d.date].backup.add(n));
+  });
+
+  const weekdayMap = {};
+  monthData.forEach(d => { weekdayMap[d.date] = d.weekday || ''; });
+
+  const thCells = dates.map(d => {
+    const [dy, dm, dd] = d.split('-').map(Number);
+    return `<th>${dy}/${dm}/${dd}<br><span style="font-weight:400;color:#888;font-size:11px">${weekdayMap[d]||''}</span></th>`;
+  }).join('');
+
+  const bodyRows = persons.map(name => {
+    const cells = dates.map(date => {
+      let val = '休息', color = '#aaa', bg = '';
+      if (dutyMap[date]) {
+        if (dutyMap[date].onDuty.has(name)) { val = '值班'; color = '#1677ff'; bg = '#e6f4ff'; }
+        else if (dutyMap[date].backup.has(name)) { val = '备班'; color = '#d46b08'; bg = '#fff7e6'; }
+      }
+      return `<td style="text-align:center;background:${bg};color:${color};font-weight:${val!=='休息'?600:400}">${val}</td>`;
+    }).join('');
+    return `<tr><td style="font-weight:600;white-space:nowrap;padding:8px 14px">${name}</td>${cells}</tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${monthLabel} 考勤表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;padding:30px;color:#1a1a2e}
+.container{max-width:100%;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
+.header{background:linear-gradient(135deg,#1d2b4f,#3370ff);color:#fff;padding:24px 40px;text-align:center}
+.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.header p{font-size:12px;opacity:.7}
+.body{padding:24px 30px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:#f7f8fa;padding:10px 12px;text-align:center;font-weight:600;color:#444;border:1px solid #e8e8e8;white-space:nowrap;min-width:72px}
+th:first-child{text-align:left;min-width:80px}
+td{padding:8px 12px;border:1px solid #e8e8e8;font-size:13px}
+tr:hover td{background:#fafafa}
+.footer{text-align:center;padding:16px;color:#bbb;font-size:11px;border-top:1px solid #f0f0f0}
+@media print{body{background:#fff;padding:5px}.container{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📋 ${monthLabel} 考勤表</h1>
+    <p>客服部门 · 值班考勤记录</p>
+  </div>
+  <div class="body">
+    <table>
+      <thead><tr><th>姓名</th>${thCells}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  </div>
+  <div class="footer">生成时间：${new Date().toLocaleString('zh-CN')} · 客服GPT SAE版 需求池看板</div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `考勤表_${_schMonth}.html`;
   a.click();
   URL.revokeObjectURL(url);
 }
