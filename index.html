@@ -233,7 +233,7 @@ tr:hover td{background:#fafbff}
 </div>
 
 <!-- 新增/编辑 -->
-<div class="modal-bg" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+<div class="modal-bg" id="modal" style="display:none">
   <div class="modal">
     <div class="modal-head">
       <h2 id="modalTitle">新增需求</h2>
@@ -2342,7 +2342,7 @@ function openIssAdd() {
   _issAttachments = [];
   closeIssModal();
   const today = new Date().toISOString().split('T')[0];
-  const html = `<div class="modal-bg" id="issModal" style="display:flex" onclick="if(event.target===this)closeIssModal()">
+  const html = `<div class="modal-bg" id="issModal" style="display:flex">
     <div class="modal" style="max-width:500px">
       <div class="modal-head"><h2>新增问题记录</h2><button class="modal-close" onclick="closeIssModal()">×</button></div>
       <div class="modal-body">
