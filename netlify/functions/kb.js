@@ -255,13 +255,14 @@ exports.handler = async function (event) {
 
     if (action === "iss-list") {
       const [rows] = await pool.execute(
-        "SELECT id, date_str, customer_id, package_type, desc_text, solution, tags, status, person, in_kb, attachments FROM kb_issues ORDER BY created_at DESC"
+        "SELECT id, date_str, customer_id, package_type, platform, desc_text, solution, tags, status, person, in_kb, attachments FROM kb_issues ORDER BY created_at DESC"
       );
       const items = rows.map(r => ({
         id: r.id,
         date: r.date_str,
         customerId: r.customer_id,
         packageType: r.package_type,
+        platform: r.platform || "",
         desc: r.desc_text,
         solution: r.solution,
         tags: r.tags,
@@ -275,22 +276,22 @@ exports.handler = async function (event) {
 
     if (action === "iss-add") {
       const body = JSON.parse(event.body || "{}");
-      const { date, customerId, packageType, desc, solution, tags, status, person, inKb, attachments } = body;
+      const { date, customerId, packageType, platform, desc, solution, tags, status, person, inKb, attachments } = body;
       console.log('[iss-add] attachments received:', JSON.stringify(attachments));
       if (!desc) return err("缺少问题描述", 400);
       const id = "iss_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
       const embText = `${desc} ${solution || ""} ${tags || ""}`.trim();
       const [emb] = await getEmbeddings([embText]);
       await pool.execute(
-        "INSERT INTO kb_issues (id,date_str,customer_id,package_type,desc_text,solution,tags,status,person,in_kb,attachments,embedding) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [id, date || "", customerId || "", packageType || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), JSON.stringify(emb)]
+        "INSERT INTO kb_issues (id,date_str,customer_id,package_type,platform,desc_text,solution,tags,status,person,in_kb,attachments,embedding) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [id, date || "", customerId || "", packageType || "", platform || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), JSON.stringify(emb)]
       );
       return ok({ ok: true, id });
     }
 
     if (action === "iss-update") {
       const body = JSON.parse(event.body || "{}");
-      const { id, date, customerId, packageType, desc, solution, tags, status, person, inKb, attachments } = body;
+      const { id, date, customerId, packageType, platform, desc, solution, tags, status, person, inKb, attachments } = body;
       if (!id) return err("缺少 id", 400);
       const [old] = await pool.execute("SELECT desc_text, solution, tags FROM kb_issues WHERE id=?", [id]);
       let embJson = null;
@@ -301,11 +302,11 @@ exports.handler = async function (event) {
         embJson = JSON.stringify(emb);
       }
       const sql = embJson
-        ? "UPDATE kb_issues SET date_str=?,customer_id=?,package_type=?,desc_text=?,solution=?,tags=?,status=?,person=?,in_kb=?,attachments=?,embedding=?,updated_at=NOW() WHERE id=?"
-        : "UPDATE kb_issues SET date_str=?,customer_id=?,package_type=?,desc_text=?,solution=?,tags=?,status=?,person=?,in_kb=?,attachments=?,updated_at=NOW() WHERE id=?";
+        ? "UPDATE kb_issues SET date_str=?,customer_id=?,package_type=?,platform=?,desc_text=?,solution=?,tags=?,status=?,person=?,in_kb=?,attachments=?,embedding=?,updated_at=NOW() WHERE id=?"
+        : "UPDATE kb_issues SET date_str=?,customer_id=?,package_type=?,platform=?,desc_text=?,solution=?,tags=?,status=?,person=?,in_kb=?,attachments=?,updated_at=NOW() WHERE id=?";
       const params = embJson
-        ? [date || "", customerId || "", packageType || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), embJson, id]
-        : [date || "", customerId || "", packageType || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), id];
+        ? [date || "", customerId || "", packageType || "", platform || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), embJson, id]
+        : [date || "", customerId || "", packageType || "", platform || "", desc, solution || "", tags || "", status || "未解决", person || "", inKb !== false ? 1 : 0, JSON.stringify(attachments || []), id];
       await pool.execute(sql, params);
       return ok({ ok: true });
     }

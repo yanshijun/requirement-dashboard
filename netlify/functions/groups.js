@@ -100,6 +100,14 @@ exports.handler = async function (event) {
       return ok({ ok: true, subGroup: nextSg });
     }
 
+    // ===== 删除子组配置 =====
+    if (action === "config-delete") {
+      const { id } = body;
+      if (!id) return err("缺少id", 400);
+      await pool.execute("DELETE FROM group_sub_config WHERE id=?", [id]);
+      return ok({ ok: true });
+    }
+
     // ===== 新增群 =====
     if (action === "add") {
       const { customerId, groupName, activeStatus, packageType, ownerA, ownerB, sales, note, autoAssign, autoSubGroup } = body;

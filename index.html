@@ -2134,15 +2134,6 @@ function exportAttendance() {
 
   const isWeekend = (ds) => { const [dy2,dm2,dd2] = ds.split('-').map(Number); const dow = new Date(dy2,dm2-1,dd2).getDay(); return dow===0||dow===6; };
 
-  // 表头列
-  const thCells = dates.map(d => {
-    const [,dm2,dd2] = d.split('-').map(Number);
-    const weekend = isWeekend(d);
-    const bg = weekend ? '#fff7e6' : '#f7f8fa';
-    const color = weekend ? '#d46b08' : '#444';
-    return `<th style="background:${bg};color:${color}">${y}/${dm2}/${dd2}<br><span style="font-weight:400;font-size:11px">${weekdayMap[d]||''}</span></th>`;
-  }).join('');
-
   // 统计：每人值班次数、备班次数
   const dutyCount = {}, backupCount = {};
   persons.forEach(n => { dutyCount[n] = 0; backupCount[n] = 0; });
@@ -2152,117 +2143,94 @@ function exportAttendance() {
     dutyMap[date].backup.forEach(n => { if (backupCount[n] !== undefined) backupCount[n]++; });
   });
 
+  // ===== 生成 SpreadsheetML Excel =====
+  const C = (val, styleId) => `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</Data></Cell>`;
+
+  // 第1行：标题
+  const titleColSpan = dates.length + 2;
+  const titleRow = `<Row ss:Height="28">
+    <Cell ss:MergeAcross="${titleColSpan - 1}" ss:StyleID="sTitle"><Data ss:Type="String">${monthLabel} 值班考勤表　客服部　共${persons.length}人　生成时间：${new Date().toLocaleString('zh-CN')}</Data></Cell>
+  </Row>`;
+
+  // 漏排提示行
+  const missingRow = missingDates.length
+    ? `<Row ss:Height="20">
+        <Cell ss:MergeAcross="${titleColSpan - 1}" ss:StyleID="sMissing"><Data ss:Type="String">⚠ 以下周末日期暂无排班记录，请确认是否漏排：${missingDates.map(d => { const [,dm2,dd2] = d.split('-').map(Number); return `${y}/${dm2}/${dd2}(${weekdayMap[d]})`; }).join('  ')}</Data></Cell>
+      </Row>`
+    : `<Row ss:Height="18">
+        <Cell ss:MergeAcross="${titleColSpan - 1}" ss:StyleID="sOk"><Data ss:Type="String">✓ 本月周末排班记录完整，无漏排</Data></Cell>
+      </Row>`;
+
+  // 表头行
+  const headerCells = dates.map(d => {
+    const [,dm2,dd2] = d.split('-').map(Number);
+    const sid = isWeekend(d) ? 'sThWeekend' : 'sTh';
+    return C(`${y}/${dm2}/${dd2} ${weekdayMap[d]||''}`, sid);
+  }).join('');
+  const headerRow = `<Row ss:Height="22">
+    ${C('姓名', 'sThName')}${headerCells}${C('合计(值班)', 'sThTotal')}
+  </Row>`;
+
   // 数据行
-  const bodyRows = persons.map(name => {
+  const dataRows = persons.map(name => {
     const cells = dates.map(date => {
-      let val = '休息', color = '#bbb', bg = '', fw = 400;
-      if (dutyMap[date]) {
-        if (dutyMap[date].onDuty.has(name))   { val = '值班'; color = '#1677ff'; bg = '#e6f4ff'; fw = 700; }
-        else if (dutyMap[date].backup.has(name)) { val = '备班'; color = '#d46b08'; bg = '#fff7e6'; fw = 600; }
-      }
-      // 周末列底色叠加（未值班时）
-      if (val === '休息' && isWeekend(date)) bg = '#fffbf5';
-      return `<td style="text-align:center;background:${bg};color:${color};font-weight:${fw}">${val}</td>`;
+      if (!dutyMap[date]) return C('休息', isWeekend(date) ? 'sRestWeekend' : 'sRest');
+      if (dutyMap[date].onDuty.has(name)) return C('值班', 'sDuty');
+      if (dutyMap[date].backup.has(name)) return C('备班', 'sBackup');
+      return C('休息', isWeekend(date) ? 'sRestWeekend' : 'sRest');
     }).join('');
     const total = dutyCount[name] || 0;
     const bk = backupCount[name] || 0;
-    const summaryText = total > 0 || bk > 0
-      ? `<span style="color:#1677ff;font-weight:700">${total}</span>${bk>0?`<span style="color:#aaa;font-size:11px">+${bk}备</span>`:''}`
-      : `<span style="color:#ccc">0</span>`;
-    return `<tr>
-      <td style="font-weight:600;white-space:nowrap;padding:8px 14px;background:#fafafa">${name}</td>
-      ${cells}
-      <td style="text-align:center;background:#f0f5ff;border-left:2px solid #adc6ff;white-space:nowrap">${summaryText}</td>
-    </tr>`;
+    const totalText = bk > 0 ? `${total}天(+${bk}备)` : `${total}天`;
+    return `<Row ss:Height="20">${C(name, 'sName')}${cells}${C(totalText, 'sTotal')}</Row>`;
   }).join('');
 
-  // 漏排提示
-  const missingHtml = missingDates.length
-    ? `<div style="margin-bottom:20px;padding:10px 16px;background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;color:#cf1322;font-size:13px">
-        ⚠️ <strong>以下周末日期暂无排班记录，请确认是否漏排：</strong>
-        ${missingDates.map(d => { const [,dm2,dd2] = d.split('-').map(Number); return `<span style="margin:0 6px;font-weight:600">${y}/${dm2}/${dd2}(${weekdayMap[d]})</span>`; }).join('')}
-      </div>`
-    : `<div style="margin-bottom:20px;padding:8px 16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;color:#389e0d;font-size:13px">✅ 本月周末排班记录完整，无漏排</div>`;
+  // 图例行
+  const legendRow = `<Row ss:Height="18">
+    <Cell ss:MergeAcross="${titleColSpan - 1}" ss:StyleID="sLegend"><Data ss:Type="String">图例：值班=当日主值班（蓝色）　备班=当日备班待命（橙色）　休息=当日休息　橙色列背景=周末</Data></Cell>
+  </Row>`;
 
-  // 图例
-  const legendHtml = `<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;font-size:12px;color:#555">
-    <span style="font-weight:600">图例：</span>
-    <span><span style="display:inline-block;width:14px;height:14px;background:#e6f4ff;border:1px solid #91caff;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#1677ff;font-weight:600">值班</span> 当日主值班</span>
-    <span><span style="display:inline-block;width:14px;height:14px;background:#fff7e6;border:1px solid #ffd591;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#d46b08;font-weight:600">备班</span> 当日备班待命</span>
-    <span><span style="display:inline-block;width:14px;height:14px;background:#fff;border:1px solid #e8e8e8;border-radius:3px;vertical-align:middle;margin-right:4px"></span><span style="color:#bbb">休息</span> 当日休息</span>
-    <span><span style="display:inline-block;width:14px;height:14px;background:#fffbf5;border:1px solid #ffd591;border-radius:3px;vertical-align:middle;margin-right:4px"></span>橙色列背景为周末</span>
-  </div>`;
+  const colWidths = [
+    `<Column ss:Width="70"/>`,
+    ...dates.map(d => `<Column ss:Width="${isWeekend(d) ? 72 : 68}"/>`),
+    `<Column ss:Width="80"/>`
+  ].join('');
 
-  const html = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${monthLabel} 考勤表</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;background:#f0f2f5;padding:30px;color:#1a1a2e}
-.container{max-width:100%;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
-.header{background:linear-gradient(135deg,#1d2b4f,#3370ff);color:#fff;padding:24px 40px}
-.header h1{font-size:22px;font-weight:700;margin-bottom:6px}
-.header-meta{display:flex;gap:24px;font-size:12px;opacity:.8;margin-top:4px}
-.body{padding:24px 30px;overflow-x:auto}
-table{border-collapse:collapse;font-size:13px;white-space:nowrap}
-th{padding:10px 12px;text-align:center;font-weight:600;border:1px solid #e8e8e8;min-width:68px;line-height:1.4}
-th:first-child{text-align:left;min-width:80px;position:sticky;left:0;z-index:2;background:#f7f8fa}
-th:last-child{background:#f0f5ff;color:#1d39c4;border-left:2px solid #adc6ff;min-width:72px}
-td{padding:7px 10px;border:1px solid #e8e8e8;font-size:13px;text-align:center}
-td:first-child{text-align:left;position:sticky;left:0;z-index:1}
-td:last-child{border-left:2px solid #adc6ff}
-tr:hover td{filter:brightness(0.97)}
-.footer{text-align:center;padding:14px;color:#bbb;font-size:11px;border-top:1px solid #f0f0f0;line-height:1.8}
-@media print{
-  body{background:#fff;padding:4px}
-  .container{box-shadow:none;border-radius:0}
-  .header{padding:14px 20px}
-  .body{padding:12px 16px}
-  th:first-child,td:first-child{position:static}
-}
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>📋 ${monthLabel} 值班考勤表</h1>
-    <div class="header-meta">
-      <span>📌 部门：客服部</span>
-      <span>👤 共 ${persons.length} 人</span>
-      <span>📅 排班天数：${dates.length} 天</span>
-      <span>🕐 生成时间：${new Date().toLocaleString('zh-CN')}</span>
-    </div>
-  </div>
-  <div class="body">
-    ${missingHtml}
-    ${legendHtml}
-    <table>
-      <thead>
-        <tr>
-          <th style="background:#f7f8fa">姓名</th>
-          ${thCells}
-          <th style="background:#f0f5ff;color:#1d39c4;border-left:2px solid #adc6ff">合计<br><span style="font-weight:400;font-size:11px;color:#888">值班天数</span></th>
-        </tr>
-      </thead>
-      <tbody>${bodyRows}</tbody>
-    </table>
-  </div>
-  <div class="footer">
-    <div>值班：当日主值班 &nbsp;|&nbsp; 备班：当日备班待命 &nbsp;|&nbsp; 休息：当日休息</div>
-    <div style="margin-top:2px">客服GPT SAE版 需求池看板 · 自动生成，如有疑问请联系排班管理员</div>
-  </div>
-</div>
-</body>
-</html>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+<Styles>
+  <Style ss:ID="sTitle"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="13" ss:Color="#1d2b4f"/><Interior ss:Color="#dce8ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#3370ff"/></Borders></Style>
+  <Style ss:ID="sMissing"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#cf1322"/><Interior ss:Color="#fff1f0" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="sOk"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Size="11" ss:Color="#389e0d"/><Interior ss:Color="#f6ffed" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="sThName"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#1d2b4f"/><Interior ss:Color="#e8edf5" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="sTh"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#444444"/><Interior ss:Color="#f7f8fa" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="sThWeekend"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#d46b08"/><Interior ss:Color="#fff7e6" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="sThTotal"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#1d39c4"/><Interior ss:Color="#f0f5ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#adc6ff"/></Borders></Style>
+  <Style ss:ID="sName"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#fafafa" ss:Pattern="Solid"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sDuty"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#1677ff"/><Interior ss:Color="#e6f4ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sBackup"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#d46b08"/><Interior ss:Color="#fff7e6" ss:Pattern="Solid"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sRest"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Size="11" ss:Color="#bbbbbb"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sRestWeekend"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Size="11" ss:Color="#bbbbbb"/><Interior ss:Color="#fffbf5" ss:Pattern="Solid"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sTotal"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#1677ff"/><Interior ss:Color="#f0f5ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#adc6ff"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+  <Style ss:ID="sLegend"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Size="10" ss:Color="#888888"/><Interior ss:Color="#f7f8fa" ss:Pattern="Solid"/></Style>
+</Styles>
+<Worksheet ss:Name="${monthLabel}考勤表">
+  <Table>${colWidths}${titleRow}${missingRow}${headerRow}${dataRows}${legendRow}</Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+    <FreezePanes/><FrozenNoSplit/><SplitHorizontal>3</SplitHorizontal><TopRowBottomPane>3</TopRowBottomPane><SplitVertical>1</SplitVertical><LeftColumnRightPane>1</LeftColumnRightPane>
+  </WorksheetOptions>
+</Worksheet>
+</Workbook>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `考勤表_${_schMonth}.html`;
+  a.download = `考勤表_${_schMonth}.xls`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2307,17 +2275,23 @@ function renderIssues() {
 
   const issSearchVal = document.getElementById('issSearch') ? document.getElementById('issSearch').value : (window._issSearchVal || '');
   window._issSearchVal = issSearchVal;
+  const issPlatformVal = document.getElementById('issPlatformFilter') ? document.getElementById('issPlatformFilter').value : (window._issPlatformVal || '');
+  window._issPlatformVal = issPlatformVal;
+
+  const ISS_PLATFORMS = ['拼多多','抖店','千牛','京麦','微信小店','小红书','1688'];
+  const platformOptions = ['<option value="">全部平台</option>', ...ISS_PLATFORMS.map(p => `<option value="${p}" ${issPlatformVal===p?'selected':''}>${p}</option>`)].join('');
 
   const toolbar = `<div class="iss-toolbar">
     <button class="btn btn-success" onclick="openIssAdd()">＋ 新增记录</button>
     <button class="btn btn-ghost" onclick="loadIssues()">🔄 刷新</button>
+    <select id="issPlatformFilter" onchange="window._issPlatformVal=this.value;renderIssues()">${platformOptions}</select>
     <input id="issSearch" type="text" placeholder="🔍 搜索问题描述…" value="${issSearchVal.replace(/"/g,'&quot;')}" oninput="window._issSearchVal=this.value;renderIssues()" style="width:220px">
     <button class="btn btn-primary" onclick="openKbPanel()" style="margin-left:auto">🤖 AI 售后助手</button>
   </div>`;
 
   const kw = issSearchVal.trim().toLowerCase();
   const sorted = [...issuesData]
-    .filter(d => !kw || (d.desc || '').toLowerCase().includes(kw) || (d.customerId || '').toLowerCase().includes(kw))
+    .filter(d => (!kw || (d.desc || '').toLowerCase().includes(kw) || (d.customerId || '').toLowerCase().includes(kw)) && (!issPlatformVal || d.platform === issPlatformVal))
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const issStatMap = {'未解决':'tag-p1','处理中':'tag-p2','已解决':'tag-p4','已关闭':'tag-s5'};
   const issStatTag = s => `<span class="tag ${issStatMap[s]||'tag-s0'}">${s||'未解决'}</span>`;
@@ -2333,11 +2307,15 @@ function renderIssues() {
     }).join('');
   };
 
+  const ISS_PLATFORM_COLOR = {'拼多多':'#e85d4a','抖店':'#161823','千牛':'#ff6a00','京麦':'#e1251b','微信小店':'#07c160','小红书':'#ff2442','1688':'#ff6600'};
+  const platformTag = p => p ? `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;background:${ISS_PLATFORM_COLOR[p]||'#888'}1a;color:${ISS_PLATFORM_COLOR[p]||'#888'};border:1px solid ${ISS_PLATFORM_COLOR[p]||'#888'}44">${p}</span>` : '<span style="color:#ccc">—</span>';
+
   const rows = sorted.length ? sorted.map(d => `<tr>
     <td style="white-space:nowrap;font-size:12px">${d.date||''}</td>
     <td style="font-weight:500">${d.customerId||''}</td>
     <td>${d.packageType||''}</td>
-    <td style="max-width:300px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
+    <td>${platformTag(d.platform)}</td>
+    <td style="max-width:280px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
     <td style="max-width:160px">${attachCell(d.attachments)}</td>
     <td>${d.person||''}</td>
     <td>${issStatTag(d.status)}</td>
@@ -2346,12 +2324,12 @@ function renderIssues() {
       ${d.status!=='已解决'&&d.status!=='已关闭'?`<button class="btn btn-success btn-sm" onclick="issResolve('${d.id}')">已解决</button>`:''}
       <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}')">删除</button>
     </div></td>
-  </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
+  </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
 
   document.getElementById('mainContent').innerHTML = toolbar + stats + `<div class="tbl-wrap">
-    <div class="tbl-info">${kw ? `搜索到 ${sorted.length} / ${issuesData.length} 条记录` : `共 ${issuesData.length} 条记录`}</div>
+    <div class="tbl-info">${kw||issPlatformVal ? `筛选到 ${sorted.length} / ${issuesData.length} 条记录` : `共 ${issuesData.length} 条记录`}</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>问题描述</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>平台</th><th>问题描述</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
 }
@@ -2373,6 +2351,12 @@ function openIssAdd() {
           <div class="form-row"><label>客户ID</label><input id="issCustomerId" placeholder="客户ID"></div>
           <div class="form-row"><label>套餐类型</label>
             <select id="issPackageType"><option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option></select></div>
+        </div>
+        <div class="form-row"><label>平台 <span style="color:red">*</span></label>
+          <select id="issPlatform">
+            <option value="">请选择平台</option>
+            <option>拼多多</option><option>抖店</option><option>千牛</option><option>京麦</option><option>微信小店</option><option>小红书</option><option>1688</option>
+          </select>
         </div>
         <div class="form-row"><label>问题描述</label><textarea id="issDesc" rows="3" placeholder="描述问题..."></textarea></div>
         <div class="form-row"><label>解决方案</label><textarea id="issSolution" rows="3" placeholder="填写处理步骤或方案（已解决后填写，有助于知识库积累）..."></textarea></div>
@@ -2409,6 +2393,7 @@ function openIssEdit(id) {
   document.getElementById('issDate').value = d.date || '';
   document.getElementById('issCustomerId').value = d.customerId || '';
   document.getElementById('issPackageType').value = d.packageType || '专业版';
+  document.getElementById('issPlatform').value = d.platform || '';
   document.getElementById('issDesc').value = d.desc || '';
   document.getElementById('issSolution').value = d.solution || '';
   document.getElementById('issTags').value = d.tags || '';
@@ -2505,6 +2490,7 @@ async function saveIssItem() {
     date: document.getElementById('issDate').value,
     customerId: document.getElementById('issCustomerId').value.trim(),
     packageType: document.getElementById('issPackageType').value,
+    platform: document.getElementById('issPlatform').value,
     desc: document.getElementById('issDesc').value.trim(),
     solution: document.getElementById('issSolution').value.trim(),
     tags: document.getElementById('issTags').value.trim(),
@@ -2514,6 +2500,7 @@ async function saveIssItem() {
     attachments: _issAttachments.filter(a => a.file_token).map(a => ({ file_token: a.file_token, name: a.name, type: a.type }))
   };
   console.log('[save] attachments:', item.attachments, '_issAttachments:', _issAttachments);
+  if (!item.platform) { alert('请选择平台'); return; }
   if (!item.desc) { alert('请填写问题描述'); return; }
   const modal = document.getElementById('issModal');
   try {
@@ -2942,8 +2929,20 @@ function renderGrpConfig() {
       <td><input class="grp-cfg-a" data-idx="${i}" value="${c.ownerA||''}" style="width:100%;padding:5px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px"></td>
       <td><input class="grp-cfg-b" data-idx="${i}" value="${c.ownerB||''}" style="width:100%;padding:5px 8px;border:1px solid #d9d9d9;border-radius:5px;font-size:13px"></td>
       <td style="font-size:12px;color:#aaa">${c.lastAssigned ? new Date(c.lastAssigned).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '未分配'}</td>
+      <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="deleteGrpSubGroup(${c.id})">删除</button></td>
     </tr>`).join('');
   document.getElementById('grpConfigBody').innerHTML = rows;
+}
+
+async function deleteGrpSubGroup(id) {
+  if (!confirm('确认删除该子组配置？删除后不可恢复。')) return;
+  try {
+    await grpApi('config-delete', { id });
+    _grpConfigData = await grpApi('config-list', {});
+    renderGrpConfig();
+  } catch(e) {
+    alert('删除失败：' + e.message);
+  }
 }
 
 async function saveGrpConfig() {
@@ -3031,6 +3030,7 @@ async function addGrpSubGroup() {
           <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8">责任人A</th>
           <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8">责任人B</th>
           <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8;width:100px">最后分配</th>
+          <th style="padding:8px;background:#f7f8fa;border-bottom:1px solid #e8e8e8;width:60px">操作</th>
         </tr></thead>
         <tbody id="grpConfigBody"></tbody>
       </table>

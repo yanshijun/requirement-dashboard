@@ -226,6 +226,7 @@ function mapFromIssue(record) {
     status: String(f["处理状态"] || "未解决"),
     solution: String(f["解决方案"] || ""),
     tags: String(f["问题标签"] || ""),
+    platform: String(f["平台"] || ""),
     inKb: f["是否入库"] !== false,
     attachments: Array.isArray(f["问题附件"]) ? f["问题附件"].map(a => ({
       file_token: a.file_token || "",
@@ -244,6 +245,7 @@ function mapToIssue(item) {
     "处理状态": String(item.status || "未解决"),
     "解决方案": String(item.solution || ""),
     "问题标签": String(item.tags || ""),
+    "平台": String(item.platform || ""),
     "是否入库": item.inKb !== false
   };
   if (Array.isArray(item.attachments) && item.attachments.length > 0) {

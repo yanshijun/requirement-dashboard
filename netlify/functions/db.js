@@ -27,6 +27,7 @@ async function initTables() {
         date_str VARCHAR(20),
         customer_id VARCHAR(200),
         package_type VARCHAR(50),
+        platform VARCHAR(50) DEFAULT '',
         desc_text TEXT,
         solution TEXT,
         tags VARCHAR(500),
@@ -44,7 +45,8 @@ async function initTables() {
       "ALTER TABLE kb_issues ADD COLUMN customer_id VARCHAR(200)",
       "ALTER TABLE kb_issues ADD COLUMN person VARCHAR(100)",
       "ALTER TABLE kb_issues ADD COLUMN attachments JSON",
-      "ALTER TABLE kb_issues ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+      "ALTER TABLE kb_issues ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+      "ALTER TABLE kb_issues ADD COLUMN platform VARCHAR(50) DEFAULT ''"
     ];
     for (const sql of toAdd) {
       try { await conn.execute(sql); } catch(e) { /* 字段已存在，忽略 */ }
