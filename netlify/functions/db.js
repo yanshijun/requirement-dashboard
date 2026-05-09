@@ -106,6 +106,25 @@ async function initTables() {
         );
       } catch(e) { /* 忽略 */ }
     }
+    // ===== 创新项目 Bug 表 =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS innovation_bugs (
+        id VARCHAR(64) PRIMARY KEY,
+        product VARCHAR(50) NOT NULL COMMENT '所属产品',
+        module VARCHAR(100) DEFAULT '' COMMENT '所属模块',
+        title VARCHAR(500) NOT NULL COMMENT 'Bug标题',
+        description TEXT COMMENT 'Bug描述',
+        attachments JSON COMMENT '附件列表',
+        severity VARCHAR(10) DEFAULT '3级' COMMENT '严重程度',
+        status VARCHAR(20) DEFAULT '待处理' COMMENT '状态',
+        reporter VARCHAR(100) DEFAULT '' COMMENT '提报人',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_product (product),
+        INDEX idx_severity (severity),
+        INDEX idx_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
   } finally {
     conn.release();
   }

@@ -188,6 +188,14 @@ tr:hover td{background:#fafbff}
 .iss-attach-uploading{position:absolute;inset:0;background:rgba(255,255,255,.7);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#faad14}
 .iss-preview-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
 .iss-preview-img{max-width:90vw;max-height:85vh;border-radius:8px;display:block}
+/* ===== 创新项目 ===== */
+.bug-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.bug-toolbar select,.bug-toolbar input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px}
+.bug-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.bug-stat{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.bug-stat .bug-num{font-size:24px;font-weight:700}
+.bug-stat .bug-lbl{font-size:11px;color:#888;margin-top:2px}
+.sev-1{background:#fff1f0;color:#cf1322}.sev-2{background:#fff7e6;color:#fa8c16}.sev-3{background:#fffbe6;color:#d4b106}.sev-4{background:#f6ffed;color:#52c41a}
 .grp-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .grp-toolbar select,.grp-toolbar input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;color:#333}
 .grp-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
@@ -226,6 +234,7 @@ tr:hover td{background:#fafbff}
   <div class="tab" onclick="switchTab('schedule',this)">📅 排班表</div>
   <div class="tab" onclick="switchTab('issues',this)">📝 问题记录</div>
   <div class="tab" onclick="switchTab('groups',this)">👥 客户群责人</div>
+  <div class="tab" onclick="switchTab('bugs',this)">🐛 创新项目</div>
 </div>
 
 <div class="content" id="mainContent">
@@ -956,6 +965,15 @@ function switchTab(tab,el) {
     } else {
       document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
       loadGroups();
+    }
+  } else if (tab === 'bugs') {
+    if (toolbar) toolbar.style.display = 'none';
+    if (_bugsLoaded) {
+      renderBugs();
+      loadBugs(true);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+      loadBugs();
     }
   } else {
     if (toolbar) toolbar.style.display = '';
@@ -2910,6 +2928,9 @@ async function deleteGrpItem(id) {
 
 let _grpEditId = null;
 let _grpNextSubGroup = null;
+let bugsData = [];
+let _bugsLoaded = false;
+let _bugEditId = null;
 let _grpConfigData = [];
 
 async function openGrpConfig() {
@@ -2979,7 +3000,303 @@ async function addGrpSubGroup() {
     alert('添加失败：' + e.message);
   }
 }
+
+// ===== 创新项目 =====
+const BUG_PRODUCTS = ['admin', 'GEO', 'Studio', 'CallFayOne'];
+const BUG_SEVERITIES = ['1级', '2级', '3级', '4级'];
+const BUG_STATUSES = ['待处理', '处理中', '已解决', '已关闭'];
+
+async function bugsApi(action, body) {
+  const isGet = !body;
+  const url = `/api/bugs?action=${action}&_=${Date.now()}`;
+  const opts = isGet ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadBugs(silent = false) {
+  try {
+    bugsData = await bugsApi('list');
+    _bugsLoaded = true;
+    renderBugs();
+  } catch(e) {
+    if (!silent) document.getElementById('mainContent').innerHTML = '<div class="err-box">加载失败：' + e.message + '</div>';
+  }
+}
+
+function renderBugs() {
+  const mc = document.getElementById('mainContent');
+  const fProduct = document.getElementById('bugFProduct') ? document.getElementById('bugFProduct').value : '';
+  const fSev = document.getElementById('bugFSev') ? document.getElementById('bugFSev').value : '';
+  const fStatus = document.getElementById('bugFStatus') ? document.getElementById('bugFStatus').value : '';
+  const fSearch = document.getElementById('bugFSearch') ? document.getElementById('bugFSearch').value : '';
+  const kw = fSearch.trim().toLowerCase();
+
+  let filtered = [...bugsData];
+  if (fProduct) filtered = filtered.filter(d => d.product === fProduct);
+  if (fSev) filtered = filtered.filter(d => d.severity === fSev);
+  if (fStatus) filtered = filtered.filter(d => d.status === fStatus);
+  if (kw) filtered = filtered.filter(d => (d.title||'').toLowerCase().includes(kw) || (d.description||'').toLowerCase().includes(kw) || (d.module||'').toLowerCase().includes(kw));
+
+  // 统计
+  const total = bugsData.length;
+  const sev1 = bugsData.filter(d => d.severity === '1级').length;
+  const sev2 = bugsData.filter(d => d.severity === '2级').length;
+  const pending = bugsData.filter(d => d.status === '待处理').length;
+  const resolved = bugsData.filter(d => d.status === '已解决').length;
+
+  let html = `<div class="bug-toolbar">
+    <select id="bugFProduct" onchange="renderBugs()"><option value="">全部产品</option>${BUG_PRODUCTS.map(p=>`<option ${p===fProduct?'selected':''}>${p}</option>`).join('')}</select>
+    <select id="bugFSev" onchange="renderBugs()"><option value="">全部严重程度</option>${BUG_SEVERITIES.map(s=>`<option ${s===fSev?'selected':''}>${s}</option>`).join('')}</select>
+    <select id="bugFStatus" onchange="renderBugs()"><option value="">全部状态</option>${BUG_STATUSES.map(s=>`<option ${s===fStatus?'selected':''}>${s}</option>`).join('')}</select>
+    <input id="bugFSearch" placeholder="搜索标题/描述/模块" value="${fSearch}" oninput="renderBugs()">
+    <button class="btn btn-success" onclick="openBugAdd()">＋ 新增Bug</button>
+    <button class="btn btn-ghost" onclick="exportBugs()">📥 导出</button>
+    <button class="btn btn-ghost" onclick="loadBugs(true)">🔄</button>
+  </div>`;
+  html += `<div class="bug-stats">
+    <div class="bug-stat"><div class="bug-num">${total}</div><div class="bug-lbl">总数</div></div>
+    <div class="bug-stat"><div class="bug-num" style="color:#cf1322">${sev1}</div><div class="bug-lbl">1级(致命)</div></div>
+    <div class="bug-stat"><div class="bug-num" style="color:#fa8c16">${sev2}</div><div class="bug-lbl">2级(严重)</div></div>
+    <div class="bug-stat"><div class="bug-num" style="color:#1677ff">${pending}</div><div class="bug-lbl">待处理</div></div>
+    <div class="bug-stat"><div class="bug-num" style="color:#52c41a">${resolved}</div><div class="bug-lbl">已解决</div></div>
+  </div>`;
+  html += `<div class="tbl-wrap"><div class="tbl-info">共 ${filtered.length} 条${(kw||fProduct||fSev||fStatus)?` （筛选自 ${total}）`:''}</div>`;
+  if (!filtered.length) { html += '<div class="empty">暂无数据</div></div>'; mc.innerHTML = html; return; }
+  html += `<table><thead><tr><th style="width:90px">产品</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">创建时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
+  for (const d of filtered) {
+    const sevN = (d.severity||'3级').replace('级','');
+    const attC = (d.attachments||[]).length;
+    html += `<tr>
+      <td><span class="tag tag-ur">${_escH(d.product)}</span></td>
+      <td>${_escH(d.module||'')}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(d.title)}">${_escH(d.title)}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(d.description)}">${_escH(d.description||'')}</td>
+      <td><span class="tag sev-${sevN}">${_escH(d.severity||'')}</span></td>
+      <td>${_escH(d.status||'')}</td>
+      <td>${_escH(d.reporter||'')}</td>
+      <td>${attC>0?`<span style="color:#3370ff;cursor:pointer;text-decoration:underline" onclick='previewBugAttList(${JSON.stringify(d.attachments).replace(/'/g,"&#39;")})'>${attC}个</span>`:'-'}</td>
+      <td style="font-size:12px;color:#888">${_fmtBugT(d.createdAt)}</td>
+      <td class="actions"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${JSON.stringify(d).replace(/'/g,"&#39;")})'>编辑</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  mc.innerHTML = html;
+}
+function _escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _fmtBugT(t){if(!t)return'';const d=new Date(t);if(isNaN(d))return String(t);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+
+function openBugAdd(){
+  _bugEditId=null;_bugAttachments=[];
+  document.getElementById('bugModal').style.display='flex';
+  document.getElementById('bugModalTitle').textContent='新增 Bug';
+  document.getElementById('bfProduct').value='admin';
+  document.getElementById('bfModule').value='';
+  document.getElementById('bfTitle').value='';
+  document.getElementById('bfDesc').value='';
+  document.getElementById('bfSeverity').value='3级';
+  document.getElementById('bfStatus').value='待处理';
+  document.getElementById('bfReporter').value='';
+  renderBugAtt();
+  _bindBugModalPaste();
+}
+function openBugEdit(d){
+  _bugEditId=d.id;_bugAttachments=(d.attachments||[]).slice();
+  document.getElementById('bugModal').style.display='flex';
+  document.getElementById('bugModalTitle').textContent='编辑 Bug';
+  document.getElementById('bfProduct').value=d.product||'admin';
+  document.getElementById('bfModule').value=d.module||'';
+  document.getElementById('bfTitle').value=d.title||'';
+  document.getElementById('bfDesc').value=d.description||'';
+  document.getElementById('bfSeverity').value=d.severity||'3级';
+  document.getElementById('bfStatus').value=d.status||'待处理';
+  document.getElementById('bfReporter').value=d.reporter||'';
+  renderBugAtt();
+  _bindBugModalPaste();
+}
+let _bugPasteHandler=null;
+function _bindBugModalPaste(){
+  if(_bugPasteHandler)return;
+  _bugPasteHandler=function(e){
+    const m=document.getElementById('bugModal');
+    if(!m||m.style.display==='none')return;
+    _handleBugPaste(e);
+  };
+  document.addEventListener('paste',_bugPasteHandler);
+}
+let _bugAttachments=[];
+function renderBugAtt(){
+  const w=document.getElementById('bfAttList');
+  if(!_bugAttachments.length){w.innerHTML='<span style="color:#aaa;font-size:12px">暂无附件</span>';return;}
+  w.innerHTML=_bugAttachments.map((a,i)=>{
+    const isImg=a.type&&a.type.startsWith('image/');
+    const icon=isImg?'🖼️':'📎';
+    const thumb=a.uploading
+      ? `<div class="iss-attach-icon" style="color:#faad14">⏳</div>`
+      : `<div class="iss-attach-icon" onclick="previewBugAtt(${i})" title="点击预览/下载">${icon}</div>`;
+    return `<div class="iss-attach-item">${thumb}<div class="iss-attach-name" title="${_escH(a.name)}">${_escH(a.name)}</div><button class="iss-attach-del" onclick="rmBugAtt(${i})">×</button></div>`;
+  }).join('');
+}
+function previewBugAttList(atts){
+  if(!atts||!atts.length)return;
+  if(atts.length===1){previewFeishuFile(atts[0].file_token,atts[0].name||'',atts[0].type||'');return;}
+  document.getElementById('issPreviewModal')?.remove();
+  const items=atts.map((a,i)=>{
+    const icon=(a.type&&a.type.startsWith('image/'))?'🖼️':'📎';
+    return `<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:#f7f8fa;border-radius:6px;cursor:pointer;margin:4px" onclick="document.getElementById('issPreviewModal').remove();previewFeishuFile('${a.file_token}','${_escH(a.name)}','${a.type||''}')">${icon} ${_escH(a.name)}</div>`;
+  }).join('');
+  const html=`<div class="modal-bg" id="issPreviewModal" style="z-index:2100" onclick="if(event.target===this)this.remove()">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-head"><span style="font-weight:600">附件列表</span><button class="modal-close" onclick="document.getElementById('issPreviewModal').remove()">×</button></div>
+      <div style="padding:16px;display:flex;flex-wrap:wrap">${items}</div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+function previewBugAtt(i){
+  const a=_bugAttachments[i];if(!a||!a.file_token)return;
+  previewFeishuFile(a.file_token,a.name||'',a.type||'');
+}
+async function previewFeishuFile(fileToken,name,type){
+  const isImg=type&&type.startsWith('image/');
+  document.getElementById('issPreviewModal')?.remove();
+  const html=`<div class="modal-bg" id="issPreviewModal" style="z-index:2100" onclick="if(event.target===this)this.remove()">
+    <div class="modal" style="max-width:90vw">
+      <div class="modal-head"><span style="font-weight:600">${name}</span><button class="modal-close" onclick="document.getElementById('issPreviewModal').remove()">×</button></div>
+      <div id="issPreviewBody" style="text-align:center;padding:20px;color:#aaa">⏳ 加载中…</div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+  try{
+    const res=await fetch('/api/feishu?action=iss-file-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:fileToken})});
+    const ct=res.headers.get('content-type')||'';
+    const body=document.getElementById('issPreviewBody');if(!body)return;
+    if(isImg){
+      if(ct.includes('application/json')){
+        const data=await res.json();
+        if(data.url)body.innerHTML=`<img src="${data.url}" style="max-width:100%;max-height:70vh;border-radius:6px">`;
+        else body.innerHTML='<span style="color:red">获取图片失败</span>';
+      }else{
+        const blob=await res.blob();
+        body.innerHTML=`<img src="${URL.createObjectURL(blob)}" style="max-width:100%;max-height:70vh;border-radius:6px">`;
+      }
+    }else{
+      let url='/api/feishu?action=iss-file-url';
+      if(ct.includes('application/json')){const d=await res.json();url=d.url||url;}
+      body.innerHTML=`<a href="${url}" target="_blank" class="btn btn-ghost">📥 下载 ${name}</a>`;
+    }
+  }catch(e){
+    const body=document.getElementById('issPreviewBody');if(body)body.innerHTML='<span style="color:red">加载失败：'+e.message+'</span>';
+  }
+}
+function rmBugAtt(i){_bugAttachments.splice(i,1);renderBugAtt();}
+async function onBugDescPaste(e){
+  return _handleBugPaste(e);
+}
+async function onBugAttPaste(e){
+  return _handleBugPaste(e);
+}
+async function _handleBugPaste(e){
+  const items=Array.from((e.clipboardData||window.clipboardData)?.items||[]);
+  const imgItems=items.filter(it=>it.kind==='file'&&it.type.startsWith('image/'));
+  if(!imgItems.length)return;
+  e.preventDefault();
+  for(const it of imgItems){
+    const file=it.getAsFile();if(!file)continue;
+    // 粘贴的图片通常没有文件名，补一个
+    const ext=(file.type.split('/')[1]||'png').toLowerCase();
+    const named=file.name && file.name!=='image.png'
+      ? file
+      : new File([file], `paste_${Date.now()}.${ext}`, {type:file.type});
+    await uploadBugAtt({files:[named]});
+  }
+}
+async function uploadBugAtt(input){
+  const files=Array.from(input.files||[]);if(!files.length)return;
+  for(const file of files){
+    if(file.size>10*1024*1024){alert('文件 '+file.name+' 超过10MB');continue;}
+    try{
+      const reader=new FileReader();
+      const dataUrl=await new Promise((ok,no)=>{reader.onload=()=>ok(reader.result);reader.onerror=no;reader.readAsDataURL(file);});
+      const res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,mimetype:file.type,base64:dataUrl.split(',')[1]})});
+      const data=await res.json();if(data.error)throw new Error(data.error);
+      _bugAttachments.push({name:file.name,type:file.type,file_token:data.file_token});
+    }catch(e){alert('上传 '+file.name+' 失败：'+e.message);}
+  }
+  input.value='';renderBugAtt();
+}
+async function saveBug(){
+  const title=document.getElementById('bfTitle').value.trim();
+  if(!title){alert('Bug标题不能为空');return;}
+  const body={product:document.getElementById('bfProduct').value,module:document.getElementById('bfModule').value.trim(),title,description:document.getElementById('bfDesc').value.trim(),attachments:_bugAttachments,severity:document.getElementById('bfSeverity').value,status:document.getElementById('bfStatus').value,reporter:document.getElementById('bfReporter').value.trim()};
+  const btn=document.getElementById('bugSaveBtn');btn.disabled=true;btn.textContent='保存中…';
+  try{
+    if(_bugEditId)await bugsApi('update',{...body,id:_bugEditId});
+    else await bugsApi('add',body);
+    document.getElementById('bugModal').style.display='none';
+    await loadBugs(true);
+  }catch(e){alert('保存失败：'+e.message);}
+  finally{btn.disabled=false;btn.textContent='保存';}
+}
+async function deleteBug(id){
+  if(!confirm('确认删除该Bug记录？'))return;
+  try{await bugsApi('delete',{id});await loadBugs(true);}catch(e){alert('删除失败：'+e.message);}
+}
+function exportBugs(){
+  if(!bugsData.length){alert('暂无数据可导出');return;}
+  const fp=document.getElementById('bugFProduct')?document.getElementById('bugFProduct').value:'';
+  const fs=document.getElementById('bugFSev')?document.getElementById('bugFSev').value:'';
+  const fst=document.getElementById('bugFStatus')?document.getElementById('bugFStatus').value:'';
+  const kw=(document.getElementById('bugFSearch')?document.getElementById('bugFSearch').value:'').trim().toLowerCase();
+  let rows=[...bugsData];
+  if(fp)rows=rows.filter(d=>d.product===fp);
+  if(fs)rows=rows.filter(d=>d.severity===fs);
+  if(fst)rows=rows.filter(d=>d.status===fst);
+  if(kw)rows=rows.filter(d=>(d.title||'').toLowerCase().includes(kw)||(d.description||'').toLowerCase().includes(kw)||(d.module||'').toLowerCase().includes(kw));
+  const hdr=['所属产品','所属模块','Bug标题','Bug描述','严重程度','状态','提报人','创建时间'];
+  const csv=[hdr.join(','),...rows.map(d=>[d.product,d.module,d.title,d.description,d.severity,d.status,d.reporter,_fmtBugT(d.createdAt)].map(c=>{const s=String(c==null?'':c).replace(/"/g,'""');return /[",\n\r]/.test(s)?`"${s}"`:s;}).join(','))].join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`创新项目Bug_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
 </script>
+
+<!-- 创新项目 Bug 弹窗 -->
+<div class="modal-bg" id="bugModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="bugModalTitle">新增 Bug</h2>
+      <button class="modal-close" onclick="document.getElementById('bugModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row"><label>所属产品 <span style="color:red">*</span></label>
+          <select id="bfProduct"><option>admin</option><option>GEO</option><option>Studio</option><option>CallFayOne</option></select></div>
+        <div class="form-row"><label>所属模块</label><input id="bfModule" placeholder="如：用户管理、报表"></div>
+      </div>
+      <div class="form-row"><label>Bug标题 <span style="color:red">*</span></label><input id="bfTitle" placeholder="请输入Bug标题"></div>
+      <div class="form-row"><label>Bug描述</label><textarea id="bfDesc" placeholder="详细描述问题现象、复现步骤等。可直接 Ctrl+V 粘贴图片到此处" onpaste="onBugDescPaste(event)"></textarea></div>
+      <div class="form-row"><label>问题附件 <span style="color:#aaa;font-weight:400;font-size:11px">支持粘贴或选择文件</span></label>
+        <div id="bfAttList" style="margin-bottom:8px;min-height:30px;padding:8px;border:1px dashed #d9d9d9;border-radius:6px" onpaste="onBugAttPaste(event)" tabindex="0"><span style="color:#aaa;font-size:12px">点击此处后 Ctrl+V 粘贴图片，或下方选择文件</span></div>
+        <input type="file" multiple onchange="uploadBugAtt(this)" style="font-size:12px">
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label>严重程度</label>
+          <select id="bfSeverity"><option>1级</option><option>2级</option><option selected>3级</option><option>4级</option></select></div>
+        <div class="form-row"><label>状态</label>
+          <select id="bfStatus"><option selected>待处理</option><option>处理中</option><option>已解决</option><option>已关闭</option></select></div>
+      </div>
+      <div class="form-row"><label>提报人</label><input id="bfReporter" placeholder="提报人姓名"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('bugModal').style.display='none'">取消</button>
+      <button class="btn btn-primary" id="bugSaveBtn" onclick="saveBug()">保存</button>
+    </div>
+  </div>
+</div>
 
 <!-- 客户群责人 新增/编辑 弹窗 -->
 <div class="modal-bg" id="grpModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">

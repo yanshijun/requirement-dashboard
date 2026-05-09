@@ -28,6 +28,11 @@
   to = "/.netlify/functions/groups"
   status = 200
 
+[[redirects]]
+  from = "/api/bugs"
+  to = "/.netlify/functions/bugs"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
