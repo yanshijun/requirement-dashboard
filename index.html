@@ -189,6 +189,23 @@ tr:hover td{background:#fafbff}
 .iss-preview-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
 .iss-preview-img{max-width:90vw;max-height:85vh;border-radius:8px;display:block}
 /* ===== 创新项目 ===== */
+.bug-drawer{position:fixed;top:0;right:0;width:480px;max-width:100vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.15);z-index:1500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.bug-drawer.open{transform:translateX(0)}
+.bug-drawer-head{padding:18px 20px 14px;border-bottom:1px solid #f0f0f0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
+.bug-drawer-title{font-size:16px;font-weight:700;line-height:1.4;flex:1;color:#1a1a2e}
+.bug-drawer-body{flex:1;overflow-y:auto;padding:20px}
+.bug-drawer-foot{padding:14px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.bug-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:1499;display:none}
+.bug-detail-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.bug-detail-field{margin-bottom:14px}
+.bug-detail-field .field-label{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.bug-detail-field .field-value{font-size:13px;color:#333;line-height:1.6}
+.bug-detail-desc{background:#f7f8fa;border-radius:8px;padding:12px 14px;font-size:13px;color:#333;line-height:1.8;white-space:pre-wrap;word-break:break-all}
+.sev-1{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.sev-2{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.sev-3{background:#e6f4ff;color:#0958d9;border:1px solid #91caff}
+.sev-4{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+tr.bug-row-active td{background:#f0f5ff!important}
 .bug-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .bug-toolbar select,.bug-toolbar input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px}
 .bug-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
@@ -2827,7 +2844,7 @@ function renderGroups() {
   document.getElementById('mainContent').innerHTML = `
     <div class="grp-toolbar">
       <input type="text" placeholder="🔍 搜索客户ID/群名/责任人/销售" value="${_grpSearchVal.replace(/"/g,'&quot;')}"
-        oninput="_grpSearchVal=this.value;renderGroups()" style="width:240px">
+        id="grpSearch" oninput="_grpSearchVal=this.value;renderGroups()" style="width:240px">
       <select id="grpPkgFilter" onchange="_grpSearchVal=document.getElementById('grpSearch')?document.getElementById('grpSearch').value:_grpSearchVal;renderGroups()">
         <option value="">全部套餐</option>${pkgOpts}
       </select>
@@ -2849,6 +2866,11 @@ function renderGroups() {
         <tbody>${rows || '<tr><td colspan="9" class="empty">暂无数据</td></tr>'}</tbody>
       </table>
     </div>`;
+  const inp = document.getElementById('grpSearch');
+  if (inp && document.activeElement !== inp && _grpSearchVal) {
+    inp.focus();
+    inp.setSelectionRange(inp.value.length, inp.value.length);
+  }
 }
 
 async function openGrpAdd() {
@@ -3069,17 +3091,18 @@ function renderBugs() {
   for (const d of filtered) {
     const sevN = (d.severity||'3级').replace('级','');
     const attC = (d.attachments||[]).length;
-    html += `<tr>
+    const dJson = JSON.stringify(d).replace(/'/g,"&#39;");
+    html += `<tr style="cursor:pointer" onclick='openBugDrawer(${dJson})'>
       <td><span class="tag tag-ur">${_escH(d.product)}</span></td>
       <td>${_escH(d.module||'')}</td>
       <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(d.title)}">${_escH(d.title)}</td>
-      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(d.description)}">${_escH(d.description||'')}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:12px" title="${_escH(d.description)}">${_escH(d.description||'')}</td>
       <td><span class="tag sev-${sevN}">${_escH(d.severity||'')}</span></td>
       <td>${_escH(d.status||'')}</td>
       <td>${_escH(d.reporter||'')}</td>
-      <td>${attC>0?`<span style="color:#3370ff;cursor:pointer;text-decoration:underline" onclick='previewBugAttList(${JSON.stringify(d.attachments).replace(/'/g,"&#39;")})'>${attC}个</span>`:'-'}</td>
+      <td onclick="event.stopPropagation()">${attC>0?`<span style="color:#3370ff;cursor:pointer;text-decoration:underline" onclick='previewBugAttList(${JSON.stringify(d.attachments).replace(/'/g,"&#39;")})'>${attC}个</span>`:'-'}</td>
       <td style="font-size:12px;color:#888">${_fmtBugT(d.createdAt)}</td>
-      <td class="actions"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${JSON.stringify(d).replace(/'/g,"&#39;")})'>编辑</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
+      <td class="actions" onclick="event.stopPropagation()"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${dJson})'>编辑</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
     </tr>`;
   }
   html += '</tbody></table></div>';
@@ -3240,6 +3263,37 @@ async function saveBug(){
   }catch(e){alert('保存失败：'+e.message);}
   finally{btn.disabled=false;btn.textContent='保存';}
 }
+const _sevColor={1:'#cf1322',2:'#fa8c16',3:'#1677ff',4:'#52c41a'};
+const _sevLabel={1:'1级·致命',2:'2级·严重',3:'3级·一般',4:'4级·轻微'};
+function openBugDrawer(d){
+  const sevN=parseInt((d.severity||'3级').replace('级',''))||3;
+  const drawer=document.getElementById('bugDrawer');
+  document.getElementById('bugDrawerSev').textContent=_sevLabel[sevN]||d.severity;
+  document.getElementById('bugDrawerSev').style.cssText=`background:${_sevColor[sevN]}22;color:${_sevColor[sevN]};padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid ${_sevColor[sevN]}55`;
+  document.getElementById('bugDrawerStatus').textContent=d.status||'';
+  const atts=(d.attachments||[]);
+  const attHtml=atts.length?`<div class="bug-drawer-section"><div class="bug-drawer-label">📎 附件（${atts.length}个）</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${atts.map((a,i)=>{const icon=(a.type&&a.type.startsWith('image/'))?'🖼️':'📎';return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f7f8fa;border:1px solid #e8e8e8;border-radius:6px;font-size:12px;cursor:pointer;color:#3370ff" onclick="previewFeishuFile('${a.file_token}','${_escH(a.name||'')}','${a.type||''}')">${icon} ${_escH(a.name||'文件')}</span>`;}).join('')}</div></div>`:'' ;
+  document.getElementById('bugDrawerBody').innerHTML=`
+    <div class="bug-drawer-title">${_escH(d.title)}</div>
+    <div class="bug-drawer-meta">
+      <span>🏷️ <b>${_escH(d.product)}</b></span>
+      ${d.module?`<span>📦 ${_escH(d.module)}</span>`:''}
+      ${d.reporter?`<span>👤 ${_escH(d.reporter)}</span>`:''}
+      <span style="color:#bbb">${_fmtBugT(d.createdAt)}</span>
+    </div>
+    ${d.description?`<div class="bug-drawer-section"><div class="bug-drawer-label">📝 问题描述</div><div class="bug-drawer-desc">${_escH(d.description).replace(/\n/g,'<br>')}</div></div>`:''}
+    ${attHtml}
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="btn btn-ghost btn-sm" onclick="openBugEdit(${JSON.stringify(d).replace(/'/g,"'")}); closeBugDrawer()">✏️ 编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteBug('${d.id}'); closeBugDrawer()">🗑️ 删除</button>
+    </div>`;
+  drawer.classList.add('open');
+  document.getElementById('bugDrawerMask').style.display='block';
+}
+function closeBugDrawer(){
+  document.getElementById('bugDrawer').classList.remove('open');
+  document.getElementById('bugDrawerMask').style.display='none';
+}
 async function deleteBug(id){
   if(!confirm('确认删除该Bug记录？'))return;
   try{await bugsApi('delete',{id});await loadBugs(true);}catch(e){alert('删除失败：'+e.message);}
@@ -3264,8 +3318,21 @@ function exportBugs(){
 }
 </script>
 
+<!-- 创新项目 Bug 详情抽屉 -->
+<div id="bugDrawer" class="bug-drawer">
+  <div class="bug-drawer-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="bugDrawerSev" class="tag"></span>
+      <span id="bugDrawerStatus" style="font-size:12px;color:#888"></span>
+    </div>
+    <button onclick="closeBugDrawer()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1">✕</button>
+  </div>
+  <div class="bug-drawer-body" id="bugDrawerBody"></div>
+</div>
+<div id="bugDrawerMask" style="display:none;position:fixed;inset:0;z-index:1499;background:transparent" onclick="closeBugDrawer()"></div>
+
 <!-- 创新项目 Bug 弹窗 -->
-<div class="modal-bg" id="bugModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal-bg" id="bugModal" style="display:none">
   <div class="modal">
     <div class="modal-head">
       <h2 id="bugModalTitle">新增 Bug</h2>
