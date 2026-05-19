@@ -9,6 +9,7 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "express": "^4.19.2",
     "mysql2": "^3.22.3",
     "xlsx": "^0.18.5"

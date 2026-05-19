@@ -5,6 +5,8 @@ const { handler: uploadHandler } = require('./netlify/functions/upload');
 const { handler: kbHandler } = require('./netlify/functions/kb');
 const { handler: groupsHandler } = require('./netlify/functions/groups');
 const { handler: bugsHandler } = require('./netlify/functions/bugs');
+const { handler: authHandler } = require('./netlify/functions/auth');
+const { handler: usersHandler } = require('./netlify/functions/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,6 +101,36 @@ app.all('/api/bugs', async (req, res) => {
     res.status(result.statusCode).set(result.headers);
     if (result.isBase64Encoded) res.send(Buffer.from(result.body, 'base64'));
     else res.send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/auth', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await authHandler(event);
+    res.status(result.statusCode).set(result.headers).send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/users', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await usersHandler(event);
+    res.status(result.statusCode).set(result.headers).send(result.body);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -125,6 +125,31 @@ async function initTables() {
         INDEX idx_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // ===== 用户权限表 =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS sys_users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(200) NOT NULL COMMENT 'bcrypt hash',
+        display_name VARCHAR(100) DEFAULT '' COMMENT '显示名称',
+        role VARCHAR(20) DEFAULT 'user' COMMENT 'admin/user',
+        permissions JSON COMMENT '权限配置 {"tabs":{"list":"rw","bugs":"r"},...}',
+        status VARCHAR(10) DEFAULT 'active' COMMENT 'active/disabled',
+        last_login DATETIME DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // 初始化超级管理员（已存在则忽略）
+    const [adminExists] = await conn.execute("SELECT id FROM sys_users WHERE username='admin'");
+    if (!adminExists.length) {
+      const bcrypt = require('bcryptjs');
+      const hash = bcrypt.hashSync('admin123', 10);
+      await conn.execute(
+        "INSERT INTO sys_users (username, password, display_name, role, permissions) VALUES (?,?,?,?,?)",
+        ['admin', hash, '超级管理员', 'admin', JSON.stringify({tabs:{list:'rw',kanban:'rw',person:'rw',feedback:'rw',schedule:'rw',issues:'rw',groups:'rw',bugs:'rw',users:'rw'}})]
+      );
+    }
   } finally {
     conn.release();
   }

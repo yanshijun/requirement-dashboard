@@ -219,18 +219,41 @@ tr.bug-row-active td{background:#f0f5ff!important}
 .grp-stat{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .grp-stat .grp-num{font-size:24px;font-weight:700}
 .grp-stat .grp-lbl{font-size:11px;color:#888;margin-top:2px}
+/* ===== 登录页 ===== */
+.login-page{position:fixed;inset:0;background:linear-gradient(135deg,#1d2b4f 0%,#3370ff 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:16px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-box h2{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:24px;text-align:center}
+.login-box input{width:100%;padding:12px 14px;border:1px solid #d9d9d9;border-radius:8px;font-size:14px;margin-bottom:14px;outline:none;transition:border .2s}
+.login-box input:focus{border-color:#3370ff;box-shadow:0 0 0 3px rgba(51,112,255,.1)}
+.login-box button{width:100%;padding:12px;background:#3370ff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.login-box button:hover{background:#2860e0}
+.login-box button:disabled{opacity:.5;cursor:not-allowed}
+.login-err{color:#cf1322;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px}
 </style>
 </head>
 <body>
+
+<!-- 登录页 -->
+<div class="login-page" id="loginPage">
+  <div class="login-box">
+    <h2>📋 需求池看板</h2>
+    <div class="login-err" id="loginErr"></div>
+    <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button id="loginBtn" onclick="doLogin()">登 录</button>
+  </div>
+</div>
 
 <header>
   <h1>📋 客服GPT SAE版 · 需求池看板</h1>
   <div class="header-right">
     <span class="last-update" id="lastUpdate"></span>
-    <button class="btn btn-ghost" onclick="reorderAllNumbers()" style="color:#fff;border-color:rgba(255,255,255,.4)">🔢 重新编号</button>
-    <button class="btn btn-ghost" onclick="openImport()" style="color:#fff;border-color:rgba(255,255,255,.4)">📥 导入数据</button>
-    <button class="btn btn-success" onclick="openAdd()">＋ 新增需求</button>
+    <span id="headerUser" style="font-size:12px;color:rgba(255,255,255,.7);margin-right:4px"></span>
+    <button id="btnReorder" class="btn btn-ghost" onclick="reorderAllNumbers()" style="color:#fff;border-color:rgba(255,255,255,.4);display:none">🔢 重新编号</button>
+    <button id="btnImport" class="btn btn-ghost" onclick="openImport()" style="color:#fff;border-color:rgba(255,255,255,.4);display:none">📥 导入数据</button>
+    <button id="btnAddReq" class="btn btn-success" onclick="openAdd()" style="display:none">＋ 新增需求</button>
     <button class="btn btn-primary" onclick="loadData()">🔄 刷新</button>
+    <button class="btn btn-ghost" onclick="doLogout()" style="color:#fff;border-color:rgba(255,255,255,.4)">退出</button>
   </div>
 </header>
 
@@ -252,6 +275,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
   <div class="tab" onclick="switchTab('issues',this)">📝 问题记录</div>
   <div class="tab" onclick="switchTab('groups',this)">👥 客户群责人</div>
   <div class="tab" onclick="switchTab('bugs',this)">🐛 创新项目</div>
+  <div class="tab" id="tabUsers" onclick="switchTab('users',this)" style="display:none">👤 用户管理</div>
 </div>
 
 <div class="content" id="mainContent">
@@ -446,6 +470,150 @@ tr.bug-row-active td{background:#f0f5ff!important}
 </div>
 
 <script>
+// ===== 登录/权限系统 =====
+let _currentUser = null;
+let _authToken = localStorage.getItem('_authToken') || '';
+
+async function authApi(action, body) {
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _authToken } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`/api/auth?action=${action}`, opts);
+  return res.json();
+}
+async function usersApi(action, body) {
+  const isGet = !body;
+  const url = `/api/users?action=${action}`;
+  const opts = isGet
+    ? { headers: { 'Authorization': 'Bearer ' + _authToken } }
+    : { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _authToken }, body: JSON.stringify(body) };
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+async function checkAuth() {
+  if (!_authToken) { showLogin(); return; }
+  const data = await authApi('check');
+  if (data.error) { _authToken = ''; localStorage.removeItem('_authToken'); showLogin(); return; }
+  _currentUser = data.user;
+  hideLogin();
+  applyPermissions();
+}
+
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginUser').focus();
+}
+function hideLogin() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('headerUser').textContent = _currentUser.displayName || _currentUser.username;
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!username || !password) { document.getElementById('loginErr').textContent = '请输入用户名和密码'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '登录中...';
+  try {
+    const data = await authApi('login', { username, password });
+    if (data.error) { document.getElementById('loginErr').textContent = data.error; return; }
+    _authToken = data.token;
+    _currentUser = data.user;
+    localStorage.setItem('_authToken', _authToken);
+    hideLogin();
+    applyPermissions();
+    loadData();
+  } catch(e) {
+    document.getElementById('loginErr').textContent = '网络错误';
+  } finally {
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+}
+
+async function doLogout() {
+  await authApi('logout');
+  _authToken = ''; _currentUser = null;
+  localStorage.removeItem('_authToken');
+  showLogin();
+}
+
+// 权限配置格式: { tabs: { list: "rw", bugs: "r", ... } }
+// "rw" = 可读写, "r" = 只读, 不存在 = 不可见
+const ALL_TABS = ['list','kanban','person','feedback','schedule','issues','groups','bugs','users'];
+const TAB_LABELS = {list:'需求列表',kanban:'开发看板',person:'人员任务',feedback:'今日收集',schedule:'排班表',issues:'问题记录',groups:'客户群责人',bugs:'创新项目',users:'用户管理'};
+
+function getTabPerm(tab) {
+  if (!_currentUser) return '';
+  if (_currentUser.role === 'admin') return 'rw';
+  const perms = _currentUser.permissions?.tabs || {};
+  return perms[tab] || '';
+}
+
+function applyPermissions() {
+  if (!_currentUser) return;
+  // 显示/隐藏 Tab
+  document.querySelectorAll('.tabs .tab').forEach(el => {
+    const onclick = el.getAttribute('onclick') || '';
+    const m = onclick.match(/switchTab\('(\w+)'/);
+    if (!m) return;
+    const tab = m[1];
+    const perm = getTabPerm(tab);
+    el.style.display = perm ? '' : 'none';
+  });
+  // 用户管理 Tab 仅 admin 可见
+  const usersTab = document.getElementById('tabUsers');
+  if (usersTab) usersTab.style.display = _currentUser.role === 'admin' ? '' : 'none';
+  // 需求列表写操作按钮
+  const listWrite = canWrite('list');
+  const btnReorder = document.getElementById('btnReorder');
+  const btnImport = document.getElementById('btnImport');
+  const btnAddReq = document.getElementById('btnAddReq');
+  if (btnReorder) btnReorder.style.display = listWrite ? '' : 'none';
+  if (btnImport) btnImport.style.display = listWrite ? '' : 'none';
+  if (btnAddReq) btnAddReq.style.display = listWrite ? '' : 'none';
+  // 如果当前 Tab 没有权限，自动切换到第一个有权限的 Tab
+  if (!getTabPerm(curTab)) {
+    const firstTab = ALL_TABS.find(t => getTabPerm(t));
+    if (firstTab) {
+      const el = document.querySelector(`.tabs .tab[onclick*="'${firstTab}'"]`);
+      if (el) switchTab(firstTab, el);
+    } else {
+      document.getElementById('mainContent').innerHTML = '<div class="empty">暂无可访问的页面，请联系管理员配置权限</div>';
+    }
+  }
+  // 隐藏需求列表相关的 toolbar（如果没有 list/kanban/person 权限）
+  const toolbar = document.querySelector('.toolbar');
+  if (toolbar) {
+    const hasReqPerm = getTabPerm('list') || getTabPerm('kanban') || getTabPerm('person');
+    toolbar.style.display = hasReqPerm && (curTab === 'list' || curTab === 'kanban' || curTab === 'person') ? '' : 'none';
+  }
+}
+
+function canWrite(tab) {
+  return getTabPerm(tab) === 'rw';
+}
+
+function enforceReadonly() {
+  if (!_currentUser) return;
+  const tab = curTab;
+  const writable = canWrite(tab);
+  if (writable) return;
+  // 隐藏所有操作列按钮（编辑/删除）
+  document.querySelectorAll('#mainContent .actions').forEach(el => {
+    el.style.display = 'none';
+  });
+  // 隐藏所有新增/写操作按钮
+  document.querySelectorAll('#mainContent button.btn').forEach(el => {
+    const text = el.textContent || '';
+    if (text.includes('新增') || text.includes('配置') || text.includes('导入') || text.includes('编号')) {
+      el.style.display = 'none';
+    }
+  });
+}
+
+// 页面加载时检查登录状态
+window.addEventListener('DOMContentLoaded', () => { checkAuth(); });
+
 let allData = [];
 let curTab = 'list';
 let currentPage = 1;
@@ -632,6 +800,13 @@ const hasPerson = p => p && p !== '待认领';
 const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
 const statTag = s => `<span class="tag ${statMap[s||'待开始']||'tag-s0'}">${s||'待开始'}</span>`;
+const reviewTag = r => {
+  if (!r || r === '待确认') return `<span style="color:#aaa;font-size:12px">待确认</span>`;
+  if (r === '已通过') return `<span class="tag" style="background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f">✓ 通过</span>`;
+  if (r === '已拒绝') return `<span class="tag" style="background:#fff1f0;color:#cf1322;border:1px solid #ffa39e">✗ 拒绝</span>`;
+  if (r === '暂缓') return `<span class="tag" style="background:#fff7e6;color:#d46b08;border:1px solid #ffd591">⏸ 暂缓</span>`;
+  return `<span style="font-size:12px">${r}</span>`;
+};
 const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
 
 function toggleExpand(parentId) {
@@ -702,7 +877,7 @@ function render() {
   if (curTab==='list') renderList(data);
   else if (curTab==='kanban') renderKanban(filteredAll());
   else if (curTab==='person') renderPerson(filteredAll());
-  // feedback 由 switchTab 直接调用 renderFeedback，不在这里处理
+  enforceReadonly();
 }
 
 function renderList(data) {
@@ -781,6 +956,7 @@ function renderList(data) {
     <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td style="font-size:12px;color:#666;white-space:nowrap">${d.submitter||''}</td>
     <td>${statTag(d.status)}</td><td>${progBar(displayProgress)}</td>
+    <td>${reviewTag(d.review)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.createTime||''}</td>
     <td><div class="actions">
@@ -803,6 +979,7 @@ function renderList(data) {
     <td style="color:#666;font-size:12px;max-width:260px">${(c.desc||'').substring(0,60)}${(c.desc||'').length>60?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(c.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${c.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td>${statTag(c.status)}</td><td>${progBar(c.progress)}</td>
+    <td>${reviewTag(c.review)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.createTime||''}</td>
     <td><div class="actions">
@@ -852,7 +1029,7 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>进度</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>进度</th><th>评审</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>${pageButtons}</div>`;
 }
@@ -992,6 +1169,10 @@ function switchTab(tab,el) {
       document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
       loadBugs();
     }
+  } else if (tab === 'users') {
+    if (toolbar) toolbar.style.display = 'none';
+    document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+    loadUsers();
   } else {
     if (toolbar) toolbar.style.display = '';
     if (tab === 'list') {
@@ -1003,6 +1184,7 @@ function switchTab(tab,el) {
     }
     render();
   }
+  setTimeout(enforceReadonly, 100);
 }
 
 // ===== 编号管理 =====
@@ -1075,6 +1257,7 @@ async function reorderAllNumbers() {
 
 // ===== 新增/编辑 =====
 function openAdd() {
+  if (!canWrite('list')) return;
   document.getElementById('modalTitle').textContent='新增需求';
   document.getElementById('fId').value='';
   document.getElementById('fParentId').value='';
@@ -1096,6 +1279,7 @@ function openAdd() {
   document.getElementById('modal').style.display='flex';
 }
 function openEdit(id) {
+  if (!canWrite('list')) return;
   const d=allData.find(x=>x.id===id); if(!d)return;
   document.getElementById('modalTitle').textContent='编辑需求';
   document.getElementById('fId').value=d.id;
@@ -1626,6 +1810,7 @@ async function loadFeedback(silent = false) {
   // 只有当前还在 feedback tab 时才渲染
   if (curTab === 'feedback') {
     renderFeedback();
+    enforceReadonly();
   }
 }
 
@@ -1835,7 +2020,7 @@ async function loadSchedule(silent = false) {
     if (!silent) scheduleData = [];
     console.error('加载排班表失败', e);
   }
-  if (curTab === 'schedule') renderSchedule();
+  if (curTab === 'schedule') { renderSchedule(); enforceReadonly(); }
 }
 
 function schChangeMonth(delta) {
@@ -2291,7 +2476,7 @@ async function loadIssues(silent = false) {
     if (!silent) issuesData = [];
     console.error('加载问题记录失败', e);
   }
-  if (curTab === 'issues') renderIssues();
+  if (curTab === 'issues') { renderIssues(); enforceReadonly(); }
 }
 
 function renderIssues() {
@@ -2776,6 +2961,7 @@ async function loadGroups(silent = false) {
     groupsData = await grpApi('list');
     _grpLoaded = true;
     renderGroups();
+    enforceReadonly();
   } catch(e) {
     if (!silent) document.getElementById('mainContent').innerHTML = `<div class="err-box">加载失败：${e.message}</div>`;
   }
@@ -2844,7 +3030,7 @@ function renderGroups() {
   document.getElementById('mainContent').innerHTML = `
     <div class="grp-toolbar">
       <input type="text" placeholder="🔍 搜索客户ID/群名/责任人/销售" value="${_grpSearchVal.replace(/"/g,'&quot;')}"
-        id="grpSearch" oninput="_grpSearchVal=this.value;renderGroups()" style="width:240px">
+        id="grpSearch" oninput="if(!window._grpComposing){_grpSearchVal=this.value;renderGroups()}" oncompositionstart="window._grpComposing=true" oncompositionend="window._grpComposing=false;_grpSearchVal=this.value;renderGroups()" style="width:240px">
       <select id="grpPkgFilter" onchange="_grpSearchVal=document.getElementById('grpSearch')?document.getElementById('grpSearch').value:_grpSearchVal;renderGroups()">
         <option value="">全部套餐</option>${pkgOpts}
       </select>
@@ -3043,6 +3229,7 @@ async function loadBugs(silent = false) {
     bugsData = await bugsApi('list');
     _bugsLoaded = true;
     renderBugs();
+    enforceReadonly();
   } catch(e) {
     if (!silent) document.getElementById('mainContent').innerHTML = '<div class="err-box">加载失败：' + e.message + '</div>';
   }
@@ -3054,6 +3241,8 @@ function renderBugs() {
   const fSev = document.getElementById('bugFSev') ? document.getElementById('bugFSev').value : '';
   const fStatus = document.getElementById('bugFStatus') ? document.getElementById('bugFStatus').value : '';
   const fSearch = document.getElementById('bugFSearch') ? document.getElementById('bugFSearch').value : '';
+  const fDateFrom = document.getElementById('bugFDateFrom') ? document.getElementById('bugFDateFrom').value : '';
+  const fDateTo = document.getElementById('bugFDateTo') ? document.getElementById('bugFDateTo').value : '';
   const kw = fSearch.trim().toLowerCase();
 
   let filtered = [...bugsData];
@@ -3061,6 +3250,9 @@ function renderBugs() {
   if (fSev) filtered = filtered.filter(d => d.severity === fSev);
   if (fStatus) filtered = filtered.filter(d => d.status === fStatus);
   if (kw) filtered = filtered.filter(d => (d.title||'').toLowerCase().includes(kw) || (d.description||'').toLowerCase().includes(kw) || (d.module||'').toLowerCase().includes(kw));
+  const _bugLD=t=>{if(!t)return'';const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+  if (fDateFrom) filtered = filtered.filter(d => _bugLD(d.updatedAt||d.createdAt) >= fDateFrom);
+  if (fDateTo) filtered = filtered.filter(d => _bugLD(d.updatedAt||d.createdAt) <= fDateTo);
 
   // 统计
   const total = bugsData.length;
@@ -3069,25 +3261,44 @@ function renderBugs() {
   const pending = bugsData.filter(d => d.status === '待处理').length;
   const resolved = bugsData.filter(d => d.status === '已解决').length;
 
-  let html = `<div class="bug-toolbar">
-    <select id="bugFProduct" onchange="renderBugs()"><option value="">全部产品</option>${BUG_PRODUCTS.map(p=>`<option ${p===fProduct?'selected':''}>${p}</option>`).join('')}</select>
-    <select id="bugFSev" onchange="renderBugs()"><option value="">全部严重程度</option>${BUG_SEVERITIES.map(s=>`<option ${s===fSev?'selected':''}>${s}</option>`).join('')}</select>
-    <select id="bugFStatus" onchange="renderBugs()"><option value="">全部状态</option>${BUG_STATUSES.map(s=>`<option ${s===fStatus?'selected':''}>${s}</option>`).join('')}</select>
-    <input id="bugFSearch" placeholder="搜索标题/描述/模块" value="${fSearch}" oninput="renderBugs()">
-    <button class="btn btn-success" onclick="openBugAdd()">＋ 新增Bug</button>
-    <button class="btn btn-ghost" onclick="exportBugs()">📥 导出</button>
-    <button class="btn btn-ghost" onclick="loadBugs(true)">🔄</button>
-  </div>`;
-  html += `<div class="bug-stats">
+  // 第一次渲染：建立完整骨架（含搜索框），之后只更新内容区，不碰工具栏
+  if (!document.getElementById('bugFSearch')) {
+    mc.innerHTML = `<div class="bug-toolbar">
+      <select id="bugFProduct" onchange="renderBugs()"><option value="">全部产品</option>${BUG_PRODUCTS.map(p=>`<option>${p}</option>`).join('')}</select>
+      <select id="bugFSev" onchange="renderBugs()"><option value="">全部严重程度</option>${BUG_SEVERITIES.map(s=>`<option>${s}</option>`).join('')}</select>
+      <select id="bugFStatus" onchange="renderBugs()"><option value="">全部状态</option>${BUG_STATUSES.map(s=>`<option>${s}</option>`).join('')}</select>
+      <input id="bugFSearch" placeholder="搜索标题/描述/模块" oninput="renderBugs()" autocomplete="off">
+      <span style="font-size:12px;color:#888;white-space:nowrap">更新日期</span>
+      <input type="date" id="bugFDateFrom" onchange="renderBugs()" style="width:130px">
+      <span style="font-size:12px;color:#aaa">~</span>
+      <input type="date" id="bugFDateTo" onchange="renderBugs()" style="width:130px">
+      <button class="btn btn-success" onclick="openBugAdd()">＋ 新增Bug</button>
+      <button class="btn btn-ghost" onclick="exportBugsHtml()">📥 导出报告</button>
+      <button class="btn btn-ghost" onclick="loadBugs(true)">🔄</button>
+    </div>
+    <div id="bugStatsArea"></div>
+    <div id="bugTableArea"></div>`;
+  }
+
+  // 同步下拉选中状态（不重建元素）
+  if (document.getElementById('bugFProduct')) document.getElementById('bugFProduct').value = fProduct;
+  if (document.getElementById('bugFSev')) document.getElementById('bugFSev').value = fSev;
+  if (document.getElementById('bugFStatus')) document.getElementById('bugFStatus').value = fStatus;
+
+  document.getElementById('bugStatsArea').innerHTML = `<div class="bug-stats">
     <div class="bug-stat"><div class="bug-num">${total}</div><div class="bug-lbl">总数</div></div>
     <div class="bug-stat"><div class="bug-num" style="color:#cf1322">${sev1}</div><div class="bug-lbl">1级(致命)</div></div>
     <div class="bug-stat"><div class="bug-num" style="color:#fa8c16">${sev2}</div><div class="bug-lbl">2级(严重)</div></div>
     <div class="bug-stat"><div class="bug-num" style="color:#1677ff">${pending}</div><div class="bug-lbl">待处理</div></div>
     <div class="bug-stat"><div class="bug-num" style="color:#52c41a">${resolved}</div><div class="bug-lbl">已解决</div></div>
   </div>`;
+
+  const bugTable = document.getElementById('bugTableArea');
+  if (!bugTable) return;
+  let html = '';
   html += `<div class="tbl-wrap"><div class="tbl-info">共 ${filtered.length} 条${(kw||fProduct||fSev||fStatus)?` （筛选自 ${total}）`:''}</div>`;
-  if (!filtered.length) { html += '<div class="empty">暂无数据</div></div>'; mc.innerHTML = html; return; }
-  html += `<table><thead><tr><th style="width:90px">产品</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">创建时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
+  if (!filtered.length) { html += '<div class="empty">暂无数据</div></div>'; bugTable.innerHTML = html; return; }
+  html += `<table><thead><tr><th style="width:90px">产品</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">更新时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
   for (const d of filtered) {
     const sevN = (d.severity||'3级').replace('级','');
     const attC = (d.attachments||[]).length;
@@ -3101,12 +3312,16 @@ function renderBugs() {
       <td>${_escH(d.status||'')}</td>
       <td>${_escH(d.reporter||'')}</td>
       <td onclick="event.stopPropagation()">${attC>0?`<span style="color:#3370ff;cursor:pointer;text-decoration:underline" onclick='previewBugAttList(${JSON.stringify(d.attachments).replace(/'/g,"&#39;")})'>${attC}个</span>`:'-'}</td>
-      <td style="font-size:12px;color:#888">${_fmtBugT(d.createdAt)}</td>
+      <td style="font-size:12px;color:#888">${_fmtBugT(d.updatedAt||d.createdAt)}</td>
       <td class="actions" onclick="event.stopPropagation()"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${dJson})'>编辑</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
     </tr>`;
   }
   html += '</tbody></table></div>';
-  mc.innerHTML = html;
+  bugTable.innerHTML = html;
+}
+function _restoreBugSearch(){
+  const inp=document.getElementById('bugFSearch');
+  if(inp&&inp.value){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 function _escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _fmtBugT(t){if(!t)return'';const d=new Date(t);if(isNaN(d))return String(t);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
@@ -3298,23 +3513,209 @@ async function deleteBug(id){
   if(!confirm('确认删除该Bug记录？'))return;
   try{await bugsApi('delete',{id});await loadBugs(true);}catch(e){alert('删除失败：'+e.message);}
 }
-function exportBugs(){
-  if(!bugsData.length){alert('暂无数据可导出');return;}
+function _getBugFiltered(){
   const fp=document.getElementById('bugFProduct')?document.getElementById('bugFProduct').value:'';
   const fs=document.getElementById('bugFSev')?document.getElementById('bugFSev').value:'';
   const fst=document.getElementById('bugFStatus')?document.getElementById('bugFStatus').value:'';
   const kw=(document.getElementById('bugFSearch')?document.getElementById('bugFSearch').value:'').trim().toLowerCase();
+  const fdFrom=document.getElementById('bugFDateFrom')?document.getElementById('bugFDateFrom').value:'';
+  const fdTo=document.getElementById('bugFDateTo')?document.getElementById('bugFDateTo').value:'';
   let rows=[...bugsData];
   if(fp)rows=rows.filter(d=>d.product===fp);
   if(fs)rows=rows.filter(d=>d.severity===fs);
   if(fst)rows=rows.filter(d=>d.status===fst);
   if(kw)rows=rows.filter(d=>(d.title||'').toLowerCase().includes(kw)||(d.description||'').toLowerCase().includes(kw)||(d.module||'').toLowerCase().includes(kw));
-  const hdr=['所属产品','所属模块','Bug标题','Bug描述','严重程度','状态','提报人','创建时间'];
-  const csv=[hdr.join(','),...rows.map(d=>[d.product,d.module,d.title,d.description,d.severity,d.status,d.reporter,_fmtBugT(d.createdAt)].map(c=>{const s=String(c==null?'':c).replace(/"/g,'""');return /[",\n\r]/.test(s)?`"${s}"`:s;}).join(','))].join('\r\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`创新项目Bug_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const _ld=t=>{if(!t)return'';const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+  if(fdFrom)rows=rows.filter(d=>_ld(d.updatedAt||d.createdAt)>=fdFrom);
+  if(fdTo)rows=rows.filter(d=>_ld(d.updatedAt||d.createdAt)<=fdTo);
+  return {rows,filters:[fp&&`产品：${fp}`,fs&&`严重程度：${fs}`,fst&&`状态：${fst}`,fdFrom&&`更新≥${fdFrom}`,fdTo&&`更新≤${fdTo}`,kw&&`关键词：${kw}`].filter(Boolean)};
+}
+async function exportBugsHtml(){
+  if(!bugsData.length){alert('暂无数据可导出');return;}
+  const {rows,filters}=_getBugFiltered();
+  if(!rows.length){alert('当前筛选条件下无数据');return;}
+  const hasAtts=rows.some(r=>(r.attachments||[]).length>0);
+  let loadingEl=null;
+  if(hasAtts){
+    loadingEl=document.createElement('div');
+    loadingEl.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;padding:20px 32px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:9999;font-size:14px;color:#555';
+    loadingEl.textContent='⏳ 正在加载附件图片...';
+    document.body.appendChild(loadingEl);
+  }
+  try{
+    // 加载附件为 base64
+    const attMap={};
+    for(const r of rows){
+      if(!(r.attachments||[]).length)continue;
+      const imgs=[];
+      for(const a of r.attachments){
+        if(!a.file_token){imgs.push({name:a.name,b64:'',isImg:false});continue;}
+        try{
+          const res=await fetch('/api/feishu?action=iss-file-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:a.file_token})});
+          const ct=res.headers.get('content-type')||'';
+          if(ct.includes('application/json')){
+            const d=await res.json();imgs.push({name:a.name,b64:'',url:d.url||'',isImg:a.type&&a.type.startsWith('image/')});
+          }else{
+            const blob=await res.blob();
+            const b64=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(blob);});
+            imgs.push({name:a.name,b64,isImg:a.type&&a.type.startsWith('image/')});
+          }
+        }catch(e){imgs.push({name:a.name,b64:'',isImg:false});}
+      }
+      attMap[r.id]=imgs;
+    }
+    const now=_fmtBugT(new Date().toISOString());
+    const sevLabel={'1':'1级·致命','2':'2级·严重','3':'3级·一般','4':'4级·轻微'};
+    const sevColor={'1':'#cf1322','2':'#fa8c16','3':'#1677ff','4':'#52c41a'};
+    // 生成每条 Bug 的 HTML（表格布局，Word 兼容）
+    const cards=rows.map((d,i)=>{
+      const sevN=parseInt((d.severity||'3级').replace('级',''))||3;
+      const imgs=attMap[d.id]||[];
+      let attHtml='';
+      if(imgs.length){
+        attHtml='<tr><td style="padding:8px 12px;vertical-align:top;font-size:12px;color:#888;width:80px;border-bottom:1px solid #eee">附件</td><td style="padding:8px 12px;border-bottom:1px solid #eee">';
+        for(const a of imgs){
+          if(a.isImg&&(a.b64||a.url)){
+            attHtml+=`<p style="margin:6px 0"><img src="${a.b64||a.url}" width="400" style="max-width:400px;border:1px solid #ddd"><br><span style="font-size:10px;color:#999">${_escH(a.name)}</span></p>`;
+          }else{
+            attHtml+=`<p style="margin:4px 0;font-size:12px;color:#555">[附件] ${_escH(a.name)}</p>`;
+          }
+        }
+        attHtml+='</td></tr>';
+      }
+      return `<table style="width:100%;border-collapse:collapse;border:2px solid #d9d9d9;margin-bottom:20px;page-break-inside:avoid">
+  <tr style="background:#f0f5ff">
+    <td colspan="2" style="padding:10px 12px;font-size:15px;font-weight:bold;border-bottom:2px solid #d9d9d9">
+      <span style="color:#3370ff;margin-right:8px">No.${i+1}</span>${_escH(d.title)}
+    </td>
+  </tr>
+  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">产品/模块</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.product)}${d.module?' / '+_escH(d.module):''}</td></tr>
+  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">严重程度</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;color:${sevColor[sevN]||'#333'};font-weight:bold">${sevLabel[sevN]||d.severity||''}</td></tr>
+  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">状态</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.status||'待处理')}</td></tr>
+  ${d.description?`<tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">问题描述</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;line-height:1.7">${_escH(d.description).replace(/\n/g,'<br>')}</td></tr>`:''}
+  ${d.reporter?`<tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">提报人</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.reporter)}</td></tr>`:''}
+  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">更新时间</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:12px;color:#999">${_fmtBugT(d.updatedAt||d.createdAt)}</td></tr>
+  ${attHtml}
+</table>`;
+    }).join('\n');
+    const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page{size:A4;margin:2cm}body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#1a1a2e}table{border-collapse:collapse;width:100%}</style></head><body>
+<h1 style="font-size:22px;text-align:center;margin-bottom:4px">创新项目 Bug 报告</h1>
+<p style="text-align:center;font-size:12px;color:#888;margin-bottom:24px">导出时间：${now} | 共 ${rows.length} 条${filters.length?' | 筛选：'+filters.join('，'):''}</p>
+${cards}
+</body></html>`;
+    const blob=new Blob(['﻿'+html],{type:'application/msword'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`创新项目Bug报告_${new Date().toISOString().slice(0,10)}.doc`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }finally{if(loadingEl)document.body.removeChild(loadingEl);}
+}
+// ===== 用户管理 =====
+let _usersData = [];
+async function loadUsers() {
+  try {
+    const data = await usersApi('list');
+    if (data.error) { document.getElementById('mainContent').innerHTML = '<div class="err-box">' + data.error + '</div>'; return; }
+    _usersData = data;
+    renderUsers();
+  } catch(e) {
+    document.getElementById('mainContent').innerHTML = '<div class="err-box">加载失败：' + e.message + '</div>';
+  }
+}
+function renderUsers() {
+  const mc = document.getElementById('mainContent');
+  let html = `<div class="bug-toolbar"><button class="btn btn-success" onclick="openUserAdd()">＋ 新增用户</button><button class="btn btn-ghost" onclick="loadUsers()">🔄 刷新</button></div>`;
+  html += `<div class="tbl-wrap"><div class="tbl-info">共 ${_usersData.length} 个用户</div>`;
+  html += `<table><thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>权限（Tab）</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead><tbody>`;
+  for (const u of _usersData) {
+    const perms = u.permissions?.tabs || {};
+    const permStr = Object.entries(perms).map(([k,v]) => `${TAB_LABELS[k]||k}(${v})`).join(', ') || '-';
+    const stColor = u.status === 'active' ? '#52c41a' : '#ff4d4f';
+    html += `<tr>
+      <td><b>${u.username}</b></td>
+      <td>${u.displayName || ''}</td>
+      <td>${u.role === 'admin' ? '<span style="color:#3370ff;font-weight:700">管理员</span>' : '普通用户'}</td>
+      <td style="font-size:12px;max-width:300px">${permStr}</td>
+      <td><span style="color:${stColor}">${u.status === 'active' ? '启用' : '禁用'}</span></td>
+      <td style="font-size:12px;color:#888">${u.lastLogin ? _fmtBugT(u.lastLogin) : '-'}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick='openUserEdit(${JSON.stringify(u).replace(/'/g,"&#39;")})'>编辑</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetUserPwd(${u.id})">重置密码</button>
+        ${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">删除</button>` : ''}
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  mc.innerHTML = html;
+}
+function openUserAdd() {
+  const permsHtml = ALL_TABS.filter(t=>t!=='users').map(t => `<label style="display:flex;align-items:center;gap:6px;margin:4px 0;font-size:13px"><input type="checkbox" value="${t}" checked> ${TAB_LABELS[t]} <select style="font-size:12px;padding:2px 4px;margin-left:4px"><option value="rw">读写</option><option value="r">只读</option></select></label>`).join('');
+  const html = `<div class="modal-bg" id="userModal" style="display:flex"><div class="modal"><div class="modal-head"><h2>新增用户</h2><button class="modal-close" onclick="document.getElementById('userModal').remove()">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid"><div class="form-row"><label>用户名 <span style="color:red">*</span></label><input id="ufUsername" placeholder="字母数字下划线，3-30位"></div><div class="form-row"><label>密码 <span style="color:red">*</span></label><input id="ufPassword" type="password" placeholder="至少6位"></div></div>
+      <div class="form-grid"><div class="form-row"><label>显示名称</label><input id="ufDisplayName" placeholder="中文名"></div><div class="form-row"><label>角色</label><select id="ufRole"><option value="user">普通用户</option><option value="admin">管理员</option></select></div></div>
+      <div class="form-row"><label>页面权限</label><div id="ufPerms" style="border:1px solid #d9d9d9;border-radius:6px;padding:10px;max-height:200px;overflow-y:auto">${permsHtml}</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('userModal').remove()">取消</button><button class="btn btn-primary" onclick="saveUser()">保存</button></div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function openUserEdit(u) {
+  const perms = u.permissions?.tabs || {};
+  const permsHtml = ALL_TABS.filter(t=>t!=='users').map(t => {
+    const v = perms[t] || '';
+    return `<label style="display:flex;align-items:center;gap:6px;margin:4px 0;font-size:13px"><input type="checkbox" value="${t}" ${v?'checked':''}> ${TAB_LABELS[t]} <select style="font-size:12px;padding:2px 4px;margin-left:4px"><option value="rw" ${v==='rw'?'selected':''}>读写</option><option value="r" ${v==='r'?'selected':''}>只读</option></select></label>`;
+  }).join('');
+  const html = `<div class="modal-bg" id="userModal" style="display:flex"><div class="modal"><div class="modal-head"><h2>编辑用户 - ${u.username}</h2><button class="modal-close" onclick="document.getElementById('userModal').remove()">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ufId" value="${u.id}">
+      <div class="form-grid"><div class="form-row"><label>显示名称</label><input id="ufDisplayName" value="${u.displayName||''}"></div><div class="form-row"><label>角色</label><select id="ufRole"><option value="user" ${u.role==='user'?'selected':''}>普通用户</option><option value="admin" ${u.role==='admin'?'selected':''}>管理员</option></select></div></div>
+      <div class="form-grid"><div class="form-row"><label>状态</label><select id="ufStatus"><option value="active" ${u.status==='active'?'selected':''}>启用</option><option value="disabled" ${u.status!=='active'?'selected':''}>禁用</option></select></div></div>
+      <div class="form-row"><label>页面权限</label><div id="ufPerms" style="border:1px solid #d9d9d9;border-radius:6px;padding:10px;max-height:200px;overflow-y:auto">${permsHtml}</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('userModal').remove()">取消</button><button class="btn btn-primary" onclick="saveUser()">保存</button></div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+async function saveUser() {
+  const id = document.getElementById('ufId')?.value;
+  const displayName = document.getElementById('ufDisplayName').value.trim();
+  const role = document.getElementById('ufRole').value;
+  const status = document.getElementById('ufStatus')?.value || 'active';
+  const tabs = {};
+  document.querySelectorAll('#ufPerms label').forEach(lbl => {
+    const cb = lbl.querySelector('input[type=checkbox]');
+    const sel = lbl.querySelector('select');
+    if (cb.checked) tabs[cb.value] = sel.value;
+  });
+  const permissions = { tabs };
+  try {
+    if (id) {
+      const data = await usersApi('update', { id: parseInt(id), displayName, role, permissions, status });
+      if (data.error) { alert(data.error); return; }
+    } else {
+      const username = document.getElementById('ufUsername').value.trim();
+      const password = document.getElementById('ufPassword').value;
+      if (!username || !password) { alert('用户名和密码不能为空'); return; }
+      const data = await usersApi('add', { username, password, displayName, role, permissions });
+      if (data.error) { alert(data.error); return; }
+    }
+    document.getElementById('userModal').remove();
+    loadUsers();
+  } catch(e) { alert('保存失败：' + e.message); }
+}
+async function resetUserPwd(id) {
+  const pwd = prompt('请输入新密码（至少6位）：');
+  if (!pwd) return;
+  if (pwd.length < 6) { alert('密码至少6位'); return; }
+  const data = await usersApi('reset-password', { id, newPassword: pwd });
+  if (data.error) alert(data.error);
+  else alert('密码已重置');
+}
+async function deleteUser(id) {
+  if (!confirm('确认删除该用户？')) return;
+  const data = await usersApi('delete', { id });
+  if (data.error) alert(data.error);
+  else loadUsers();
 }
 </script>
 

@@ -33,6 +33,16 @@
   to = "/.netlify/functions/bugs"
   status = 200
 
+[[redirects]]
+  from = "/api/auth"
+  to = "/.netlify/functions/auth"
+  status = 200
+
+[[redirects]]
+  from = "/api/users"
+  to = "/.netlify/functions/users"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
