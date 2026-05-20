@@ -188,6 +188,19 @@ tr:hover td{background:#fafbff}
 .iss-attach-uploading{position:absolute;inset:0;background:rgba(255,255,255,.7);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#faad14}
 .iss-preview-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
 .iss-preview-img{max-width:90vw;max-height:85vh;border-radius:8px;display:block}
+.iss-drawer{position:fixed;top:0;right:0;width:520px;max-width:100vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.15);z-index:1500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.iss-drawer.open{transform:translateX(0)}
+.iss-drawer-head{padding:18px 24px 14px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.iss-drawer-body{flex:1;overflow-y:auto;padding:24px}
+.iss-drawer-section{margin-bottom:20px}
+.iss-drawer-label{font-size:12px;color:#999;margin-bottom:6px;font-weight:500}
+.iss-drawer-value{font-size:14px;color:#333;line-height:1.6}
+.iss-drawer-desc{background:#f7f8fa;border-radius:8px;padding:14px 16px;font-size:13px;color:#444;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.iss-drawer-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.iss-drawer-field{display:flex;flex-direction:column;gap:4px}
+.iss-drawer-atts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.iss-drawer-att{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#f7f8fa;border:1px solid #e8e8e8;border-radius:6px;font-size:12px;cursor:pointer;color:#3370ff;transition:background .15s}
+.iss-drawer-att:hover{background:#eef3ff}
 /* ===== 创新项目 ===== */
 .bug-drawer{position:fixed;top:0;right:0;width:480px;max-width:100vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.15);z-index:1500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
 .bug-drawer.open{transform:translateX(0)}
@@ -2530,16 +2543,16 @@ function renderIssues() {
   const ISS_PLATFORM_COLOR = {'拼多多':'#e85d4a','抖店':'#161823','千牛':'#ff6a00','京麦':'#e1251b','微信小店':'#07c160','小红书':'#ff2442','1688':'#ff6600'};
   const platformTag = p => p ? `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;background:${ISS_PLATFORM_COLOR[p]||'#888'}1a;color:${ISS_PLATFORM_COLOR[p]||'#888'};border:1px solid ${ISS_PLATFORM_COLOR[p]||'#888'}44">${p}</span>` : '<span style="color:#ccc">—</span>';
 
-  const rows = sorted.length ? sorted.map(d => `<tr>
+  const rows = sorted.length ? sorted.map(d => `<tr style="cursor:pointer" onclick='openIssDrawer(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
     <td style="white-space:nowrap;font-size:12px">${d.date||''}</td>
     <td style="font-weight:500">${d.customerId||''}</td>
     <td>${d.packageType||''}</td>
     <td>${platformTag(d.platform)}</td>
     <td style="max-width:280px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
-    <td style="max-width:160px">${attachCell(d.attachments)}</td>
+    <td style="max-width:160px" onclick="event.stopPropagation()">${attachCell(d.attachments)}</td>
     <td>${d.person||''}</td>
     <td>${issStatTag(d.status)}</td>
-    <td><div class="actions">
+    <td onclick="event.stopPropagation()"><div class="actions">
       <button class="btn btn-ghost btn-sm" onclick="openIssEdit('${d.id}')">编辑</button>
       ${d.status!=='已解决'&&d.status!=='已关闭'?`<button class="btn btn-success btn-sm" onclick="issResolve('${d.id}')">已解决</button>`:''}
       <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}')">删除</button>
@@ -2794,6 +2807,54 @@ async function issPreviewAttach(fileToken, type, name) {
     const body = document.getElementById('issPreviewBody');
     if (body) body.innerHTML = `<span style="color:red">加载失败：${e.message}</span>`;
   }
+}
+
+function openIssDrawer(d) {
+  const ISS_PLATFORM_COLOR = {'拼多多':'#e85d4a','抖店':'#161823','千牛':'#ff6a00','京麦':'#e1251b','微信小店':'#07c160','小红书':'#ff2442','1688':'#ff6600'};
+  const issStatMap = {'未解决':'#f5222d','处理中':'#faad14','已解决':'#52c41a','已关闭':'#999'};
+  const statusColor = issStatMap[d.status] || '#999';
+  const platColor = ISS_PLATFORM_COLOR[d.platform] || '#888';
+
+  const atts = d.attachments || [];
+  const attHtml = atts.length ? `<div class="iss-drawer-section">
+    <div class="iss-drawer-label">📎 附件（${atts.length}个）</div>
+    <div class="iss-drawer-atts">${atts.map(a => {
+      const icon = (a.type && a.type.startsWith('image/')) ? '🖼️' : '📎';
+      const safeName = (a.name||'附件').replace(/'/g,'').replace(/"/g,'');
+      return `<span class="iss-drawer-att" onclick="issPreviewAttach('${a.file_token}','${a.type||''}','${safeName}')">${icon} ${safeName}</span>`;
+    }).join('')}</div>
+  </div>` : '';
+
+  const tagsHtml = d.tags ? d.tags.split(/[,，]/).filter(Boolean).map(t => `<span style="display:inline-block;padding:2px 8px;background:#f0f5ff;color:#3370ff;border-radius:4px;font-size:11px;margin-right:4px">${t.trim()}</span>`).join('') : '<span style="color:#ccc">—</span>';
+
+  document.getElementById('issDrawerBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;background:${statusColor}18;color:${statusColor};border:1px solid ${statusColor}44">${d.status||'未解决'}</span>
+      ${d.platform ? `<span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;background:${platColor}1a;color:${platColor};border:1px solid ${platColor}44">${d.platform}</span>` : ''}
+      <span style="font-size:12px;color:#bbb;margin-left:auto">${d.date||''}</span>
+    </div>
+    <div class="iss-drawer-grid">
+      <div class="iss-drawer-field"><div class="iss-drawer-label">客户ID</div><div class="iss-drawer-value" style="font-weight:600">${d.customerId||'—'}</div></div>
+      <div class="iss-drawer-field"><div class="iss-drawer-label">套餐类型</div><div class="iss-drawer-value">${d.packageType||'—'}</div></div>
+      <div class="iss-drawer-field"><div class="iss-drawer-label">责任人</div><div class="iss-drawer-value">${d.person||'—'}</div></div>
+      <div class="iss-drawer-field"><div class="iss-drawer-label">问题标签</div><div class="iss-drawer-value">${tagsHtml}</div></div>
+    </div>
+    <div class="iss-drawer-section">
+      <div class="iss-drawer-label">📝 问题描述</div>
+      <div class="iss-drawer-desc">${_escH(d.desc||'暂无描述')}</div>
+    </div>
+    ${d.solution ? `<div class="iss-drawer-section"><div class="iss-drawer-label">💡 解决方案</div><div class="iss-drawer-desc" style="background:#f0fff4;border:1px solid #b7eb8f">${_escH(d.solution)}</div></div>` : ''}
+    ${attHtml}
+    <div style="display:flex;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid #f0f0f0">
+      <button class="btn btn-ghost btn-sm" onclick="openIssEdit('${d.id}');closeIssDrawer()">✏️ 编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}');closeIssDrawer()">🗑️ 删除</button>
+    </div>`;
+  document.getElementById('issDrawer').classList.add('open');
+  document.getElementById('issDrawerMask').style.display = 'block';
+}
+function closeIssDrawer() {
+  document.getElementById('issDrawer').classList.remove('open');
+  document.getElementById('issDrawerMask').style.display = 'none';
 }
 
 async function deleteIssItem(id) {
@@ -3313,7 +3374,7 @@ function renderBugs() {
       <td>${_escH(d.reporter||'')}</td>
       <td onclick="event.stopPropagation()">${attC>0?`<span style="color:#3370ff;cursor:pointer;text-decoration:underline" onclick='previewBugAttList(${JSON.stringify(d.attachments).replace(/'/g,"&#39;")})'>${attC}个</span>`:'-'}</td>
       <td style="font-size:12px;color:#888">${_fmtBugT(d.updatedAt||d.createdAt)}</td>
-      <td class="actions" onclick="event.stopPropagation()"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${dJson})'>编辑</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
+      <td class="actions" onclick="event.stopPropagation()"><button class="btn btn-sm btn-ghost" onclick='openBugEdit(${dJson})'>编辑</button><button class="btn btn-sm btn-ghost" onclick='copyBug(${dJson})'>复制</button><button class="btn btn-sm btn-danger" onclick="deleteBug('${d.id}')">删除</button></td>
     </tr>`;
   }
   html += '</tbody></table></div>';
@@ -3350,6 +3411,20 @@ function openBugEdit(d){
   document.getElementById('bfDesc').value=d.description||'';
   document.getElementById('bfSeverity').value=d.severity||'3级';
   document.getElementById('bfStatus').value=d.status||'待处理';
+  document.getElementById('bfReporter').value=d.reporter||'';
+  renderBugAtt();
+  _bindBugModalPaste();
+}
+function copyBug(d){
+  _bugEditId=null;_bugAttachments=(d.attachments||[]).slice();
+  document.getElementById('bugModal').style.display='flex';
+  document.getElementById('bugModalTitle').textContent='复制新增 Bug';
+  document.getElementById('bfProduct').value=d.product||'admin';
+  document.getElementById('bfModule').value=d.module||'';
+  document.getElementById('bfTitle').value=(d.title||'')+' (副本)';
+  document.getElementById('bfDesc').value=d.description||'';
+  document.getElementById('bfSeverity').value=d.severity||'3级';
+  document.getElementById('bfStatus').value='待处理';
   document.getElementById('bfReporter').value=d.reporter||'';
   renderBugAtt();
   _bindBugModalPaste();
@@ -3500,6 +3575,7 @@ function openBugDrawer(d){
     ${attHtml}
     <div style="display:flex;gap:8px;margin-top:20px">
       <button class="btn btn-ghost btn-sm" onclick="openBugEdit(${JSON.stringify(d).replace(/'/g,"'")}); closeBugDrawer()">✏️ 编辑</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyBug(${JSON.stringify(d).replace(/'/g,"'")}); closeBugDrawer()">📋 复制</button>
       <button class="btn btn-danger btn-sm" onclick="deleteBug('${d.id}'); closeBugDrawer()">🗑️ 删除</button>
     </div>`;
   drawer.classList.add('open');
@@ -3718,6 +3794,16 @@ async function deleteUser(id) {
   else loadUsers();
 }
 </script>
+
+<!-- 问题记录详情抽屉 -->
+<div id="issDrawer" class="iss-drawer">
+  <div class="iss-drawer-head">
+    <span style="font-size:16px;font-weight:700;color:#1a1a2e">问题详情</span>
+    <button onclick="closeIssDrawer()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1">✕</button>
+  </div>
+  <div class="iss-drawer-body" id="issDrawerBody"></div>
+</div>
+<div id="issDrawerMask" style="display:none;position:fixed;inset:0;z-index:1499;background:rgba(0,0,0,.15)" onclick="closeIssDrawer()"></div>
 
 <!-- 创新项目 Bug 详情抽屉 -->
 <div id="bugDrawer" class="bug-drawer">
