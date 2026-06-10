@@ -3607,12 +3607,6 @@ async function previewFeishuFile(fileToken,name,type){
   }
 }
 function rmBugAtt(i){_bugAttachments.splice(i,1);renderBugAtt();}
-async function onBugDescPaste(e){
-  return _handleBugPaste(e);
-}
-async function onBugAttPaste(e){
-  return _handleBugPaste(e);
-}
 async function _handleBugPaste(e){
   const items=Array.from((e.clipboardData||window.clipboardData)?.items||[]);
   const imgItems=items.filter(it=>it.kind==='file'&&it.type.startsWith('image/'));
@@ -3942,9 +3936,9 @@ async function deleteUser(id) {
         <div class="form-row"><label>所属模块</label><input id="bfModule" placeholder="如：用户管理、报表"></div>
       </div>
       <div class="form-row"><label>Bug标题 <span style="color:red">*</span></label><input id="bfTitle" placeholder="请输入Bug标题"></div>
-      <div class="form-row"><label>Bug描述</label><textarea id="bfDesc" placeholder="详细描述问题现象、复现步骤等。可直接 Ctrl+V 粘贴图片到此处" onpaste="onBugDescPaste(event)"></textarea></div>
+      <div class="form-row"><label>Bug描述</label><textarea id="bfDesc" placeholder="详细描述问题现象、复现步骤等。可直接 Ctrl+V 粘贴图片到此处"></textarea></div>
       <div class="form-row"><label>问题附件 <span style="color:#aaa;font-weight:400;font-size:11px">支持粘贴或选择文件</span></label>
-        <div id="bfAttList" style="margin-bottom:8px;min-height:30px;padding:8px;border:1px dashed #d9d9d9;border-radius:6px" onpaste="onBugAttPaste(event)" tabindex="0"><span style="color:#aaa;font-size:12px">点击此处后 Ctrl+V 粘贴图片，或下方选择文件</span></div>
+        <div id="bfAttList" style="margin-bottom:8px;min-height:30px;padding:8px;border:1px dashed #d9d9d9;border-radius:6px" tabindex="0"><span style="color:#aaa;font-size:12px">弹窗内任意位置 Ctrl+V 即可粘贴图片，或下方选择文件</span></div>
         <input type="file" multiple onchange="uploadBugAtt(this)" style="font-size:12px">
       </div>
       <div class="form-grid">
