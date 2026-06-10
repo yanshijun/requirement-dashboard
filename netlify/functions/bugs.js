@@ -43,6 +43,7 @@ exports.handler = async function (event) {
       const [rows] = await pool.execute(sql, params);
       return ok(rows.map(r => ({
         id: r.id,
+        seqNo: r.seq_no,
         product: r.product,
         module: r.module,
         title: r.title,

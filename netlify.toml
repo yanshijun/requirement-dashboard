@@ -34,6 +34,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/reqbugs"
+  to = "/.netlify/functions/reqbugs"
+  status = 200
+
+[[redirects]]
   from = "/api/auth"
   to = "/.netlify/functions/auth"
   status = 200

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>测试用例看板</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft YaHei",sans-serif;background:#0f1117;margin:0;padding:0;color:#e6e6eb}
+  header{background:linear-gradient(135deg,#2b5cff,#1a3aad);padding:24px 32px;box-shadow:0 2px 20px rgba(0,0,0,.4)}
+  header h1{margin:0;font-size:22px;display:flex;align-items:center;gap:10px}
+  header .meta{margin-top:8px;font-size:13px;color:#cdd6ff;opacity:.9}
+  .summary{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+  .pill{background:rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+  .pill.pass{background:rgba(82,196,26,.25);color:#b7f5a0}
+  main{padding:28px 32px;max-width:1500px;margin:0 auto}
+  h2{font-size:16px;margin:30px 0 14px;padding-left:10px;border-left:3px solid #2b5cff;display:flex;align-items:center;gap:8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+  .card{background:#1a1d28;border:1px solid #262a38;border-radius:12px;overflow:hidden;transition:transform .15s,border-color .15s}
+  .card:hover{transform:translateY(-3px);border-color:#2b5cff}
+  .card .hd{padding:12px 14px;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;border-bottom:1px solid #262a38;line-height:1.4}
+  .num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#2b5cff;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .badge{margin-left:auto;flex:0 0 auto;background:rgba(82,196,26,.2);color:#7ee063;font-size:11px;padding:2px 8px;border-radius:10px}
+  video,.shot{width:100%;display:block;background:#000;cursor:pointer}
+  .shot{border:0}
+  .empty{color:#888;font-size:14px;padding:20px;background:#1a1d28;border-radius:10px;border:1px dashed #333}
+  footer{text-align:center;color:#666;font-size:12px;padding:30px}
+  .tip{background:#1f2433;border:1px solid #2d3344;border-radius:8px;padding:12px 16px;font-size:13px;color:#9aa4c0;margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎬 测试用例看板</h1>
+  <div class="meta">生成时间：2026/6/5 15:51:22 · 数据来源：Playwright 录像 + MCP 实测截图</div>
+  <div class="summary">
+    <span class="pill pass">✅ 录像 10 段</span>
+    <span class="pill">📸 登录截图 4 张</span>
+    <span class="pill">全部通过</span>
+  </div>
+</header>
+<main>
+  <div class="tip">💡 点击任意视频/图片可播放或放大。录像是自动化测试时真实录制的浏览器操作；截图是 MCP 实测登录流程时保存的画面。重跑 <b>node gen-test-board.js</b> 可刷新本页。</div>
+
+  <h2>🐛 创新项目 · 自动化录像（10）</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="hd"><span class="num">1</span>表格有编号列和复选框列<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E8%A1%A8%E6%A0%BC%E6%9C%89%E7%BC%96%E5%8F%B7%E5%88%97%E5%92%8C%E5%A4%8D%E9%80%89%E6%A1%86%E5%88%97/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">2</span>抽屉标题显示编号-No-<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E6%8A%BD%E5%B1%89%E6%A0%87%E9%A2%98%E6%98%BE%E7%A4%BA%E7%BC%96%E5%8F%B7-No-/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">3</span>点击新增Bug打开弹窗<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E7%82%B9%E5%87%BB%E6%96%B0%E5%A2%9EBug%E6%89%93%E5%BC%80%E5%BC%B9%E7%AA%97/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">4</span>点击行打开详情抽屉<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E7%82%B9%E5%87%BB%E8%A1%8C%E6%89%93%E5%BC%80%E8%AF%A6%E6%83%85%E6%8A%BD%E5%B1%89/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">5</span>复制按钮预填数据并标题带-副本-<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E5%A4%8D%E5%88%B6%E6%8C%89%E9%92%AE%E9%A2%84%E5%A1%AB%E6%95%B0%E6%8D%AE%E5%B9%B6%E6%A0%87%E9%A2%98%E5%B8%A6-%E5%89%AF%E6%9C%AC-/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">6</span>勾选复选框后导出按钮显示选中数量<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E5%8B%BE%E9%80%89%E5%A4%8D%E9%80%89%E6%A1%86%E5%90%8E%E5%AF%BC%E5%87%BA%E6%8C%89%E9%92%AE%E6%98%BE%E7%A4%BA%E9%80%89%E4%B8%AD%E6%95%B0%E9%87%8F/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">7</span>关闭抽屉<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E5%85%B3%E9%97%AD%E6%8A%BD%E5%B1%89/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">8</span>全选框勾选所有行<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E5%85%A8%E9%80%89%E6%A1%86%E5%8B%BE%E9%80%89%E6%89%80%E6%9C%89%E8%A1%8C/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">9</span>搜索过滤<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E6%90%9C%E7%B4%A2%E8%BF%87%E6%BB%A4/video.webm"></video>
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">10</span>页面加载，显示统计卡片和表格<span class="badge">PASS</span></div>
+      <video controls preload="metadata" src="test-results/bugs-%E5%88%9B%E6%96%B0%E9%A1%B9%E7%9B%AE-%E9%A1%B5%E9%9D%A2%E5%8A%A0%E8%BD%BD%EF%BC%8C%E6%98%BE%E7%A4%BA%E7%BB%9F%E8%AE%A1%E5%8D%A1%E7%89%87%E5%92%8C%E8%A1%A8%E6%A0%BC/video.webm"></video>
+    </div></div>
+
+  <h2>🔐 登录流程 · 实测截图（4）</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="hd"><span class="num">1</span>登录页</div>
+      <img class="shot" src="login-step1-%E7%99%BB%E5%BD%95%E9%A1%B5.png" onclick="window.open(this.src)">
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">2</span>填好账号</div>
+      <img class="shot" src="login-step2-%E5%A1%AB%E5%A5%BD%E8%B4%A6%E5%8F%B7.png" onclick="window.open(this.src)">
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">3</span>登录成功</div>
+      <img class="shot" src="login-step3-%E7%99%BB%E5%BD%95%E6%88%90%E5%8A%9F.png" onclick="window.open(this.src)">
+    </div>
+    <div class="card">
+      <div class="hd"><span class="num">4</span>密码错误拦截</div>
+      <img class="shot" src="login-step4-%E5%AF%86%E7%A0%81%E9%94%99%E8%AF%AF%E6%8B%A6%E6%88%AA.png" onclick="window.open(this.src)">
+    </div></div>
+</main>
+<footer>测试看板由 gen-test-board.js 自动生成 · 共 10 段录像 / 4 张截图</footer>
+</body>
+</html>

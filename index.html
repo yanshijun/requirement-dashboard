@@ -886,6 +886,7 @@ function filteredAll() {
 }
 
 function render() {
+  if (_reqBugListOpen) return;   // 需求 Bug 清单打开时，避免迟到的 loadData() 用需求列表覆盖
   const data = filtered();
   if (curTab==='list') renderList(data);
   else if (curTab==='kanban') renderKanban(filteredAll());
@@ -916,6 +917,9 @@ function renderList(data) {
     <div class="stat-card" onclick="jumpToKanban('待上线')"><div class="num" style="color:#722ed1">${ready}</div><div class="lbl">待上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已上线')"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已暂缓')"><div class="num" style="color:#d9d9d9">${paused}</div><div class="lbl">已暂缓</div></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <button class="btn btn-ghost" onclick="openReqBugList()" style="border-color:#d9d9d9">🐛 Bug清单</button>
   </div>`;
   if (sortPri) {
     const rank = p => {
@@ -1133,6 +1137,7 @@ function renderPerson(data) {
 
 function switchTab(tab,el) {
   curTab=tab;
+  _reqBugListOpen = false;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   const toolbar = document.querySelector('.toolbar');
@@ -1175,7 +1180,8 @@ function switchTab(tab,el) {
     }
   } else if (tab === 'bugs') {
     if (toolbar) toolbar.style.display = 'none';
-    if (_bugsLoaded) {
+    curBugScope = 'innovation';
+    if (BUG_STORE[curBugScope].loaded) {
       renderBugs();
       loadBugs(true);
     } else {
@@ -2583,7 +2589,7 @@ function openIssAdd() {
         <div class="form-grid">
           <div class="form-row"><label>客户ID</label><input id="issCustomerId" placeholder="客户ID"></div>
           <div class="form-row"><label>套餐类型</label>
-            <select id="issPackageType"><option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option></select></div>
+            <select id="issPackageType"><option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option><option>免费版</option></select></div>
         </div>
         <div class="form-row"><label>平台 <span style="color:red">*</span></label>
           <select id="issPlatform">
@@ -3197,8 +3203,12 @@ async function deleteGrpItem(id) {
 
 let _grpEditId = null;
 let _grpNextSubGroup = null;
-let bugsData = [];
-let _bugsLoaded = false;
+const BUG_API   = { innovation: '/api/bugs', requirement: '/api/reqbugs' };
+const BUG_TITLE = { innovation: '创新项目',  requirement: '需求Bug清单' };
+const BUG_STORE = { innovation:{data:[],loaded:false}, requirement:{data:[],loaded:false} };
+let curBugScope = 'innovation';
+let _bugSkeletonScope = null;
+let _reqBugListOpen = false;
 let _bugEditId = null;
 let _grpConfigData = [];
 
@@ -3274,10 +3284,16 @@ async function addGrpSubGroup() {
 const BUG_PRODUCTS = ['admin', 'GEO', 'Studio', 'CallFayOne'];
 const BUG_SEVERITIES = ['1级', '2级', '3级', '4级'];
 const BUG_STATUSES = ['待处理', '处理中', '已解决', '已关闭'];
+// 创新项目按「所属产品」分类；需求 Bug 清单按「所属计划」分类（计划列表读自需求列表 getPlans()）
+const BUG_PRODUCT_LABEL = { innovation: '所属产品', requirement: '所属计划' };
+const BUG_PRODUCT_ALL   = { innovation: '全部产品', requirement: '全部计划' };
+const BUG_PRODUCT_COL   = { innovation: '产品',     requirement: '计划' };
+function bugProductOptions() { return curBugScope === 'requirement' ? getPlans() : BUG_PRODUCTS; }
+function bugProductDefault() { return curBugScope === 'requirement' ? (getPlans()[0] || '') : 'admin'; }
 
 async function bugsApi(action, body) {
   const isGet = !body;
-  const url = `/api/bugs?action=${action}&_=${Date.now()}`;
+  const url = `${BUG_API[curBugScope]}?action=${action}&_=${Date.now()}`;
   const opts = isGet ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
   const res = await fetch(url, opts);
   const data = await res.json();
@@ -3287,13 +3303,36 @@ async function bugsApi(action, body) {
 
 async function loadBugs(silent = false) {
   try {
-    bugsData = await bugsApi('list');
-    _bugsLoaded = true;
+    BUG_STORE[curBugScope].data = await bugsApi('list');
+    BUG_STORE[curBugScope].loaded = true;
     renderBugs();
     enforceReadonly();
   } catch(e) {
     if (!silent) document.getElementById('mainContent').innerHTML = '<div class="err-box">加载失败：' + e.message + '</div>';
   }
+}
+
+function openReqBugList() {
+  curBugScope = 'requirement';
+  _reqBugListOpen = true;
+  const tb = document.querySelector('.toolbar');
+  if (tb) tb.style.display = 'none';
+  if (BUG_STORE.requirement.loaded) {
+    renderBugs();
+    loadBugs(true);
+  } else {
+    document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+    loadBugs();
+  }
+  setTimeout(enforceReadonly, 100);
+}
+function closeReqBugList() {
+  curBugScope = 'innovation';
+  _reqBugListOpen = false;
+  const tb = document.querySelector('.toolbar');
+  if (tb) tb.style.display = '';
+  render();
+  setTimeout(enforceReadonly, 100);
 }
 
 function renderBugs() {
@@ -3306,7 +3345,8 @@ function renderBugs() {
   const fDateTo = document.getElementById('bugFDateTo') ? document.getElementById('bugFDateTo').value : '';
   const kw = fSearch.trim().toLowerCase();
 
-  let filtered = [...bugsData];
+  const data = BUG_STORE[curBugScope].data;
+  let filtered = [...data];
   if (fProduct) filtered = filtered.filter(d => d.product === fProduct);
   if (fSev) filtered = filtered.filter(d => d.severity === fSev);
   if (fStatus) filtered = filtered.filter(d => d.status === fStatus);
@@ -3316,16 +3356,20 @@ function renderBugs() {
   if (fDateTo) filtered = filtered.filter(d => _bugLD(d.updatedAt||d.createdAt) <= fDateTo);
 
   // 统计
-  const total = bugsData.length;
-  const sev1 = bugsData.filter(d => d.severity === '1级').length;
-  const sev2 = bugsData.filter(d => d.severity === '2级').length;
-  const pending = bugsData.filter(d => d.status === '待处理').length;
-  const resolved = bugsData.filter(d => d.status === '已解决').length;
+  const total = data.length;
+  const sev1 = data.filter(d => d.severity === '1级').length;
+  const sev2 = data.filter(d => d.severity === '2级').length;
+  const pending = data.filter(d => d.status === '待处理').length;
+  const resolved = data.filter(d => d.status === '已解决').length;
 
-  // 第一次渲染：建立完整骨架（含搜索框），之后只更新内容区，不碰工具栏
-  if (!document.getElementById('bugFSearch')) {
+  // 第一次渲染（或切换数据源时）：建立完整骨架（含搜索框），之后只更新内容区，不碰工具栏
+  if (!document.getElementById('bugFSearch') || _bugSkeletonScope !== curBugScope) {
+    const backBtn = curBugScope === 'requirement'
+      ? `<button class="btn btn-ghost" onclick="closeReqBugList()" style="margin-right:auto">← 返回需求列表</button>`
+      : '';
     mc.innerHTML = `<div class="bug-toolbar">
-      <select id="bugFProduct" onchange="renderBugs()"><option value="">全部产品</option>${BUG_PRODUCTS.map(p=>`<option>${p}</option>`).join('')}</select>
+      ${backBtn}
+      <select id="bugFProduct" onchange="renderBugs()"><option value="">${BUG_PRODUCT_ALL[curBugScope]}</option>${bugProductOptions().map(p=>`<option>${p}</option>`).join('')}</select>
       <select id="bugFSev" onchange="renderBugs()"><option value="">全部严重程度</option>${BUG_SEVERITIES.map(s=>`<option>${s}</option>`).join('')}</select>
       <select id="bugFStatus" onchange="renderBugs()"><option value="">全部状态</option>${BUG_STATUSES.map(s=>`<option>${s}</option>`).join('')}</select>
       <input id="bugFSearch" placeholder="搜索标题/描述/模块" oninput="renderBugs()" autocomplete="off">
@@ -3334,11 +3378,12 @@ function renderBugs() {
       <span style="font-size:12px;color:#aaa">~</span>
       <input type="date" id="bugFDateTo" onchange="renderBugs()" style="width:130px">
       <button class="btn btn-success" onclick="openBugAdd()">＋ 新增Bug</button>
-      <button class="btn btn-ghost" onclick="exportBugsHtml()">📥 导出报告</button>
+      <button class="btn btn-ghost" id="bugExportBtn" onclick="exportBugsHtml()">📥 导出报告</button>
       <button class="btn btn-ghost" onclick="loadBugs(true)">🔄</button>
     </div>
     <div id="bugStatsArea"></div>
     <div id="bugTableArea"></div>`;
+    _bugSkeletonScope = curBugScope;
   }
 
   // 同步下拉选中状态（不重建元素）
@@ -3359,12 +3404,15 @@ function renderBugs() {
   let html = '';
   html += `<div class="tbl-wrap"><div class="tbl-info">共 ${filtered.length} 条${(kw||fProduct||fSev||fStatus)?` （筛选自 ${total}）`:''}</div>`;
   if (!filtered.length) { html += '<div class="empty">暂无数据</div></div>'; bugTable.innerHTML = html; return; }
-  html += `<table><thead><tr><th style="width:90px">产品</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">更新时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
-  for (const d of filtered) {
+  html += `<table><thead><tr><th style="width:36px"><input type="checkbox" id="bugCheckAll" onchange="toggleBugCheckAll(this.checked)"></th><th style="width:40px">编号</th><th style="width:90px">${BUG_PRODUCT_COL[curBugScope]}</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">更新时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
+  for (let idx=0; idx<filtered.length; idx++) {
+    const d = filtered[idx];
     const sevN = (d.severity||'3级').replace('级','');
     const attC = (d.attachments||[]).length;
     const dJson = JSON.stringify(d).replace(/'/g,"&#39;");
     html += `<tr style="cursor:pointer" onclick='openBugDrawer(${dJson})'>
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="bug-check-item" value="${d.id}" onchange="updateBugCheckState()"></td>
+      <td style="font-size:12px;color:#666;text-align:center;font-weight:600">${d.seqNo||idx+1}</td>
       <td><span class="tag tag-ur">${_escH(d.product)}</span></td>
       <td>${_escH(d.module||'')}</td>
       <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(d.title)}">${_escH(d.title)}</td>
@@ -3380,6 +3428,21 @@ function renderBugs() {
   html += '</tbody></table></div>';
   bugTable.innerHTML = html;
 }
+function toggleBugCheckAll(checked){
+  document.querySelectorAll('.bug-check-item').forEach(cb=>cb.checked=checked);
+  updateBugCheckState();
+}
+function updateBugCheckState(){
+  const items=document.querySelectorAll('.bug-check-item');
+  const checked=document.querySelectorAll('.bug-check-item:checked');
+  const all=document.getElementById('bugCheckAll');
+  if(all)all.checked=items.length>0&&checked.length===items.length;
+  const btn=document.getElementById('bugExportBtn');
+  if(btn)btn.textContent=checked.length?`📥 导出选中(${checked.length})`:'📥 导出报告';
+}
+function _getSelectedBugIds(){
+  return Array.from(document.querySelectorAll('.bug-check-item:checked')).map(cb=>cb.value);
+}
 function _restoreBugSearch(){
   const inp=document.getElementById('bugFSearch');
   if(inp&&inp.value){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
@@ -3387,11 +3450,21 @@ function _restoreBugSearch(){
 function _escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _fmtBugT(t){if(!t)return'';const d=new Date(t);if(isNaN(d))return String(t);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 
+function _applyBugProductField(selectedVal){
+  const lbl=document.getElementById('bfProductLabel');
+  if(lbl) lbl.textContent=BUG_PRODUCT_LABEL[curBugScope];
+  const sel=document.getElementById('bfProduct');
+  if(sel){
+    const opts=bugProductOptions();
+    sel.innerHTML=opts.map(p=>`<option>${p}</option>`).join('');
+    sel.value=selectedVal && opts.includes(selectedVal) ? selectedVal : (opts[0]||'');
+  }
+}
 function openBugAdd(){
   _bugEditId=null;_bugAttachments=[];
   document.getElementById('bugModal').style.display='flex';
   document.getElementById('bugModalTitle').textContent='新增 Bug';
-  document.getElementById('bfProduct').value='admin';
+  _applyBugProductField(bugProductDefault());
   document.getElementById('bfModule').value='';
   document.getElementById('bfTitle').value='';
   document.getElementById('bfDesc').value='';
@@ -3405,7 +3478,7 @@ function openBugEdit(d){
   _bugEditId=d.id;_bugAttachments=(d.attachments||[]).slice();
   document.getElementById('bugModal').style.display='flex';
   document.getElementById('bugModalTitle').textContent='编辑 Bug';
-  document.getElementById('bfProduct').value=d.product||'admin';
+  _applyBugProductField(d.product);
   document.getElementById('bfModule').value=d.module||'';
   document.getElementById('bfTitle').value=d.title||'';
   document.getElementById('bfDesc').value=d.description||'';
@@ -3419,7 +3492,7 @@ function copyBug(d){
   _bugEditId=null;_bugAttachments=(d.attachments||[]).slice();
   document.getElementById('bugModal').style.display='flex';
   document.getElementById('bugModalTitle').textContent='复制新增 Bug';
-  document.getElementById('bfProduct').value=d.product||'admin';
+  _applyBugProductField(d.product);
   document.getElementById('bfModule').value=d.module||'';
   document.getElementById('bfTitle').value=(d.title||'')+' (副本)';
   document.getElementById('bfDesc').value=d.description||'';
@@ -3564,7 +3637,7 @@ function openBugDrawer(d){
   const atts=(d.attachments||[]);
   const attHtml=atts.length?`<div class="bug-drawer-section"><div class="bug-drawer-label">📎 附件（${atts.length}个）</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${atts.map((a,i)=>{const icon=(a.type&&a.type.startsWith('image/'))?'🖼️':'📎';return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f7f8fa;border:1px solid #e8e8e8;border-radius:6px;font-size:12px;cursor:pointer;color:#3370ff" onclick="previewFeishuFile('${a.file_token}','${_escH(a.name||'')}','${a.type||''}')">${icon} ${_escH(a.name||'文件')}</span>`;}).join('')}</div></div>`:'' ;
   document.getElementById('bugDrawerBody').innerHTML=`
-    <div class="bug-drawer-title">${_escH(d.title)}</div>
+    <div class="bug-drawer-title">${d.seqNo?`<span style="color:#3370ff;margin-right:6px">No.${d.seqNo}</span>`:''}${_escH(d.title)}</div>
     <div class="bug-drawer-meta">
       <span>🏷️ <b>${_escH(d.product)}</b></span>
       ${d.module?`<span>📦 ${_escH(d.module)}</span>`:''}
@@ -3596,7 +3669,7 @@ function _getBugFiltered(){
   const kw=(document.getElementById('bugFSearch')?document.getElementById('bugFSearch').value:'').trim().toLowerCase();
   const fdFrom=document.getElementById('bugFDateFrom')?document.getElementById('bugFDateFrom').value:'';
   const fdTo=document.getElementById('bugFDateTo')?document.getElementById('bugFDateTo').value:'';
-  let rows=[...bugsData];
+  let rows=[...BUG_STORE[curBugScope].data];
   if(fp)rows=rows.filter(d=>d.product===fp);
   if(fs)rows=rows.filter(d=>d.severity===fs);
   if(fst)rows=rows.filter(d=>d.status===fst);
@@ -3607,8 +3680,16 @@ function _getBugFiltered(){
   return {rows,filters:[fp&&`产品：${fp}`,fs&&`严重程度：${fs}`,fst&&`状态：${fst}`,fdFrom&&`更新≥${fdFrom}`,fdTo&&`更新≤${fdTo}`,kw&&`关键词：${kw}`].filter(Boolean)};
 }
 async function exportBugsHtml(){
-  if(!bugsData.length){alert('暂无数据可导出');return;}
-  const {rows,filters}=_getBugFiltered();
+  if(!BUG_STORE[curBugScope].data.length){alert('暂无数据可导出');return;}
+  const selectedIds=_getSelectedBugIds();
+  let rows,filters;
+  if(selectedIds.length){
+    rows=BUG_STORE[curBugScope].data.filter(d=>selectedIds.includes(d.id));
+    filters=[`手动选中 ${rows.length} 条`];
+  }else{
+    const f=_getBugFiltered();
+    rows=f.rows;filters=f.filters;
+  }
   if(!rows.length){alert('当前筛选条件下无数据');return;}
   const hasAtts=rows.some(r=>(r.attachments||[]).length>0);
   let loadingEl=null;
@@ -3662,10 +3743,10 @@ async function exportBugsHtml(){
       return `<table style="width:100%;border-collapse:collapse;border:2px solid #d9d9d9;margin-bottom:20px;page-break-inside:avoid">
   <tr style="background:#f0f5ff">
     <td colspan="2" style="padding:10px 12px;font-size:15px;font-weight:bold;border-bottom:2px solid #d9d9d9">
-      <span style="color:#3370ff;margin-right:8px">No.${i+1}</span>${_escH(d.title)}
+      <span style="color:#3370ff;margin-right:8px">No.${d.seqNo||i+1}</span>${_escH(d.title)}
     </td>
   </tr>
-  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">产品/模块</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.product)}${d.module?' / '+_escH(d.module):''}</td></tr>
+  <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">${BUG_PRODUCT_COL[curBugScope]}/模块</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.product)}${d.module?' / '+_escH(d.module):''}</td></tr>
   <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">严重程度</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;color:${sevColor[sevN]||'#333'};font-weight:bold">${sevLabel[sevN]||d.severity||''}</td></tr>
   <tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">状态</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${_escH(d.status||'待处理')}</td></tr>
   ${d.description?`<tr><td style="padding:8px 12px;width:80px;font-size:12px;color:#888;border-bottom:1px solid #eee;vertical-align:top">问题描述</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;line-height:1.7">${_escH(d.description).replace(/\n/g,'<br>')}</td></tr>`:''}
@@ -3675,13 +3756,13 @@ async function exportBugsHtml(){
 </table>`;
     }).join('\n');
     const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page{size:A4;margin:2cm}body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#1a1a2e}table{border-collapse:collapse;width:100%}</style></head><body>
-<h1 style="font-size:22px;text-align:center;margin-bottom:4px">创新项目 Bug 报告</h1>
+<h1 style="font-size:22px;text-align:center;margin-bottom:4px">${BUG_TITLE[curBugScope]} Bug 报告</h1>
 <p style="text-align:center;font-size:12px;color:#888;margin-bottom:24px">导出时间：${now} | 共 ${rows.length} 条${filters.length?' | 筛选：'+filters.join('，'):''}</p>
 ${cards}
 </body></html>`;
     const blob=new Blob(['﻿'+html],{type:'application/msword'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=`创新项目Bug报告_${new Date().toISOString().slice(0,10)}.doc`;
+    a.download=`${BUG_TITLE[curBugScope]}Bug报告_${new Date().toISOString().slice(0,10)}.doc`;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
   }finally{if(loadingEl)document.body.removeChild(loadingEl);}
 }
@@ -3827,7 +3908,7 @@ async function deleteUser(id) {
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-row"><label>所属产品 <span style="color:red">*</span></label>
+        <div class="form-row"><label><span id="bfProductLabel">所属产品</span> <span style="color:red">*</span></label>
           <select id="bfProduct"><option>admin</option><option>GEO</option><option>Studio</option><option>CallFayOne</option></select></div>
         <div class="form-row"><label>所属模块</label><input id="bfModule" placeholder="如：用户管理、报表"></div>
       </div>
@@ -3866,7 +3947,7 @@ async function deleteUser(id) {
         <div class="form-row"><label>套餐类型</label>
           <select id="gfPackageType">
             <option value="">请选择</option>
-            <option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option>
+            <option>专业版</option><option>团队版</option><option>臻享版</option><option>尊享版</option><option>免费版</option>
           </select>
         </div>
       </div>

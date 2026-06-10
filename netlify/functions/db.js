@@ -110,6 +110,7 @@ async function initTables() {
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS innovation_bugs (
         id VARCHAR(64) PRIMARY KEY,
+        seq_no INT AUTO_INCREMENT UNIQUE COMMENT '自增编号',
         product VARCHAR(50) NOT NULL COMMENT '所属产品',
         module VARCHAR(100) DEFAULT '' COMMENT '所属模块',
         title VARCHAR(500) NOT NULL COMMENT 'Bug标题',
@@ -125,6 +126,40 @@ async function initTables() {
         INDEX idx_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    await conn.execute(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='innovation_bugs' AND COLUMN_NAME='seq_no'
+    `).then(async ([rows]) => {
+      if (!rows.length) {
+        await conn.execute("ALTER TABLE innovation_bugs ADD COLUMN seq_no INT AUTO_INCREMENT UNIQUE AFTER id");
+      }
+    });
+    // ===== 需求 Bug 清单表（与创新项目同构，数据独立） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS requirement_bugs (
+        id VARCHAR(64) PRIMARY KEY,
+        seq_no INT AUTO_INCREMENT UNIQUE COMMENT '自增编号',
+        product VARCHAR(50) NOT NULL COMMENT '所属产品',
+        module VARCHAR(100) DEFAULT '' COMMENT '所属模块',
+        title VARCHAR(500) NOT NULL COMMENT 'Bug标题',
+        description TEXT COMMENT 'Bug描述',
+        attachments JSON COMMENT '附件列表',
+        severity VARCHAR(10) DEFAULT '3级' COMMENT '严重程度',
+        status VARCHAR(20) DEFAULT '待处理' COMMENT '状态',
+        reporter VARCHAR(100) DEFAULT '' COMMENT '提报人',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_product (product),
+        INDEX idx_severity (severity),
+        INDEX idx_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await conn.execute(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='requirement_bugs' AND COLUMN_NAME='seq_no'
+    `).then(async ([rows]) => {
+      if (!rows.length) {
+        await conn.execute("ALTER TABLE requirement_bugs ADD COLUMN seq_no INT AUTO_INCREMENT UNIQUE AFTER id");
+      }
+    });
     // ===== 用户权限表 =====
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS sys_users (
