@@ -160,6 +160,14 @@ async function initTables() {
         await conn.execute("ALTER TABLE requirement_bugs ADD COLUMN seq_no INT AUTO_INCREMENT UNIQUE AFTER id");
       }
     });
+    // ===== 计划列表（服务端持久化，替代浏览器 localStorage） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS req_plans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE COMMENT '计划名称',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
     // ===== 用户权限表 =====
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS sys_users (

@@ -6,6 +6,7 @@ const { handler: kbHandler } = require('./netlify/functions/kb');
 const { handler: groupsHandler } = require('./netlify/functions/groups');
 const { handler: bugsHandler } = require('./netlify/functions/bugs');
 const { handler: reqbugsHandler } = require('./netlify/functions/reqbugs');
+const { handler: plansHandler } = require('./netlify/functions/plans');
 const { handler: authHandler } = require('./netlify/functions/auth');
 const { handler: usersHandler } = require('./netlify/functions/users');
 
@@ -116,6 +117,23 @@ app.all('/api/reqbugs', async (req, res) => {
   };
   try {
     const result = await reqbugsHandler(event);
+    res.status(result.statusCode).set(result.headers);
+    if (result.isBase64Encoded) res.send(Buffer.from(result.body, 'base64'));
+    else res.send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/plans', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await plansHandler(event);
     res.status(result.statusCode).set(result.headers);
     if (result.isBase64Encoded) res.send(Buffer.from(result.body, 'base64'));
     else res.send(result.body);

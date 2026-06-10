@@ -58,7 +58,7 @@ test.describe('需求列表 · 独立 Bug 清单', () => {
     expect(opts).toContain('SAE2.3.3');
   });
 
-  test('新增一条 Bug 并出现在列表', async ({ page }) => {
+  test('新增一条 Bug 并出现在列表', async ({ page, request }) => {
     await page.click('button:has-text("🐛 Bug清单")');
     await page.waitForSelector('#bugFSearch', { timeout: 15000 });
     await page.click('button:has-text("＋ 新增Bug")');
@@ -69,21 +69,29 @@ test.describe('需求列表 · 独立 Bug 清单', () => {
     await page.click('#bugModal button:has-text("保存")');
     await page.waitForTimeout(800);
     await expect(page.locator('#bugTableArea').getByText(title)).toBeVisible();
+    // 清理：删除本次新增的记录
+    const list = await (await request.get('/api/reqbugs?action=list')).json();
+    const rec = list.find(r => r.title === title);
+    if (rec) await request.post('/api/reqbugs?action=delete', { data: { id: rec.id } });
   });
 
-  test('点击行打开详情抽屉', async ({ page }) => {
+  test('点击行打开详情抽屉', async ({ page, request }) => {
+    const r = await (await request.post('/api/reqbugs?action=add', { data: { product: 'SAE2.3.3', title: 'seed详情_' + Date.now() } })).json();
     await page.click('button:has-text("🐛 Bug清单")');
-    await page.waitForSelector('#bugTableArea tbody tr', { timeout: 15000 });
+    await page.waitForSelector('#bugTableArea tbody tr td.actions', { timeout: 15000 });
     await page.locator('#bugTableArea tbody tr').first().click();
     await expect(page.locator('#bugDrawer.open')).toBeVisible();
     await expect(page.locator('.bug-drawer-title')).toContainText('No.');
+    if (r.id) await request.post('/api/reqbugs?action=delete', { data: { id: r.id } });
   });
 
-  test('勾选后导出按钮显示选中数量', async ({ page }) => {
+  test('勾选后导出按钮显示选中数量', async ({ page, request }) => {
+    const r = await (await request.post('/api/reqbugs?action=add', { data: { product: 'SAE2.3.3', title: 'seed勾选_' + Date.now() } })).json();
     await page.click('button:has-text("🐛 Bug清单")');
     await page.waitForSelector('.bug-check-item', { timeout: 15000 });
     await page.locator('.bug-check-item').first().check();
     await expect(page.locator('#bugExportBtn')).toContainText('导出选中');
+    if (r.id) await request.post('/api/reqbugs?action=delete', { data: { id: r.id } });
   });
 
   test('创新项目 Tab 不受影响（无返回按钮）', async ({ page }) => {

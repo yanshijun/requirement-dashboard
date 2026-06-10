@@ -687,42 +687,70 @@ function getPersonItems() {
   return result;
 }
 
-// ===== 计划列表管理 =====
+// ===== 计划列表管理（服务端持久化，清缓存/换设备不丢） =====
 const DEFAULT_PLANS = ['SAE2.3.3', '1688商贸版'];
-function getPlans() {
-  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
-  return [...new Set([...DEFAULT_PLANS, ...extra])];
+let _extraPlans = [];   // 用户自定义计划，来自服务端 /api/plans
+async function plansApi(action, body) {
+  const url = `/api/plans?action=${action}&_=${Date.now()}`;
+  const opts = body ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) } : {};
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
-function addNewPlan() {
+async function loadPlans() {
+  try {
+    let server = await plansApi('list');
+    // 一次性迁移：把旧版本地 localStorage 里的计划上传到服务端，然后清掉本地
+    const local = JSON.parse(localStorage.getItem('extraPlans') || '[]');
+    const toMigrate = local.filter(p => p && !DEFAULT_PLANS.includes(p) && !server.includes(p));
+    if (toMigrate.length) {
+      for (const p of toMigrate) { try { await plansApi('add', { name: p }); } catch(e) {} }
+      server = await plansApi('list');
+    }
+    if (local.length) localStorage.removeItem('extraPlans');
+    _extraPlans = server;
+  } catch(e) {
+    // 后端不可用时退回本地，至少不崩
+    _extraPlans = JSON.parse(localStorage.getItem('extraPlans') || '[]');
+  }
+}
+function getPlans() {
+  return [...new Set([...DEFAULT_PLANS, ..._extraPlans])];
+}
+async function addNewPlan() {
   const name = prompt('请输入计划名称：');
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
-  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
-  if (!extra.includes(trimmed) && !DEFAULT_PLANS.includes(trimmed)) {
-    extra.push(trimmed);
-    localStorage.setItem('extraPlans', JSON.stringify(extra));
+  if (!DEFAULT_PLANS.includes(trimmed) && !_extraPlans.includes(trimmed)) {
+    try { await plansApi('add', { name: trimmed }); _extraPlans.push(trimmed); }
+    catch(e) { alert('新增计划失败：' + e.message); return; }
   }
   buildPlanSelects(trimmed);
 }
-function deleteCurPlan() {
+async function deleteCurPlan() {
   const sel = document.getElementById('fFPlan');
   const cur = sel.value;
   if (DEFAULT_PLANS.includes(cur)) { alert('默认计划不能删除'); return; }
   if (!confirm(`确认删除计划「${cur}」？`)) return;
-  const extra = JSON.parse(localStorage.getItem('extraPlans') || '[]');
-  localStorage.setItem('extraPlans', JSON.stringify(extra.filter(p => p !== cur)));
+  try { await plansApi('delete', { name: cur }); _extraPlans = _extraPlans.filter(p => p !== cur); }
+  catch(e) { alert('删除计划失败：' + e.message); return; }
   buildPlanSelects(getPlans()[0]);
 }
 function buildPlanSelects(selectVal) {
   const plans = getPlans();
   // 筛选栏
   const fPlan = document.getElementById('fPlan');
-  const curFilter = fPlan.value;
-  fPlan.innerHTML = '<option value="">全部计划</option>' + plans.map(p => `<option${p===curFilter?' selected':''}>${p}</option>`).join('');
+  if (fPlan) {
+    const curFilter = fPlan.value;
+    fPlan.innerHTML = '<option value="">全部计划</option>' + plans.map(p => `<option${p===curFilter?' selected':''}>${p}</option>`).join('');
+  }
   // 表单下拉
   const fFPlan = document.getElementById('fFPlan');
-  const curForm = selectVal || fFPlan.value;
-  fFPlan.innerHTML = plans.map(p => `<option${p===curForm?' selected':''}>${p}</option>`).join('');
+  if (fFPlan) {
+    const curForm = selectVal || fFPlan.value;
+    fFPlan.innerHTML = plans.map(p => `<option${p===curForm?' selected':''}>${p}</option>`).join('');
+  }
 }
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
@@ -748,6 +776,7 @@ async function api(action, body, qs = '') {
 // ===== 加载数据 =====
 async function loadData(silent = false) {
   if (!silent) document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
+  await loadPlans();  // 从服务端拉取计划列表（持久化）
   buildPlanSelects(); // 初始化计划下拉
   try {
     const res = await api('get', null, '?table=all');
@@ -3403,8 +3432,8 @@ function renderBugs() {
   if (!bugTable) return;
   let html = '';
   html += `<div class="tbl-wrap"><div class="tbl-info">共 ${filtered.length} 条${(kw||fProduct||fSev||fStatus)?` （筛选自 ${total}）`:''}</div>`;
-  if (!filtered.length) { html += '<div class="empty">暂无数据</div></div>'; bugTable.innerHTML = html; return; }
   html += `<table><thead><tr><th style="width:36px"><input type="checkbox" id="bugCheckAll" onchange="toggleBugCheckAll(this.checked)"></th><th style="width:40px">编号</th><th style="width:90px">${BUG_PRODUCT_COL[curBugScope]}</th><th style="width:100px">模块</th><th>Bug标题</th><th>Bug描述</th><th style="width:70px">严重程度</th><th style="width:70px">状态</th><th style="width:70px">提报人</th><th style="width:50px">附件</th><th style="width:130px">更新时间</th><th style="width:120px">操作</th></tr></thead><tbody>`;
+  if (!filtered.length) { html += '<tr><td colspan="12" style="text-align:center;padding:40px;color:#aaa">暂无数据</td></tr></tbody></table></div>'; bugTable.innerHTML = html; return; }
   for (let idx=0; idx<filtered.length; idx++) {
     const d = filtered[idx];
     const sevN = (d.severity||'3级').replace('级','');
