@@ -2584,6 +2584,7 @@ function renderIssues() {
     <td>${d.packageType||''}</td>
     <td>${platformTag(d.platform)}</td>
     <td style="max-width:280px;color:#666;font-size:12px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
+    <td style="text-align:center">${d.chatUp && d.chatUp.trim() ? '<span title="有 CHAT-UP 数据，点开查看" style="color:#722ed1">🧩</span>' : '<span style="color:#ddd">—</span>'}</td>
     <td style="max-width:160px" onclick="event.stopPropagation()">${attachCell(d.attachments)}</td>
     <td>${d.person||''}</td>
     <td>${issStatTag(d.status)}</td>
@@ -2592,12 +2593,12 @@ function renderIssues() {
       ${d.status!=='已解决'&&d.status!=='已关闭'?`<button class="btn btn-success btn-sm" onclick="issResolve('${d.id}')">已解决</button>`:''}
       <button class="btn btn-danger btn-sm" onclick="deleteIssItem('${d.id}')">删除</button>
     </div></td>
-  </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
+  </tr>`).join('') : '<tr><td colspan="10" style="text-align:center;padding:40px;color:#aaa">暂无问题记录</td></tr>';
 
   document.getElementById('mainContent').innerHTML = toolbar + stats + `<div class="tbl-wrap">
     <div class="tbl-info">${kw||issPlatformVal ? `筛选到 ${sorted.length} / ${issuesData.length} 条记录` : `共 ${issuesData.length} 条记录`}</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>平台</th><th>问题描述</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>平台</th><th>问题描述</th><th>CHAT-UP</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
 }
@@ -2629,6 +2630,13 @@ function openIssAdd() {
         <div class="form-row"><label>问题描述</label><textarea id="issDesc" rows="3" placeholder="描述问题..."></textarea></div>
         <div class="form-row"><label>解决方案</label><textarea id="issSolution" rows="3" placeholder="填写处理步骤或方案（已解决后填写，有助于知识库积累）..."></textarea></div>
         <div class="form-row"><label>问题标签</label><input id="issTags" placeholder="如：登录异常、退款、套餐升级（逗号分隔）"></div>
+        <div class="form-row">
+          <label style="display:flex;align-items:center;gap:8px">CHAT-UP
+            <span style="color:#aaa;font-weight:400;font-size:11px">粘贴长 JSON，保存前可点「格式化」美化</span>
+            <button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="issFormatChatUp()">🔧 格式化</button>
+          </label>
+          <textarea id="issChatUp" rows="5" placeholder='粘贴 CHAT-UP JSON，例如 {"key":"value"}' style="font-family:Consolas,Monaco,monospace;font-size:12px;white-space:pre;overflow-wrap:normal;overflow-x:auto"></textarea>
+        </div>
         <div class="form-row">
           <label>附件 <span style="color:#aaa;font-weight:400;font-size:11px">图片/文件，点击预览</span></label>
           <div class="iss-attach-list" id="issAttachList"></div>
@@ -2665,6 +2673,7 @@ function openIssEdit(id) {
   document.getElementById('issDesc').value = d.desc || '';
   document.getElementById('issSolution').value = d.solution || '';
   document.getElementById('issTags').value = d.tags || '';
+  document.getElementById('issChatUp').value = d.chatUp || '';
   document.getElementById('issPerson').value = d.person || '';
   document.getElementById('issStatus').value = d.status || '未解决';
   document.getElementById('issInKb').checked = d.inKb !== false;
@@ -2752,6 +2761,17 @@ async function issHandleFiles(files) {
   }
 }
 
+function issFormatChatUp() {
+  const ta = document.getElementById('issChatUp');
+  const raw = ta.value.trim();
+  if (!raw) return;
+  try {
+    ta.value = JSON.stringify(JSON.parse(raw), null, 2);
+  } catch(e) {
+    alert('不是合法的 JSON，无法格式化：' + e.message);
+  }
+}
+
 async function saveIssItem() {
   if (_issAttachments.some(a => a.uploading)) { alert('附件上传中，请稍候'); return; }
   const item = {
@@ -2762,6 +2782,7 @@ async function saveIssItem() {
     desc: document.getElementById('issDesc').value.trim(),
     solution: document.getElementById('issSolution').value.trim(),
     tags: document.getElementById('issTags').value.trim(),
+    chatUp: document.getElementById('issChatUp').value.trim(),
     person: document.getElementById('issPerson').value.trim(),
     status: document.getElementById('issStatus').value,
     inKb: document.getElementById('issInKb').checked,
@@ -2844,6 +2865,68 @@ async function issPreviewAttach(fileToken, type, name) {
   }
 }
 
+// 从任意结构里找出聊天消息数组（[{role,content}]），支持顶层数组或对象里的 messages 字段
+function _findChatMessages(obj) {
+  if (Array.isArray(obj)) {
+    if (obj.length && obj.every(m => m && typeof m === 'object' && 'role' in m && 'content' in m)) return obj;
+    for (const it of obj) { const r = _findChatMessages(it); if (r) return r; }
+    return null;
+  }
+  if (obj && typeof obj === 'object') {
+    if (Array.isArray(obj.messages)) { const r = _findChatMessages(obj.messages); if (r) return r; }
+    for (const k of Object.keys(obj)) { const r = _findChatMessages(obj[k]); if (r) return r; }
+  }
+  return null;
+}
+const _ROLE_STYLE = {
+  system:    { label:'⚙️ system',    bg:'#fff7e6', bd:'#ffd591', name:'#d46b08' },
+  user:      { label:'🧑 user',      bg:'#e6f4ff', bd:'#91caff', name:'#0958d9' },
+  assistant: { label:'🤖 assistant', bg:'#f6ffed', bd:'#b7eb8f', name:'#389e0d' },
+  tool:      { label:'🔧 tool',      bg:'#f9f0ff', bd:'#d3adf7', name:'#722ed1' }
+};
+function _issRenderChatUp(raw) {
+  if (!raw || !raw.trim()) return '';
+  window._issChatUpRaw = raw;
+  let parsed = null;
+  try { parsed = JSON.parse(raw); } catch(e) {}
+
+  const copyBtn = `<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:1px 8px;font-size:11px" onclick="navigator.clipboard.writeText(window._issChatUpRaw).then(()=>{this.textContent='已复制';setTimeout(()=>this.textContent='📋 复制原文',1200)})">📋 复制原文</button>`;
+
+  // 情况1：能解析出聊天消息数组 → 渲染成对话气泡（content 里的 \n 还原为真换行）
+  const msgs = parsed ? _findChatMessages(parsed) : null;
+  if (msgs) {
+    const bubbles = msgs.map(m => {
+      const st = _ROLE_STYLE[m.role] || { label:_escH(m.role||'?'), bg:'#f5f5f5', bd:'#e0e0e0', name:'#666' };
+      const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content, null, 2);
+      return `<div style="margin-bottom:10px;background:${st.bg};border:1px solid ${st.bd};border-radius:8px;padding:8px 12px">
+        <div style="font-size:11px;font-weight:700;color:${st.name};margin-bottom:4px">${st.label}</div>
+        <div style="font-size:12.5px;line-height:1.7;color:#333;white-space:pre-wrap;word-break:break-word">${_escH(content)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="iss-drawer-section">
+      <div class="iss-drawer-label" style="display:flex;align-items:center;gap:8px">🧩 CHAT-UP
+        <span style="font-weight:400;color:#52c41a;font-size:11px">对话 ${msgs.length} 条</span>${copyBtn}</div>
+      <div style="max-height:460px;overflow:auto;background:#fafafa;border:1px solid #f0f0f0;border-radius:8px;padding:12px">${bubbles}</div>
+    </div>`;
+  }
+
+  // 情况2：是合法 JSON 但不是消息数组 → 缩进美化
+  if (parsed !== null) {
+    return `<div class="iss-drawer-section">
+      <div class="iss-drawer-label" style="display:flex;align-items:center;gap:8px">🧩 CHAT-UP
+        <span style="font-weight:400;color:#52c41a;font-size:11px">JSON</span>${copyBtn}</div>
+      <pre style="margin:0;background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:14px 16px;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.6;max-height:460px;overflow:auto;white-space:pre-wrap;word-break:break-word">${_escH(JSON.stringify(parsed, null, 2))}</pre>
+    </div>`;
+  }
+
+  // 情况3：不是合法 JSON → 原文按换行显示
+  return `<div class="iss-drawer-section">
+    <div class="iss-drawer-label" style="display:flex;align-items:center;gap:8px">🧩 CHAT-UP
+      <span style="font-weight:400;color:#faad14;font-size:11px">原文</span>${copyBtn}</div>
+    <div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:8px;padding:12px;font-size:12.5px;line-height:1.7;color:#333;white-space:pre-wrap;word-break:break-word;max-height:460px;overflow:auto">${_escH(raw)}</div>
+  </div>`;
+}
+
 function openIssDrawer(d) {
   const ISS_PLATFORM_COLOR = {'拼多多':'#e85d4a','抖店':'#161823','千牛':'#ff6a00','京麦':'#e1251b','微信小店':'#07c160','小红书':'#ff2442','1688':'#ff6600'};
   const issStatMap = {'未解决':'#f5222d','处理中':'#faad14','已解决':'#52c41a','已关闭':'#999'};
@@ -2862,6 +2945,8 @@ function openIssDrawer(d) {
 
   const tagsHtml = d.tags ? d.tags.split(/[,，]/).filter(Boolean).map(t => `<span style="display:inline-block;padding:2px 8px;background:#f0f5ff;color:#3370ff;border-radius:4px;font-size:11px;margin-right:4px">${t.trim()}</span>`).join('') : '<span style="color:#ccc">—</span>';
 
+  const chatUpHtml = _issRenderChatUp(d.chatUp);
+
   document.getElementById('issDrawerBody').innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;background:${statusColor}18;color:${statusColor};border:1px solid ${statusColor}44">${d.status||'未解决'}</span>
@@ -2879,6 +2964,7 @@ function openIssDrawer(d) {
       <div class="iss-drawer-desc">${_escH(d.desc||'暂无描述')}</div>
     </div>
     ${d.solution ? `<div class="iss-drawer-section"><div class="iss-drawer-label">💡 解决方案</div><div class="iss-drawer-desc" style="background:#f0fff4;border:1px solid #b7eb8f">${_escH(d.solution)}</div></div>` : ''}
+    ${chatUpHtml}
     ${attHtml}
     <div style="display:flex;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid #f0f0f0">
       <button class="btn btn-ghost btn-sm" onclick="openIssEdit('${d.id}');closeIssDrawer()">✏️ 编辑</button>

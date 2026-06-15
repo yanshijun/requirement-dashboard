@@ -35,6 +35,7 @@ async function initTables() {
         person VARCHAR(100),
         in_kb TINYINT(1) DEFAULT 1,
         attachments JSON COMMENT '附件列表',
+        chat_up LONGTEXT COMMENT 'CHAT-UP（长JSON）',
         embedding LONGTEXT COMMENT '向量JSON数组',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -46,7 +47,8 @@ async function initTables() {
       "ALTER TABLE kb_issues ADD COLUMN person VARCHAR(100)",
       "ALTER TABLE kb_issues ADD COLUMN attachments JSON",
       "ALTER TABLE kb_issues ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
-      "ALTER TABLE kb_issues ADD COLUMN platform VARCHAR(50) DEFAULT ''"
+      "ALTER TABLE kb_issues ADD COLUMN platform VARCHAR(50) DEFAULT ''",
+      "ALTER TABLE kb_issues ADD COLUMN chat_up LONGTEXT"
     ];
     for (const sql of toAdd) {
       try { await conn.execute(sql); } catch(e) { /* 字段已存在，忽略 */ }
