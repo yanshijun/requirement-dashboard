@@ -23,6 +23,17 @@ header h1{font-size:16px;font-weight:700}
 .toolbar{background:#fff;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #e8e8e8}
 .toolbar select,.toolbar input[type=text]{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;color:#333}
 .toolbar input[type=text]{width:200px}
+.ms-wrap{position:relative;display:inline-block}
+.ms-btn{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;color:#333;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-width:110px;justify-content:space-between}
+.ms-btn:hover{border-color:#3370ff}
+.ms-btn .ms-cnt{background:#3370ff;color:#fff;border-radius:9px;font-size:11px;padding:0 6px;line-height:16px}
+.ms-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:200;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:6px;min-width:150px;display:none}
+.ms-panel.open{display:block}
+.ms-panel label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;font-size:13px;cursor:pointer;white-space:nowrap}
+.ms-panel label:hover{background:#f5f7fa}
+.ms-panel input[type=checkbox]{width:auto;margin:0;cursor:pointer}
+.ms-panel .ms-clear{border-top:1px solid #f0f0f0;margin-top:4px;padding-top:6px;text-align:center;color:#3370ff;font-size:12px;cursor:pointer}
+.ms-panel .ms-clear:hover{text-decoration:underline}
 .tabs{background:#fff;display:flex;padding:0 24px;border-bottom:2px solid #e8e8e8}
 .tab{padding:12px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#666;white-space:nowrap}
 .tab.active{color:#3370ff;border-bottom-color:#3370ff;font-weight:600}
@@ -274,7 +285,19 @@ tr.bug-row-active td{background:#f0f5ff!important}
   <select id="fPlan" onchange="render()"><option value="">全部计划</option></select>
   <select id="fType" onchange="render()"><option value="">全部类型</option><option>用户需求</option><option>研发需求</option></select>
   <select id="fPri" onchange="render()"><option value="">全部优先级</option><option>紧急🔴</option><option>高🟠</option><option>中🟡</option><option>低🟢</option></select>
-  <select id="fStatus" onchange="render()"><option value="">全部状态</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select>
+  <div class="ms-wrap" id="fStatusWrap">
+    <button type="button" class="ms-btn" id="fStatusBtn" onclick="toggleStatusPanel(event)"><span id="fStatusLabel">全部状态</span><span style="color:#aaa">▾</span></button>
+    <div class="ms-panel" id="fStatusPanel">
+      <label><input type="checkbox" value="待开始" onchange="onStatusFilterChange()">待开始</label>
+      <label><input type="checkbox" value="开发中" onchange="onStatusFilterChange()">开发中</label>
+      <label><input type="checkbox" value="联调中" onchange="onStatusFilterChange()">联调中</label>
+      <label><input type="checkbox" value="测试中" onchange="onStatusFilterChange()">测试中</label>
+      <label><input type="checkbox" value="待上线" onchange="onStatusFilterChange()">待上线</label>
+      <label><input type="checkbox" value="已上线" onchange="onStatusFilterChange()">已上线</label>
+      <label><input type="checkbox" value="已暂缓" onchange="onStatusFilterChange()">已暂缓</label>
+      <div class="ms-clear" onclick="clearStatusFilter()">清空</div>
+    </div>
+  </div>
   <select id="fPerson" onchange="render()"><option value="">全部认领人</option></select>
   <input type="text" id="fSearch" placeholder="🔍 搜索需求名称/描述" oninput="render()">
 </div>
@@ -798,16 +821,65 @@ function buildPersonFilter() {
   sel.value = cur;
 }
 
+// ===== 状态多选筛选 =====
+function getStatusFilter() {
+  return Array.from(document.querySelectorAll('#fStatusPanel input[type=checkbox]:checked')).map(c => c.value);
+}
+function setStatusFilter(arr) {
+  const set = new Set(arr || []);
+  document.querySelectorAll('#fStatusPanel input[type=checkbox]').forEach(c => { c.checked = set.has(c.value); });
+  updateStatusLabel();
+}
+function updateStatusLabel() {
+  const sel = getStatusFilter();
+  const label = document.getElementById('fStatusLabel');
+  const btn = document.getElementById('fStatusBtn');
+  if (!label) return;
+  // 清掉旧的计数徽标
+  const oldCnt = btn.querySelector('.ms-cnt');
+  if (oldCnt) oldCnt.remove();
+  if (sel.length === 0) {
+    label.textContent = '全部状态';
+  } else if (sel.length === 1) {
+    label.textContent = sel[0];
+  } else {
+    label.textContent = '已选状态';
+    const cnt = document.createElement('span');
+    cnt.className = 'ms-cnt';
+    cnt.textContent = sel.length;
+    label.after(cnt);
+  }
+}
+function toggleStatusPanel(e) {
+  e.stopPropagation();
+  document.getElementById('fStatusPanel').classList.toggle('open');
+}
+function onStatusFilterChange() {
+  updateStatusLabel();
+  render();
+}
+function clearStatusFilter() {
+  document.querySelectorAll('#fStatusPanel input[type=checkbox]').forEach(c => c.checked = false);
+  updateStatusLabel();
+  render();
+}
+// 点击面板外部关闭
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('fStatusWrap');
+  const panel = document.getElementById('fStatusPanel');
+  if (wrap && panel && !wrap.contains(e.target)) panel.classList.remove('open');
+});
+
 function filtered() {
   const plan = document.getElementById('fPlan').value;
   const type = document.getElementById('fType').value;
   const pri = document.getElementById('fPri').value;
-  const stat = document.getElementById('fStatus').value;
+  const stat = getStatusFilter();
   const person = document.getElementById('fPerson').value;
   const kw = document.getElementById('fSearch').value.trim().toLowerCase();
 
   // 如果没有任何筛选条件，返回所有顶级需求
-  if (!plan && !type && !pri && !stat && !person && !kw) {
+  if (!plan && !type && !pri && !stat.length && !person && !kw) {
     return allData.filter(d => !d.parentId);
   }
 
@@ -815,7 +887,7 @@ function filtered() {
     if (plan && d.plan !== plan) return false;
     if (type && d.type !== type) return false;
     if (pri && d.priority !== pri) return false;
-    if (stat && (d.status || '待开始') !== stat) return false;
+    if (stat.length && !stat.includes(d.status || '待开始')) return false;
     if (person && !(d.person||'').split(',').map(p=>p.trim()).includes(person)) return false;
     if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
     return true;
@@ -876,7 +948,7 @@ function jumpToKanban(filter) {
   document.getElementById('fPlan').value = '';
   document.getElementById('fType').value = '';
   document.getElementById('fPri').value = '';
-  document.getElementById('fStatus').value = '';
+  setStatusFilter([]);
   document.getElementById('fPerson').value = '';
 
   // 根据点击的卡片设置筛选条件
@@ -884,7 +956,7 @@ function jumpToKanban(filter) {
     document.getElementById('fPri').value = '紧急🔴';
   } else if (filter && filter !== '') {
     // 其他状态直接设置状态筛选
-    document.getElementById('fStatus').value = filter;
+    setStatusFilter([filter]);
   }
   // '全部需求' (filter === '') 不设置额外筛选
 
@@ -899,15 +971,15 @@ function filteredAll() {
   const plan = document.getElementById('fPlan').value;
   const type = document.getElementById('fType').value;
   const pri = document.getElementById('fPri').value;
-  const stat = document.getElementById('fStatus').value;
+  const stat = getStatusFilter();
   const person = document.getElementById('fPerson').value;
   const kw = document.getElementById('fSearch').value.trim().toLowerCase();
-  if (!plan && !type && !pri && !stat && !person && !kw) return allData;
+  if (!plan && !type && !pri && !stat.length && !person && !kw) return allData;
   return allData.filter(d => {
     if (plan && d.plan !== plan) return false;
     if (type && d.type !== type) return false;
     if (pri && d.priority !== pri) return false;
-    if (stat && (d.status || '待开始') !== stat) return false;
+    if (stat.length && !stat.includes(d.status || '待开始')) return false;
     if (person && !(d.person||'').split(',').map(p=>p.trim()).includes(person)) return false;
     if (kw && !(String(d.name||'').toLowerCase().includes(kw) || String(d.desc||'').toLowerCase().includes(kw))) return false;
     return true;
@@ -1227,7 +1299,7 @@ function switchTab(tab,el) {
       document.getElementById('fPlan').value = '';
       document.getElementById('fType').value = '';
       document.getElementById('fPri').value = '';
-      document.getElementById('fStatus').value = '';
+      setStatusFilter([]);
       document.getElementById('fPerson').value = '';
     }
     render();
