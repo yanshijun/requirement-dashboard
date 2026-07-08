@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e9]:
+    - heading "📋 客服GPT SAE版 · 需求池看板" [level=1] [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e47]: 更新 10:49:36
+      - generic [ref=e48]: 超级管理员
+      - button "🔢 重新编号" [ref=e49] [cursor=pointer]
+      - button "📥 导入数据" [ref=e50] [cursor=pointer]
+      - button "＋ 新增需求" [ref=e51] [cursor=pointer]
+      - button "🔄 刷新" [ref=e12] [cursor=pointer]
+      - button "退出" [ref=e13] [cursor=pointer]
+  - generic [ref=e24]:
+    - generic [ref=e25] [cursor=pointer]: 📋 需求列表
+    - generic [ref=e26] [cursor=pointer]: 📊 管理面板
+    - generic [ref=e27] [cursor=pointer]: 🗂 开发看板
+    - generic [ref=e28] [cursor=pointer]: 👤 人员任务
+    - generic [ref=e29] [cursor=pointer]: 🗒 今日收集
+    - generic [ref=e30] [cursor=pointer]: 📅 排班表
+    - generic [ref=e31] [cursor=pointer]: 📝 问题记录
+    - generic [ref=e32] [cursor=pointer]: 👥 客户群责人
+    - generic [ref=e33] [cursor=pointer]: 🐛 创新项目
+    - generic [ref=e52] [cursor=pointer]: 👤 用户管理
+  - generic [ref=e34]:
+    - generic [ref=e927]:
+      - generic [ref=e928]: 📊 管理面板 · 全员概览
+      - generic [ref=e929]:
+        - generic [ref=e930]:
+          - button "👥 按人" [ref=e931] [cursor=pointer]
+          - button "🏊 按阶段" [ref=e932] [cursor=pointer]
+        - button "🔄 刷新" [ref=e933] [cursor=pointer]
+    - generic [ref=e934]:
+      - generic [ref=e935]:
+        - generic [ref=e936]: "134"
+        - generic [ref=e937]: 流程中需求
+      - generic [ref=e938]:
+        - generic [ref=e939]: "0"
+        - generic [ref=e940]: 涉及人员
+      - generic [ref=e941]:
+        - generic [ref=e942]: "0"
+        - generic [ref=e943]: 未解决卡点
+      - generic [ref=e944]:
+        - generic [ref=e945]: "0"
+        - generic [ref=e946]: 逾期卡点
+    - generic [ref=e947]: 📈 各阶段需求分布
+    - generic [ref=e948]:
+      - generic [ref=e949]:
+        - generic [ref=e950]: "133"
+        - generic [ref=e951]: 提报
+      - generic [ref=e952]:
+        - generic [ref=e953]: "1"
+        - generic [ref=e954]: 研发评审
+      - generic [ref=e955]:
+        - generic [ref=e956]: "0"
+        - generic [ref=e957]: 开发认领
+      - generic [ref=e958]:
+        - generic [ref=e959]: "0"
+        - generic [ref=e960]: 测试认领
+    - generic [ref=e961]: 🏊 各阶段进行中的需求（点卡片进详情）
+    - generic [ref=e962]:
+      - generic [ref=e963]:
+        - generic [ref=e964]:
+          - generic [ref=e965]: 评审中
+          - generic [ref=e966]: "0"
+        - generic [ref=e968]: 暂无
+      - generic [ref=e969]:
+        - generic [ref=e970]:
+          - generic [ref=e971]: 开发中
+          - generic [ref=e972]: "0"
+        - generic [ref=e974]: 暂无
+      - generic [ref=e975]:
+        - generic [ref=e976]:
+          - generic [ref=e977]: 测试中
+          - generic [ref=e978]: "0"
+        - generic [ref=e980]: 暂无
+  - generic [ref=e37]:
+    - generic [ref=e38]: 问题详情
+    - button "✕" [ref=e39] [cursor=pointer]
+  - button "✕" [ref=e45] [cursor=pointer]

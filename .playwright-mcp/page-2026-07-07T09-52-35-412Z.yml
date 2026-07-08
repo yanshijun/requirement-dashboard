@@ -1,0 +1,359 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e9]:
+    - heading "📋 客服GPT SAE版 · 需求池看板" [level=1] [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e47]: 更新 17:50:31
+      - generic [ref=e878]: 超级管理员
+      - button "🔢 重新编号" [ref=e879] [cursor=pointer]
+      - button "📥 导入数据" [ref=e880] [cursor=pointer]
+      - button "＋ 新增需求" [ref=e881] [cursor=pointer]
+      - button "🔄 刷新" [ref=e12] [cursor=pointer]
+      - button "退出" [ref=e13] [cursor=pointer]
+  - generic [ref=e24]:
+    - generic [ref=e25] [cursor=pointer]: 📋 需求列表
+    - generic [ref=e26] [cursor=pointer]: 📊 管理面板
+    - generic [ref=e27] [cursor=pointer]: 🗂 开发看板
+    - generic [ref=e28] [cursor=pointer]: 👤 人员任务
+    - generic [ref=e29] [cursor=pointer]: 🗒 今日收集
+    - generic [ref=e30] [cursor=pointer]: 📅 排班表
+    - generic [ref=e31] [cursor=pointer]: 📝 问题记录
+    - generic [ref=e32] [cursor=pointer]: 👥 客户群责人
+    - generic [ref=e33] [cursor=pointer]: 🐛 创新项目
+    - generic [ref=e882] [cursor=pointer]: 👤 用户管理
+  - generic [ref=e34]:
+    - generic [ref=e2092]:
+      - generic [ref=e2093]:
+        - button "◀" [ref=e2094] [cursor=pointer]
+        - generic [ref=e2095]: 2026年7月
+        - button "▶" [ref=e2096] [cursor=pointer]
+      - button "⚡ 快速生成排班" [ref=e2097] [cursor=pointer]
+      - button "＋ 新增排班" [ref=e2098] [cursor=pointer]
+      - button "📄 导出网页" [ref=e2099] [cursor=pointer]
+      - button "📊 考勤导出" [ref=e2100] [cursor=pointer]
+      - button "🔄 刷新" [ref=e2101] [cursor=pointer]
+    - generic [ref=e2102]:
+      - generic [ref=e2103]: 本月共 31 条排班
+      - table [ref=e2105]:
+        - rowgroup [ref=e2106]:
+          - row "日期 星期 组别 值班人 备班人 操作" [ref=e2107]:
+            - columnheader "日期" [ref=e2108]
+            - columnheader "星期" [ref=e2109]
+            - columnheader "组别" [ref=e2110]
+            - columnheader "值班人" [ref=e2111]
+            - columnheader "备班人" [ref=e2112]
+            - columnheader "操作" [ref=e2113]
+        - rowgroup [ref=e2114]:
+          - row "2026-07-01 周三 A组B组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2115]:
+            - cell "2026-07-01" [ref=e2116]
+            - cell "周三" [ref=e2117]
+            - cell "A组B组" [ref=e2118]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2119]
+            - cell [ref=e2120]
+            - cell "编辑 删除" [ref=e2121]:
+              - generic [ref=e2122]:
+                - button "编辑" [ref=e2123] [cursor=pointer]
+                - button "删除" [ref=e2124] [cursor=pointer]
+          - row "2026-07-02 周四 A组B组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2125]:
+            - cell "2026-07-02" [ref=e2126]
+            - cell "周四" [ref=e2127]
+            - cell "A组B组" [ref=e2128]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2129]
+            - cell [ref=e2130]
+            - cell "编辑 删除" [ref=e2131]:
+              - generic [ref=e2132]:
+                - button "编辑" [ref=e2133] [cursor=pointer]
+                - button "删除" [ref=e2134] [cursor=pointer]
+          - row "2026-07-03 周五 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2135]:
+            - cell "2026-07-03" [ref=e2136]
+            - cell "周五" [ref=e2137]
+            - cell "B组" [ref=e2138]
+            - cell "杨国桦、徐耀阳" [ref=e2139]
+            - cell [ref=e2140]
+            - cell "编辑 删除" [ref=e2141]:
+              - generic [ref=e2142]:
+                - button "编辑" [ref=e2143] [cursor=pointer]
+                - button "删除" [ref=e2144] [cursor=pointer]
+          - row "2026-07-04 周六 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2145]:
+            - cell "2026-07-04" [ref=e2146]
+            - cell "周六" [ref=e2147]
+            - cell "B组" [ref=e2148]
+            - cell "杨国桦、徐耀阳" [ref=e2149]
+            - cell [ref=e2150]
+            - cell "编辑 删除" [ref=e2151]:
+              - generic [ref=e2152]:
+                - button "编辑" [ref=e2153] [cursor=pointer]
+                - button "删除" [ref=e2154] [cursor=pointer]
+          - row "2026-07-05 周日 A组 李和枫、臧东 编辑 删除" [ref=e2155]:
+            - cell "2026-07-05" [ref=e2156]
+            - cell "周日" [ref=e2157]
+            - cell "A组" [ref=e2158]
+            - cell "李和枫、臧东" [ref=e2159]
+            - cell [ref=e2160]
+            - cell "编辑 删除" [ref=e2161]:
+              - generic [ref=e2162]:
+                - button "编辑" [ref=e2163] [cursor=pointer]
+                - button "删除" [ref=e2164] [cursor=pointer]
+          - row "2026-07-06 周一 A组 李和枫、臧东 编辑 删除" [ref=e2165]:
+            - cell "2026-07-06" [ref=e2166]
+            - cell "周一" [ref=e2167]
+            - cell "A组" [ref=e2168]
+            - cell "李和枫、臧东" [ref=e2169]
+            - cell [ref=e2170]
+            - cell "编辑 删除" [ref=e2171]:
+              - generic [ref=e2172]:
+                - button "编辑" [ref=e2173] [cursor=pointer]
+                - button "删除" [ref=e2174] [cursor=pointer]
+          - row "2026-07-07 周二 A组B组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2175]:
+            - cell "2026-07-07" [ref=e2176]
+            - cell "周二" [ref=e2177]
+            - cell "A组B组" [ref=e2178]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2179]
+            - cell [ref=e2180]
+            - cell "编辑 删除" [ref=e2181]:
+              - generic [ref=e2182]:
+                - button "编辑" [ref=e2183] [cursor=pointer]
+                - button "删除" [ref=e2184] [cursor=pointer]
+          - row "2026-07-08 周三 A组B组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2185]:
+            - cell "2026-07-08" [ref=e2186]
+            - cell "周三" [ref=e2187]
+            - cell "A组B组" [ref=e2188]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2189]
+            - cell [ref=e2190]
+            - cell "编辑 删除" [ref=e2191]:
+              - generic [ref=e2192]:
+                - button "编辑" [ref=e2193] [cursor=pointer]
+                - button "删除" [ref=e2194] [cursor=pointer]
+          - row "2026-07-09 周四 A组B组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2195]:
+            - cell "2026-07-09" [ref=e2196]
+            - cell "周四" [ref=e2197]
+            - cell "A组B组" [ref=e2198]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2199]
+            - cell [ref=e2200]
+            - cell "编辑 删除" [ref=e2201]:
+              - generic [ref=e2202]:
+                - button "编辑" [ref=e2203] [cursor=pointer]
+                - button "删除" [ref=e2204] [cursor=pointer]
+          - row "2026-07-10 周五 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2205]:
+            - cell "2026-07-10" [ref=e2206]
+            - cell "周五" [ref=e2207]
+            - cell "AB组" [ref=e2208]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2209]
+            - cell [ref=e2210]
+            - cell "编辑 删除" [ref=e2211]:
+              - generic [ref=e2212]:
+                - button "编辑" [ref=e2213] [cursor=pointer]
+                - button "删除" [ref=e2214] [cursor=pointer]
+          - row "2026-07-11 周六 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2215]:
+            - cell "2026-07-11" [ref=e2216]
+            - cell "周六" [ref=e2217]
+            - cell "B组" [ref=e2218]
+            - cell "杨国桦、徐耀阳" [ref=e2219]
+            - cell [ref=e2220]
+            - cell "编辑 删除" [ref=e2221]:
+              - generic [ref=e2222]:
+                - button "编辑" [ref=e2223] [cursor=pointer]
+                - button "删除" [ref=e2224] [cursor=pointer]
+          - row "2026-07-12 周日 A组 杨国桦、徐耀阳 编辑 删除" [ref=e2225]:
+            - cell "2026-07-12" [ref=e2226]
+            - cell "周日" [ref=e2227]
+            - cell "A组" [ref=e2228]
+            - cell "杨国桦、徐耀阳" [ref=e2229]
+            - cell [ref=e2230]
+            - cell "编辑 删除" [ref=e2231]:
+              - generic [ref=e2232]:
+                - button "编辑" [ref=e2233] [cursor=pointer]
+                - button "删除" [ref=e2234] [cursor=pointer]
+          - row "2026-07-13 周一 A组 李和枫、臧东 编辑 删除" [ref=e2235]:
+            - cell "2026-07-13" [ref=e2236]
+            - cell "周一" [ref=e2237]
+            - cell "A组" [ref=e2238]
+            - cell "李和枫、臧东" [ref=e2239]
+            - cell [ref=e2240]
+            - cell "编辑 删除" [ref=e2241]:
+              - generic [ref=e2242]:
+                - button "编辑" [ref=e2243] [cursor=pointer]
+                - button "删除" [ref=e2244] [cursor=pointer]
+          - row "2026-07-14 周二 A组 李和枫、臧东 编辑 删除" [ref=e2245]:
+            - cell "2026-07-14" [ref=e2246]
+            - cell "周二" [ref=e2247]
+            - cell "A组" [ref=e2248]
+            - cell "李和枫、臧东" [ref=e2249]
+            - cell [ref=e2250]
+            - cell "编辑 删除" [ref=e2251]:
+              - generic [ref=e2252]:
+                - button "编辑" [ref=e2253] [cursor=pointer]
+                - button "删除" [ref=e2254] [cursor=pointer]
+          - row "2026-07-15 周三 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2255]:
+            - cell "2026-07-15" [ref=e2256]
+            - cell "周三" [ref=e2257]
+            - cell "AB组" [ref=e2258]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2259]
+            - cell [ref=e2260]
+            - cell "编辑 删除" [ref=e2261]:
+              - generic [ref=e2262]:
+                - button "编辑" [ref=e2263] [cursor=pointer]
+                - button "删除" [ref=e2264] [cursor=pointer]
+          - row "2026-07-16 周四 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2265]:
+            - cell "2026-07-16" [ref=e2266]
+            - cell "周四" [ref=e2267]
+            - cell "AB组" [ref=e2268]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2269]
+            - cell [ref=e2270]
+            - cell "编辑 删除" [ref=e2271]:
+              - generic [ref=e2272]:
+                - button "编辑" [ref=e2273] [cursor=pointer]
+                - button "删除" [ref=e2274] [cursor=pointer]
+          - row "2026-07-17 周五 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2275]:
+            - cell "2026-07-17" [ref=e2276]
+            - cell "周五" [ref=e2277]
+            - cell "B组" [ref=e2278]
+            - cell "杨国桦、徐耀阳" [ref=e2279]
+            - cell [ref=e2280]
+            - cell "编辑 删除" [ref=e2281]:
+              - generic [ref=e2282]:
+                - button "编辑" [ref=e2283] [cursor=pointer]
+                - button "删除" [ref=e2284] [cursor=pointer]
+          - row "2026-07-18 周六 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2285]:
+            - cell "2026-07-18" [ref=e2286]
+            - cell "周六" [ref=e2287]
+            - cell "B组" [ref=e2288]
+            - cell "杨国桦、徐耀阳" [ref=e2289]
+            - cell [ref=e2290]
+            - cell "编辑 删除" [ref=e2291]:
+              - generic [ref=e2292]:
+                - button "编辑" [ref=e2293] [cursor=pointer]
+                - button "删除" [ref=e2294] [cursor=pointer]
+          - row "2026-07-19 周日 A组 李和枫、臧东 编辑 删除" [ref=e2295]:
+            - cell "2026-07-19" [ref=e2296]
+            - cell "周日" [ref=e2297]
+            - cell "A组" [ref=e2298]
+            - cell "李和枫、臧东" [ref=e2299]
+            - cell [ref=e2300]
+            - cell "编辑 删除" [ref=e2301]:
+              - generic [ref=e2302]:
+                - button "编辑" [ref=e2303] [cursor=pointer]
+                - button "删除" [ref=e2304] [cursor=pointer]
+          - row "2026-07-20 周一 A组 李和枫、臧东 编辑 删除" [ref=e2305]:
+            - cell "2026-07-20" [ref=e2306]
+            - cell "周一" [ref=e2307]
+            - cell "A组" [ref=e2308]
+            - cell "李和枫、臧东" [ref=e2309]
+            - cell [ref=e2310]
+            - cell "编辑 删除" [ref=e2311]:
+              - generic [ref=e2312]:
+                - button "编辑" [ref=e2313] [cursor=pointer]
+                - button "删除" [ref=e2314] [cursor=pointer]
+          - row "2026-07-21 周二 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2315]:
+            - cell "2026-07-21" [ref=e2316]
+            - cell "周二" [ref=e2317]
+            - cell "AB组" [ref=e2318]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2319]
+            - cell [ref=e2320]
+            - cell "编辑 删除" [ref=e2321]:
+              - generic [ref=e2322]:
+                - button "编辑" [ref=e2323] [cursor=pointer]
+                - button "删除" [ref=e2324] [cursor=pointer]
+          - row "2026-07-22 周三 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2325]:
+            - cell "2026-07-22" [ref=e2326]
+            - cell "周三" [ref=e2327]
+            - cell "AB组" [ref=e2328]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2329]
+            - cell [ref=e2330]
+            - cell "编辑 删除" [ref=e2331]:
+              - generic [ref=e2332]:
+                - button "编辑" [ref=e2333] [cursor=pointer]
+                - button "删除" [ref=e2334] [cursor=pointer]
+          - row "2026-07-23 周四 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2335]:
+            - cell "2026-07-23" [ref=e2336]
+            - cell "周四" [ref=e2337]
+            - cell "AB组" [ref=e2338]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2339]
+            - cell [ref=e2340]
+            - cell "编辑 删除" [ref=e2341]:
+              - generic [ref=e2342]:
+                - button "编辑" [ref=e2343] [cursor=pointer]
+                - button "删除" [ref=e2344] [cursor=pointer]
+          - row "2026-07-24 周五 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2345]:
+            - cell "2026-07-24" [ref=e2346]
+            - cell "周五" [ref=e2347]
+            - cell "B组" [ref=e2348]
+            - cell "杨国桦、徐耀阳" [ref=e2349]
+            - cell [ref=e2350]
+            - cell "编辑 删除" [ref=e2351]:
+              - generic [ref=e2352]:
+                - button "编辑" [ref=e2353] [cursor=pointer]
+                - button "删除" [ref=e2354] [cursor=pointer]
+          - row "2026-07-25 周六 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2355]:
+            - cell "2026-07-25" [ref=e2356]
+            - cell "周六" [ref=e2357]
+            - cell "B组" [ref=e2358]
+            - cell "杨国桦、徐耀阳" [ref=e2359]
+            - cell [ref=e2360]
+            - cell "编辑 删除" [ref=e2361]:
+              - generic [ref=e2362]:
+                - button "编辑" [ref=e2363] [cursor=pointer]
+                - button "删除" [ref=e2364] [cursor=pointer]
+          - row "2026-07-26 周日 A组 李和枫、臧东 编辑 删除" [ref=e2365]:
+            - cell "2026-07-26" [ref=e2366]
+            - cell "周日" [ref=e2367]
+            - cell "A组" [ref=e2368]
+            - cell "李和枫、臧东" [ref=e2369]
+            - cell [ref=e2370]
+            - cell "编辑 删除" [ref=e2371]:
+              - generic [ref=e2372]:
+                - button "编辑" [ref=e2373] [cursor=pointer]
+                - button "删除" [ref=e2374] [cursor=pointer]
+          - row "2026-07-27 周一 A组 李和枫、臧东 编辑 删除" [ref=e2375]:
+            - cell "2026-07-27" [ref=e2376]
+            - cell "周一" [ref=e2377]
+            - cell "A组" [ref=e2378]
+            - cell "李和枫、臧东" [ref=e2379]
+            - cell [ref=e2380]
+            - cell "编辑 删除" [ref=e2381]:
+              - generic [ref=e2382]:
+                - button "编辑" [ref=e2383] [cursor=pointer]
+                - button "删除" [ref=e2384] [cursor=pointer]
+          - row "2026-07-28 周二 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2385]:
+            - cell "2026-07-28" [ref=e2386]
+            - cell "周二" [ref=e2387]
+            - cell "AB组" [ref=e2388]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2389]
+            - cell [ref=e2390]
+            - cell "编辑 删除" [ref=e2391]:
+              - generic [ref=e2392]:
+                - button "编辑" [ref=e2393] [cursor=pointer]
+                - button "删除" [ref=e2394] [cursor=pointer]
+          - row "2026-07-29 周三 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2395]:
+            - cell "2026-07-29" [ref=e2396]
+            - cell "周三" [ref=e2397]
+            - cell "AB组" [ref=e2398]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2399]
+            - cell [ref=e2400]
+            - cell "编辑 删除" [ref=e2401]:
+              - generic [ref=e2402]:
+                - button "编辑" [ref=e2403] [cursor=pointer]
+                - button "删除" [ref=e2404] [cursor=pointer]
+          - row "2026-07-30 周四 AB组 李和枫、臧东、杨国桦、徐耀阳 编辑 删除" [ref=e2405]:
+            - cell "2026-07-30" [ref=e2406]
+            - cell "周四" [ref=e2407]
+            - cell "AB组" [ref=e2408]
+            - cell "李和枫、臧东、杨国桦、徐耀阳" [ref=e2409]
+            - cell [ref=e2410]
+            - cell "编辑 删除" [ref=e2411]:
+              - generic [ref=e2412]:
+                - button "编辑" [ref=e2413] [cursor=pointer]
+                - button "删除" [ref=e2414] [cursor=pointer]
+          - row "2026-07-31 周五 B组 杨国桦、徐耀阳 编辑 删除" [ref=e2415]:
+            - cell "2026-07-31" [ref=e2416]
+            - cell "周五" [ref=e2417]
+            - cell "B组" [ref=e2418]
+            - cell "杨国桦、徐耀阳" [ref=e2419]
+            - cell [ref=e2420]
+            - cell "编辑 删除" [ref=e2421]:
+              - generic [ref=e2422]:
+                - button "编辑" [ref=e2423] [cursor=pointer]
+                - button "删除" [ref=e2424] [cursor=pointer]
+  - generic [ref=e37]:
+    - generic [ref=e38]: 问题详情
+    - button "✕" [ref=e39] [cursor=pointer]
+  - button "✕" [ref=e45] [cursor=pointer]

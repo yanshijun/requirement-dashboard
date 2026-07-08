@@ -195,6 +195,154 @@ async function initTables() {
         ['admin', hash, '超级管理员', 'admin', JSON.stringify({tabs:{list:'rw',kanban:'rw',person:'rw',feedback:'rw',schedule:'rw',issues:'rw',groups:'rw',bugs:'rw',users:'rw'}})]
       );
     }
+    // ===== 需求生命周期（挂在飞书需求ID上，四阶段完成情况） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS req_lifecycle (
+        req_id VARCHAR(64) PRIMARY KEY COMMENT '需求ID(飞书记录ID)',
+        current_stage VARCHAR(20) DEFAULT '销售提报' COMMENT '当前阶段',
+        stages JSON COMMENT '各阶段 {阶段:{status,owner,progress}}',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 需求 流转日志（留痕） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS collab_flow_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        req_id VARCHAR(64) NOT NULL COMMENT '需求ID',
+        from_stage VARCHAR(20) DEFAULT '' COMMENT '原阶段',
+        to_stage VARCHAR(20) NOT NULL COMMENT '新阶段',
+        operator VARCHAR(100) DEFAULT '' COMMENT '操作人',
+        remark VARCHAR(500) DEFAULT '' COMMENT '备注',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_req (req_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 卡点问题（挂在需求上） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS collab_blockers (
+        id VARCHAR(64) PRIMARY KEY,
+        seq_no INT AUTO_INCREMENT UNIQUE COMMENT '自增编号',
+        req_id VARCHAR(64) DEFAULT '' COMMENT '关联需求ID(可空)',
+        dept VARCHAR(50) NOT NULL COMMENT '归属部门',
+        stage VARCHAR(20) DEFAULT '' COMMENT '所属流程阶段',
+        description VARCHAR(1000) NOT NULL COMMENT '卡点描述',
+        impact VARCHAR(500) DEFAULT '' COMMENT '影响范围',
+        occurred_at DATE NULL COMMENT '问题产生时间',
+        resources_needed VARCHAR(500) DEFAULT '' COMMENT '待协调资源',
+        expected_resolve_at DATE NULL COMMENT '预期解决节点',
+        follower VARCHAR(100) DEFAULT '' COMMENT '跟进人',
+        progress_note TEXT COMMENT '处置进展',
+        status VARCHAR(20) DEFAULT '待处理' COMMENT '状态',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_dept (dept),
+        INDEX idx_stage (stage),
+        INDEX idx_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 认领留痕（每次认领/换人/释放/移除都记录一条） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS collab_claim_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        req_id VARCHAR(64) NOT NULL COMMENT '需求ID(飞书记录ID)',
+        action VARCHAR(20) NOT NULL DEFAULT '认领' COMMENT '认领/换人/释放/移除',
+        persons VARCHAR(500) DEFAULT '' COMMENT '本次动作后的认领人(逗号分隔)',
+        operator VARCHAR(100) DEFAULT '' COMMENT '执行动作的登录账号显示名',
+        remark VARCHAR(500) DEFAULT '' COMMENT '备注(如移除了谁)',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_req (req_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 需求主表（从飞书迁入；id 保留飞书 record_id 以续接生命周期/卡点/反馈关联） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS reqs (
+        id VARCHAR(64) PRIMARY KEY COMMENT '需求ID(沿用飞书记录ID或 req_ 前缀新ID)',
+        req_no VARCHAR(50) DEFAULT '' COMMENT '需求编号',
+        name VARCHAR(500) NOT NULL DEFAULT '' COMMENT '需求名称',
+        description TEXT COMMENT '需求描述',
+        req_type VARCHAR(50) DEFAULT '用户需求' COMMENT '需求类型',
+        plan VARCHAR(500) DEFAULT '' COMMENT '所属计划(多选,逗号分隔)',
+        priority VARCHAR(20) DEFAULT '' COMMENT '优先级',
+        status VARCHAR(20) DEFAULT '待开始' COMMENT '开发状态',
+        progress INT DEFAULT 0 COMMENT '开发进度 0-100 整数',
+        person VARCHAR(500) DEFAULT '' COMMENT '认领人(多选,逗号分隔)',
+        deadline VARCHAR(20) DEFAULT '' COMMENT '预计上线日期 YYYY-MM-DD',
+        design VARCHAR(20) DEFAULT '' COMMENT '是否需要设计',
+        review VARCHAR(20) DEFAULT '' COMMENT '评审是否通过',
+        create_time VARCHAR(20) DEFAULT '' COMMENT '提出时间 YYYY-MM-DD',
+        submitter VARCHAR(300) DEFAULT '' COMMENT '提出人',
+        note TEXT COMMENT '备注',
+        parent_id VARCHAR(64) DEFAULT '' COMMENT '父需求ID(自引用)',
+        attachments JSON COMMENT '附件 [{file_token,name,type}]',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_status (status),
+        INDEX idx_parent (parent_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 今日收集/反馈表 =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id VARCHAR(64) PRIMARY KEY COMMENT '反馈ID(沿用飞书记录ID或 fb_ 前缀新ID)',
+        title VARCHAR(500) DEFAULT '' COMMENT '标题',
+        source VARCHAR(50) DEFAULT '其他' COMMENT '来源',
+        priority VARCHAR(20) DEFAULT '中🟡' COMMENT '优先级',
+        reporter VARCHAR(200) DEFAULT '' COMMENT '反馈人',
+        customer_id VARCHAR(200) DEFAULT '' COMMENT '反馈客户ID',
+        description TEXT COMMENT '描述',
+        note TEXT COMMENT '跟进备注',
+        status VARCHAR(20) DEFAULT '待跟进' COMMENT '状态',
+        create_time VARCHAR(20) DEFAULT '' COMMENT '提出时间 YYYY-MM-DD',
+        req_id VARCHAR(64) DEFAULT '' COMMENT '关联需求ID',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_status (status),
+        INDEX idx_req (req_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 排班表 =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS schedule (
+        id VARCHAR(64) PRIMARY KEY COMMENT '排班ID(沿用飞书记录ID或 sch_ 前缀新ID)',
+        date_str VARCHAR(20) DEFAULT '' COMMENT '日期(文本)',
+        weekday VARCHAR(20) DEFAULT '' COMMENT '星期',
+        group_name VARCHAR(200) DEFAULT '' COMMENT '组别',
+        on_duty VARCHAR(300) DEFAULT '' COMMENT '值班人',
+        backup VARCHAR(300) DEFAULT '' COMMENT '备班人',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_date (date_str)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 附件表（需求/问题/Bug 共用，base64 存 MySQL，token=原 file_token 语义） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS attachments (
+        token VARCHAR(191) PRIMARY KEY COMMENT '附件token(新上传自生成/迁移沿用飞书file_token)',
+        filename VARCHAR(500) DEFAULT '' COMMENT '文件名',
+        mimetype VARCHAR(150) DEFAULT '' COMMENT 'MIME类型',
+        data LONGTEXT COMMENT '文件内容(base64)',
+        size INT DEFAULT 0 COMMENT '字节大小',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    // ===== 操作留痕（审计日志：需求/生命周期阶段/卡点 的谁-何时-把什么从A改成B） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        req_id VARCHAR(64) DEFAULT '' COMMENT '关联需求ID(留痕挂到需求上，供详情聚合)',
+        entity_type VARCHAR(20) DEFAULT 'req' COMMENT 'req/stage/blocker',
+        action VARCHAR(30) NOT NULL COMMENT 'create/update/delete/import/stage-edit/blocker-*',
+        field VARCHAR(60) DEFAULT '' COMMENT '变更字段中文名(update/stage-edit类)',
+        old_value VARCHAR(1000) DEFAULT '' COMMENT '旧值',
+        new_value VARCHAR(1000) DEFAULT '' COMMENT '新值',
+        operator VARCHAR(100) DEFAULT '' COMMENT '操作人(前端登录显示名)',
+        source VARCHAR(20) DEFAULT 'manual' COMMENT 'manual/auto-align/backfill/system',
+        remark VARCHAR(500) DEFAULT '' COMMENT '备注',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_req (req_id),
+        INDEX idx_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
   } finally {
     conn.release();
   }

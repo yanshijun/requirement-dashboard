@@ -1,0 +1,968 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e9]:
+    - heading "📋 客服GPT SAE版 · 需求池看板" [level=1] [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e47]: 更新 17:50:31
+      - generic [ref=e878]: 超级管理员
+      - button "🔢 重新编号" [ref=e879] [cursor=pointer]
+      - button "📥 导入数据" [ref=e880] [cursor=pointer]
+      - button "＋ 新增需求" [ref=e881] [cursor=pointer]
+      - button "🔄 刷新" [ref=e12] [cursor=pointer]
+      - button "退出" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - combobox [ref=e15]:
+      - option "全部计划" [selected]
+      - option "SAE2.3.3"
+      - option "1688商贸版"
+      - option "SAE2.3.4"
+      - option "SAE2.3.5"
+    - combobox [ref=e16]:
+      - option "全部类型" [selected]
+      - option "用户需求"
+      - option "研发需求"
+    - combobox [ref=e17]:
+      - option "全部优先级" [selected]
+      - option "紧急🔴"
+      - option "高🟠"
+      - option "中🟡"
+      - option "低🟢"
+    - button "全部状态 ▾" [ref=e19] [cursor=pointer]:
+      - generic [ref=e20]: 全部状态
+      - generic [ref=e21]: ▾
+    - combobox [ref=e22]:
+      - option "全部认领人" [selected]
+      - option "fay"
+      - option "吴江兵"
+      - option "周晓"
+      - option "方文健"
+      - option "李国骏"
+      - option "江宇岭"
+      - option "江鹏"
+      - option "沈明杰"
+      - option "测试"
+      - option "潘徐莉"
+      - option "邹晓东"
+      - option "钟万伟"
+      - option "颜世俊"
+    - textbox "🔍 搜索需求名称/描述" [ref=e23]
+  - generic [ref=e24]:
+    - generic [ref=e25] [cursor=pointer]: 📋 需求列表
+    - generic [ref=e26] [cursor=pointer]: 📊 管理面板
+    - generic [ref=e27] [cursor=pointer]: 🗂 开发看板
+    - generic [ref=e28] [cursor=pointer]: 👤 人员任务
+    - generic [ref=e29] [cursor=pointer]: 🗒 今日收集
+    - generic [ref=e30] [cursor=pointer]: 📅 排班表
+    - generic [ref=e31] [cursor=pointer]: 📝 问题记录
+    - generic [ref=e32] [cursor=pointer]: 👥 客户群责人
+    - generic [ref=e33] [cursor=pointer]: 🐛 创新项目
+    - generic [ref=e882] [cursor=pointer]: 👤 用户管理
+  - generic [ref=e34]:
+    - generic [ref=e3316]:
+      - generic [ref=e3317] [cursor=pointer]:
+        - generic [ref=e3318]: 190 + 23子
+        - generic [ref=e3319]: 全部需求
+      - generic [ref=e3320] [cursor=pointer]:
+        - generic [ref=e3321]: "22"
+        - generic [ref=e3322]: 🔴 紧急
+      - generic [ref=e3323] [cursor=pointer]:
+        - generic [ref=e3324]: "5"
+        - generic [ref=e3325]: 专题探讨
+      - generic [ref=e3326] [cursor=pointer]:
+        - generic [ref=e3327]: "105"
+        - generic [ref=e3328]: 待开始
+      - generic [ref=e3329] [cursor=pointer]:
+        - generic [ref=e3330]: "7"
+        - generic [ref=e3331]: 开发中
+      - generic [ref=e3332] [cursor=pointer]:
+        - generic [ref=e3333]: "5"
+        - generic [ref=e3334]: 联调中
+      - generic [ref=e3335] [cursor=pointer]:
+        - generic [ref=e3336]: "8"
+        - generic [ref=e3337]: 测试中
+      - generic [ref=e3338] [cursor=pointer]:
+        - generic [ref=e3339]: "2"
+        - generic [ref=e3340]: 待上线
+      - generic [ref=e3341] [cursor=pointer]:
+        - generic [ref=e3342]: "76"
+        - generic [ref=e3343]: 已上线
+      - generic [ref=e3344] [cursor=pointer]:
+        - generic [ref=e3345]: "0"
+        - generic [ref=e3346]: 已暂缓
+    - button "🐛 Bug清单" [ref=e3348] [cursor=pointer]
+    - generic [ref=e3349]:
+      - generic [ref=e3350]: 共 190 条 · 第 1/10 页
+      - table [ref=e3352]:
+        - rowgroup [ref=e3353]:
+          - row "编号 需求名称 类型 优先级 ↕ 所属计划 需求描述 认领人 提出人 状态 进度 评审 当前阶段 预计上线 提出时间 操作" [ref=e3354]:
+            - columnheader "编号" [ref=e3355]
+            - columnheader "需求名称" [ref=e3356]
+            - columnheader "类型" [ref=e3357]
+            - columnheader "优先级 ↕" [ref=e3358] [cursor=pointer]
+            - columnheader "所属计划" [ref=e3359]
+            - columnheader "需求描述" [ref=e3360]
+            - columnheader "认领人" [ref=e3361]
+            - columnheader "提出人" [ref=e3362]
+            - columnheader "状态" [ref=e3363]
+            - columnheader "进度" [ref=e3364]
+            - columnheader "评审" [ref=e3365]
+            - columnheader "当前阶段" [ref=e3366]
+            - columnheader "预计上线" [ref=e3367]
+            - columnheader "提出时间" [ref=e3368]
+            - columnheader "操作" [ref=e3369]
+        - rowgroup [ref=e3370]:
+          - row "URQ-193 测试2 用户需求 紧急🔴 SAE2.3.3 测试 👤 测试 × 测试 待开始 0% 待确认 开发完成 测试 100% 2026-07-07 换人 释放 编辑 +子 删除" [ref=e3371]:
+            - cell "URQ-193" [ref=e3372]: URQ-193
+            - cell "测试2" [ref=e3373] [cursor=pointer]
+            - cell "用户需求" [ref=e3374]:
+              - generic [ref=e3375]: 用户需求
+            - cell "紧急🔴" [ref=e3376]:
+              - generic [ref=e3377]: 紧急🔴
+            - cell "SAE2.3.3" [ref=e3378]
+            - cell "测试" [ref=e3379]
+            - cell "👤 测试 ×" [ref=e3380]:
+              - generic [ref=e3381]:
+                - text: 👤 测试
+                - generic "移除" [ref=e3382] [cursor=pointer]: ×
+            - cell "测试" [ref=e3383]
+            - cell "待开始" [ref=e3384]:
+              - generic [ref=e3385]: 待开始
+            - cell "0%" [ref=e3386]:
+              - generic [ref=e3389]: 0%
+            - cell "待确认" [ref=e3390]
+            - cell "开发完成 测试 100%" [ref=e3391]:
+              - generic [ref=e3392]:
+                - generic [ref=e3393]:
+                  - generic "开发认领 · 已完成" [ref=e3394]: 开发完成
+                  - generic [ref=e3395]: 测试
+                - generic [ref=e3399]: 100%
+            - cell [ref=e3400]
+            - cell "2026-07-07" [ref=e3401]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3402]:
+              - generic [ref=e3403]:
+                - button "换人" [ref=e3404] [cursor=pointer]
+                - button "释放" [ref=e3405] [cursor=pointer]
+                - button "编辑" [ref=e3406] [cursor=pointer]
+                - button "+子" [ref=e3407] [cursor=pointer]
+                - button "删除" [ref=e3408] [cursor=pointer]
+          - row "URQ-192 测试 用户需求 中🟡 SAE2.3.5 c测试1111 👤 测试 × 万伟 待开始 0% 待确认 测试中 测试 0% 2026-07-07 2026-07-07 换人 释放 编辑 +子 删除" [ref=e3409]:
+            - cell "URQ-192" [ref=e3410]: URQ-192
+            - cell "测试" [ref=e3411] [cursor=pointer]
+            - cell "用户需求" [ref=e3412]:
+              - generic [ref=e3413]: 用户需求
+            - cell "中🟡" [ref=e3414]:
+              - generic [ref=e3415]: 中🟡
+            - cell "SAE2.3.5" [ref=e3416]
+            - cell "c测试1111" [ref=e3417]
+            - cell "👤 测试 ×" [ref=e3418]:
+              - generic [ref=e3419]:
+                - text: 👤 测试
+                - generic "移除" [ref=e3420] [cursor=pointer]: ×
+            - cell "万伟" [ref=e3421]
+            - cell "待开始" [ref=e3422]:
+              - generic [ref=e3423]: 待开始
+            - cell "0%" [ref=e3424]:
+              - generic [ref=e3427]: 0%
+            - cell "待确认" [ref=e3428]
+            - cell "测试中 测试 0%" [ref=e3429]:
+              - generic [ref=e3430]:
+                - generic [ref=e3431]:
+                  - generic "测试认领 · 进行中" [ref=e3432]: 测试中
+                  - generic [ref=e3433]: 测试
+                - generic [ref=e3436]: 0%
+            - cell "2026-07-07" [ref=e3437]
+            - cell "2026-07-07" [ref=e3438]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3439]:
+              - generic [ref=e3440]:
+                - button "换人" [ref=e3441] [cursor=pointer]
+                - button "释放" [ref=e3442] [cursor=pointer]
+                - button "编辑" [ref=e3443] [cursor=pointer]
+                - button "+子" [ref=e3444] [cursor=pointer]
+                - button "删除" [ref=e3445] [cursor=pointer]
+          - row "URQ-185 预警列表一键转接 用户需求 中🟡 SAE2.3.5 👤 周晓 × 👤 钟万伟 × 周晓 开发中 0% 待确认 开发中 周晓、钟万伟 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3446]:
+            - cell "URQ-185" [ref=e3447]: URQ-185
+            - cell "预警列表一键转接" [ref=e3448] [cursor=pointer]
+            - cell "用户需求" [ref=e3449]:
+              - generic [ref=e3450]: 用户需求
+            - cell "中🟡" [ref=e3451]:
+              - generic [ref=e3452]: 中🟡
+            - cell "SAE2.3.5" [ref=e3453]
+            - cell [ref=e3454]
+            - cell "👤 周晓 × 👤 钟万伟 ×" [ref=e3455]:
+              - generic [ref=e3456]:
+                - text: 👤 周晓
+                - generic "移除" [ref=e3457] [cursor=pointer]: ×
+              - generic [ref=e3458]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3459] [cursor=pointer]: ×
+            - cell "周晓" [ref=e3460]
+            - cell "开发中" [ref=e3461]:
+              - generic [ref=e3462]: 开发中
+            - cell "0%" [ref=e3463]:
+              - generic [ref=e3466]: 0%
+            - cell "待确认" [ref=e3467]
+            - cell "开发中 周晓、钟万伟 0%" [ref=e3468]:
+              - generic [ref=e3469]:
+                - generic [ref=e3470]:
+                  - generic "开发认领 · 进行中" [ref=e3471]: 开发中
+                  - generic [ref=e3472]: 周晓、钟万伟
+                - generic [ref=e3475]: 0%
+            - cell "2026-07-10" [ref=e3476]
+            - cell "2026-07-06" [ref=e3477]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3478]:
+              - generic [ref=e3479]:
+                - button "换人" [ref=e3480] [cursor=pointer]
+                - button "释放" [ref=e3481] [cursor=pointer]
+                - button "编辑" [ref=e3482] [cursor=pointer]
+                - button "+子" [ref=e3483] [cursor=pointer]
+                - button "删除" [ref=e3484] [cursor=pointer]
+          - row "URQ-184 检测到最新订单后自动根据订单编号主动联系买家发送一条消息 用户需求 紧急🔴 SAE2.3.5 1、支持配置发送的固定话术 2、增加一张数据表，支持导入导出 👤 钟万伟 × 👤 周晓 × 👤 邹晓东 × 👤 颜世俊 × 👤 方文健 × 李国骏 待开始 0% ✓ 通过 开发中 钟万伟、周晓、邹晓东、颜世俊、方文健 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3485]:
+            - cell "URQ-184" [ref=e3486]: URQ-184
+            - cell "检测到最新订单后自动根据订单编号主动联系买家发送一条消息" [ref=e3487] [cursor=pointer]
+            - cell "用户需求" [ref=e3488]:
+              - generic [ref=e3489]: 用户需求
+            - cell "紧急🔴" [ref=e3490]:
+              - generic [ref=e3491]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3492]
+            - cell "1、支持配置发送的固定话术 2、增加一张数据表，支持导入导出" [ref=e3493]
+            - cell "👤 钟万伟 × 👤 周晓 × 👤 邹晓东 × 👤 颜世俊 × 👤 方文健 ×" [ref=e3494]:
+              - generic [ref=e3495]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3496] [cursor=pointer]: ×
+              - generic [ref=e3497]:
+                - text: 👤 周晓
+                - generic "移除" [ref=e3498] [cursor=pointer]: ×
+              - generic [ref=e3499]:
+                - text: 👤 邹晓东
+                - generic "移除" [ref=e3500] [cursor=pointer]: ×
+              - generic [ref=e3501]:
+                - text: 👤 颜世俊
+                - generic "移除" [ref=e3502] [cursor=pointer]: ×
+              - generic [ref=e3503]:
+                - text: 👤 方文健
+                - generic "移除" [ref=e3504] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3505]
+            - cell "待开始" [ref=e3506]:
+              - generic [ref=e3507]: 待开始
+            - cell "0%" [ref=e3508]:
+              - generic [ref=e3511]: 0%
+            - cell "✓ 通过" [ref=e3512]:
+              - generic [ref=e3513]: ✓ 通过
+            - cell "开发中 钟万伟、周晓、邹晓东、颜世俊、方文健 0%" [ref=e3514]:
+              - generic [ref=e3515]:
+                - generic [ref=e3516]:
+                  - generic "开发认领 · 进行中" [ref=e3517]: 开发中
+                  - generic [ref=e3518]: 钟万伟、周晓、邹晓东、颜世俊、方文健
+                - generic [ref=e3521]: 0%
+            - cell "2026-07-10" [ref=e3522]
+            - cell "2026-07-06" [ref=e3523]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3524]:
+              - generic [ref=e3525]:
+                - button "换人" [ref=e3526] [cursor=pointer]
+                - button "释放" [ref=e3527] [cursor=pointer]
+                - button "编辑" [ref=e3528] [cursor=pointer]
+                - button "+子" [ref=e3529] [cursor=pointer]
+                - button "删除" [ref=e3530] [cursor=pointer]
+          - row "URQ-183 可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）) 用户需求 高🟠 SAE2.3.5 👤 邹晓东 × 👤 江宇岭 × 李国骏 开发中 0% 待确认 开发中 邹晓东、江宇岭 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3531]:
+            - cell "URQ-183" [ref=e3532]: URQ-183
+            - cell "可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）)" [ref=e3533] [cursor=pointer]
+            - cell "用户需求" [ref=e3534]:
+              - generic [ref=e3535]: 用户需求
+            - cell "高🟠" [ref=e3536]:
+              - generic [ref=e3537]: 高🟠
+            - cell "SAE2.3.5" [ref=e3538]
+            - cell [ref=e3539]
+            - cell "👤 邹晓东 × 👤 江宇岭 ×" [ref=e3540]:
+              - generic [ref=e3541]:
+                - text: 👤 邹晓东
+                - generic "移除" [ref=e3542] [cursor=pointer]: ×
+              - generic [ref=e3543]:
+                - text: 👤 江宇岭
+                - generic "移除" [ref=e3544] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3545]
+            - cell "开发中" [ref=e3546]:
+              - generic [ref=e3547]: 开发中
+            - cell "0%" [ref=e3548]:
+              - generic [ref=e3551]: 0%
+            - cell "待确认" [ref=e3552]
+            - cell "开发中 邹晓东、江宇岭 0%" [ref=e3553]:
+              - generic [ref=e3554]:
+                - generic [ref=e3555]:
+                  - generic "开发认领 · 进行中" [ref=e3556]: 开发中
+                  - generic [ref=e3557]: 邹晓东、江宇岭
+                - generic [ref=e3560]: 0%
+            - cell "2026-07-10" [ref=e3561]
+            - cell "2026-07-06" [ref=e3562]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3563]:
+              - generic [ref=e3564]:
+                - button "换人" [ref=e3565] [cursor=pointer]
+                - button "释放" [ref=e3566] [cursor=pointer]
+                - button "编辑" [ref=e3567] [cursor=pointer]
+                - button "+子" [ref=e3568] [cursor=pointer]
+                - button "删除" [ref=e3569] [cursor=pointer]
+          - row "URQ-190 订单拦截-在聊天过程中：买家发出订单拦截的意图 / 平台自动推送了拦截的请求 -> 判断订单状态 -> 未发货的：平台可以设置自动退款 | 已发货的：可以自动复制订单编号，推送到微信群内 用户需求 紧急🔴 SAE2.3.5 订单拦截-在聊天过程中：买家发出订单拦截的意图 / 平台自动推送了拦截的请求 -> 判断订单状态 -> 未发货的：平台可以设置自动退款 | 已发货的：可以自动复… 待认领 李国骏 专题探讨 0% 待确认 提报 李国骏 100% 2026-07-06 认领 * 编辑 +子 删除" [ref=e3570]:
+            - cell "URQ-190" [ref=e3571]: URQ-190
+            - cell "订单拦截-在聊天过程中：买家发出订单拦截的意图 / 平台自动推送了拦截的请求 -> 判断订单状态 -> 未发货的：平台可以设置自动退款 | 已发货的：可以自动复制订单编号，推送到微信群内" [ref=e3572] [cursor=pointer]
+            - cell "用户需求" [ref=e3573]:
+              - generic [ref=e3574]: 用户需求
+            - cell "紧急🔴" [ref=e3575]:
+              - generic [ref=e3576]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3577]
+            - cell "订单拦截-在聊天过程中：买家发出订单拦截的意图 / 平台自动推送了拦截的请求 -> 判断订单状态 -> 未发货的：平台可以设置自动退款 | 已发货的：可以自动复…" [ref=e3578]
+            - cell "待认领" [ref=e3579]:
+              - generic [ref=e3580]: 待认领
+            - cell "李国骏" [ref=e3581]
+            - cell "专题探讨" [ref=e3582]:
+              - generic [ref=e3583]: 专题探讨
+            - cell "0%" [ref=e3584]:
+              - generic [ref=e3587]: 0%
+            - cell "待确认" [ref=e3588]
+            - cell "提报 李国骏 100%" [ref=e3589]:
+              - generic [ref=e3590]:
+                - generic [ref=e3591]:
+                  - generic "提报 · 已完成" [ref=e3592]: 提报
+                  - generic [ref=e3593]: 李国骏
+                - generic [ref=e3597]: 100%
+            - cell [ref=e3598]
+            - cell "2026-07-06" [ref=e3599]
+            - cell "认领 * 编辑 +子 删除" [ref=e3600]:
+              - generic [ref=e3601]:
+                - button "认领 *" [ref=e3602] [cursor=pointer]
+                - button "编辑" [ref=e3603] [cursor=pointer]
+                - button "+子" [ref=e3604] [cursor=pointer]
+                - button "删除" [ref=e3605] [cursor=pointer]
+          - row "URQ-189 可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）) 用户需求 紧急🔴 SAE2.3.5 可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）) 待认领 李国骏 专题探讨 0% 待确认 提报 李国骏 100% 2026-07-06 认领 * 编辑 +子 删除" [ref=e3606]:
+            - cell "URQ-189" [ref=e3607]: URQ-189
+            - cell "可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）)" [ref=e3608] [cursor=pointer]
+            - cell "用户需求" [ref=e3609]:
+              - generic [ref=e3610]: 用户需求
+            - cell "紧急🔴" [ref=e3611]:
+              - generic [ref=e3612]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3613]
+            - cell "可以根据商品卡自主添加回复话术，避免AI发挥失误(首次新进线发商品卡，回复商品固定话术（不走AI）)" [ref=e3614]
+            - cell "待认领" [ref=e3615]:
+              - generic [ref=e3616]: 待认领
+            - cell "李国骏" [ref=e3617]
+            - cell "专题探讨" [ref=e3618]:
+              - generic [ref=e3619]: 专题探讨
+            - cell "0%" [ref=e3620]:
+              - generic [ref=e3623]: 0%
+            - cell "待确认" [ref=e3624]
+            - cell "提报 李国骏 100%" [ref=e3625]:
+              - generic [ref=e3626]:
+                - generic [ref=e3627]:
+                  - generic "提报 · 已完成" [ref=e3628]: 提报
+                  - generic [ref=e3629]: 李国骏
+                - generic [ref=e3633]: 100%
+            - cell [ref=e3634]
+            - cell "2026-07-06" [ref=e3635]
+            - cell "认领 * 编辑 +子 删除" [ref=e3636]:
+              - generic [ref=e3637]:
+                - button "认领 *" [ref=e3638] [cursor=pointer]
+                - button "编辑" [ref=e3639] [cursor=pointer]
+                - button "+子" [ref=e3640] [cursor=pointer]
+                - button "删除" [ref=e3641] [cursor=pointer]
+          - row "URQ-188 检测客服在输入框手动发送的答案，匹配买家的问题，自动添加到话术库内 用户需求 紧急🔴 SAE2.3.5 检测客服在输入框手动发送的答案，匹配买家的问题，自动添加到话术库内 待认领 李国骏 专题探讨 0% 待确认 提报 李国骏 100% 2026-07-06 认领 * 编辑 +子 删除" [ref=e3642]:
+            - cell "URQ-188" [ref=e3643]: URQ-188
+            - cell "检测客服在输入框手动发送的答案，匹配买家的问题，自动添加到话术库内" [ref=e3644] [cursor=pointer]
+            - cell "用户需求" [ref=e3645]:
+              - generic [ref=e3646]: 用户需求
+            - cell "紧急🔴" [ref=e3647]:
+              - generic [ref=e3648]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3649]
+            - cell "检测客服在输入框手动发送的答案，匹配买家的问题，自动添加到话术库内" [ref=e3650]
+            - cell "待认领" [ref=e3651]:
+              - generic [ref=e3652]: 待认领
+            - cell "李国骏" [ref=e3653]
+            - cell "专题探讨" [ref=e3654]:
+              - generic [ref=e3655]: 专题探讨
+            - cell "0%" [ref=e3656]:
+              - generic [ref=e3659]: 0%
+            - cell "待确认" [ref=e3660]
+            - cell "提报 李国骏 100%" [ref=e3661]:
+              - generic [ref=e3662]:
+                - generic [ref=e3663]:
+                  - generic "提报 · 已完成" [ref=e3664]: 提报
+                  - generic [ref=e3665]: 李国骏
+                - generic [ref=e3669]: 100%
+            - cell [ref=e3670]
+            - cell "2026-07-06" [ref=e3671]
+            - cell "认领 * 编辑 +子 删除" [ref=e3672]:
+              - generic [ref=e3673]:
+                - button "认领 *" [ref=e3674] [cursor=pointer]
+                - button "编辑" [ref=e3675] [cursor=pointer]
+                - button "+子" [ref=e3676] [cursor=pointer]
+                - button "删除" [ref=e3677] [cursor=pointer]
+          - row "URQ-187 商品问答增加，用户自定义标签 用户需求 中🟡 SAE2.3.3 商品问答增加， 1、用户自定义标签，支持批量打标签， 2、列表增加根据自定义标签筛选问答 👤 江宇岭 × 李国骏 待开始 0% 待确认 开发中 江宇岭 0% 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3678]:
+            - cell "URQ-187" [ref=e3679]: URQ-187
+            - cell "商品问答增加，用户自定义标签" [ref=e3680] [cursor=pointer]
+            - cell "用户需求" [ref=e3681]:
+              - generic [ref=e3682]: 用户需求
+            - cell "中🟡" [ref=e3683]:
+              - generic [ref=e3684]: 中🟡
+            - cell "SAE2.3.3" [ref=e3685]
+            - cell "商品问答增加， 1、用户自定义标签，支持批量打标签， 2、列表增加根据自定义标签筛选问答" [ref=e3686]
+            - cell "👤 江宇岭 ×" [ref=e3687]:
+              - generic [ref=e3688]:
+                - text: 👤 江宇岭
+                - generic "移除" [ref=e3689] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3690]
+            - cell "待开始" [ref=e3691]:
+              - generic [ref=e3692]: 待开始
+            - cell "0%" [ref=e3693]:
+              - generic [ref=e3696]: 0%
+            - cell "待确认" [ref=e3697]
+            - cell "开发中 江宇岭 0%" [ref=e3698]:
+              - generic [ref=e3699]:
+                - generic [ref=e3700]:
+                  - generic "开发认领 · 进行中" [ref=e3701]: 开发中
+                  - generic [ref=e3702]: 江宇岭
+                - generic [ref=e3705]: 0%
+            - cell [ref=e3706]
+            - cell "2026-07-06" [ref=e3707]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3708]:
+              - generic [ref=e3709]:
+                - button "换人" [ref=e3710] [cursor=pointer]
+                - button "释放" [ref=e3711] [cursor=pointer]
+                - button "编辑" [ref=e3712] [cursor=pointer]
+                - button "+子" [ref=e3713] [cursor=pointer]
+                - button "删除" [ref=e3714] [cursor=pointer]
+          - 'row "URQ-186 客户端-针对聚合版用户，进行新手引导功能 用户需求 中🟡 SAE2.3.5 客户端-针对聚合版用户，进行新手引导功能： # 新手指引功能交互验收文档 ## 1. 验收目标 验证免费试用用户的新手指引流程可完整走通，并确认引导期间的… 👤 江宇岭 × 李国骏 待上线 100% ✓ 通过 开发中 江宇岭 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3715]':
+            - cell "URQ-186" [ref=e3716]: URQ-186
+            - cell "客户端-针对聚合版用户，进行新手引导功能" [ref=e3717] [cursor=pointer]
+            - cell "用户需求" [ref=e3718]:
+              - generic [ref=e3719]: 用户需求
+            - cell "中🟡" [ref=e3720]:
+              - generic [ref=e3721]: 中🟡
+            - cell "SAE2.3.5" [ref=e3722]
+            - 'cell "客户端-针对聚合版用户，进行新手引导功能： # 新手指引功能交互验收文档 ## 1. 验收目标 验证免费试用用户的新手指引流程可完整走通，并确认引导期间的…" [ref=e3723]'
+            - cell "👤 江宇岭 ×" [ref=e3724]:
+              - generic [ref=e3725]:
+                - text: 👤 江宇岭
+                - generic "移除" [ref=e3726] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3727]
+            - cell "待上线" [ref=e3728]:
+              - generic [ref=e3729]: 待上线
+            - cell "100%" [ref=e3730]:
+              - generic [ref=e3734]: 100%
+            - cell "✓ 通过" [ref=e3735]:
+              - generic [ref=e3736]: ✓ 通过
+            - cell "开发中 江宇岭 0%" [ref=e3737]:
+              - generic [ref=e3738]:
+                - generic [ref=e3739]:
+                  - generic "开发认领 · 进行中" [ref=e3740]: 开发中
+                  - generic [ref=e3741]: 江宇岭
+                - generic [ref=e3744]: 0%
+            - cell "2026-07-10" [ref=e3745]
+            - cell "2026-07-06" [ref=e3746]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3747]:
+              - generic [ref=e3748]:
+                - button "换人" [ref=e3749] [cursor=pointer]
+                - button "释放" [ref=e3750] [cursor=pointer]
+                - button "编辑" [ref=e3751] [cursor=pointer]
+                - button "+子" [ref=e3752] [cursor=pointer]
+                - button "删除" [ref=e3753] [cursor=pointer]
+          - row "URQ-182 新增多个内置变量，提高话术配置灵活性 用户需求 紧急🔴 SAE2.3.5 相关变量这句要来源于订单上报，一些平台信息不全需补充 👤 邹晓东 × 👤 钟万伟 × 李国骏 待开始 0% ✓ 通过 开发中 邹晓东、钟万伟 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3754]:
+            - cell "URQ-182" [ref=e3755]: URQ-182
+            - cell "新增多个内置变量，提高话术配置灵活性" [ref=e3756] [cursor=pointer]
+            - cell "用户需求" [ref=e3757]:
+              - generic [ref=e3758]: 用户需求
+            - cell "紧急🔴" [ref=e3759]:
+              - generic [ref=e3760]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3761]
+            - cell "相关变量这句要来源于订单上报，一些平台信息不全需补充" [ref=e3762]
+            - cell "👤 邹晓东 × 👤 钟万伟 ×" [ref=e3763]:
+              - generic [ref=e3764]:
+                - text: 👤 邹晓东
+                - generic "移除" [ref=e3765] [cursor=pointer]: ×
+              - generic [ref=e3766]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3767] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3768]
+            - cell "待开始" [ref=e3769]:
+              - generic [ref=e3770]: 待开始
+            - cell "0%" [ref=e3771]:
+              - generic [ref=e3774]: 0%
+            - cell "✓ 通过" [ref=e3775]:
+              - generic [ref=e3776]: ✓ 通过
+            - cell "开发中 邹晓东、钟万伟 0%" [ref=e3777]:
+              - generic [ref=e3778]:
+                - generic [ref=e3779]:
+                  - generic "开发认领 · 进行中" [ref=e3780]: 开发中
+                  - generic [ref=e3781]: 邹晓东、钟万伟
+                - generic [ref=e3784]: 0%
+            - cell "2026-07-10" [ref=e3785]
+            - cell "2026-07-06" [ref=e3786]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3787]:
+              - generic [ref=e3788]:
+                - button "换人" [ref=e3789] [cursor=pointer]
+                - button "释放" [ref=e3790] [cursor=pointer]
+                - button "编辑" [ref=e3791] [cursor=pointer]
+                - button "+子" [ref=e3792] [cursor=pointer]
+                - button "删除" [ref=e3793] [cursor=pointer]
+          - row "URQ-181 自动备注功能，通过设置关键字及意图，将备注的文字信息，自动点击平台的[订单备注]按钮，输入进去（工单看板增加自动备注按钮开关，点击自动备注需提示） 用户需求 紧急🔴 SAE2.3.5 👤 周晓 × 👤 邹晓东 × 👤 钟万伟 × 李国骏 待开始 0% ✓ 通过 开发中 周晓、邹晓东、钟万伟 0% 2026-07-10 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3794]:
+            - cell "URQ-181" [ref=e3795]: URQ-181
+            - cell "自动备注功能，通过设置关键字及意图，将备注的文字信息，自动点击平台的[订单备注]按钮，输入进去（工单看板增加自动备注按钮开关，点击自动备注需提示）" [ref=e3796] [cursor=pointer]
+            - cell "用户需求" [ref=e3797]:
+              - generic [ref=e3798]: 用户需求
+            - cell "紧急🔴" [ref=e3799]:
+              - generic [ref=e3800]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3801]
+            - cell [ref=e3802]
+            - cell "👤 周晓 × 👤 邹晓东 × 👤 钟万伟 ×" [ref=e3803]:
+              - generic [ref=e3804]:
+                - text: 👤 周晓
+                - generic "移除" [ref=e3805] [cursor=pointer]: ×
+              - generic [ref=e3806]:
+                - text: 👤 邹晓东
+                - generic "移除" [ref=e3807] [cursor=pointer]: ×
+              - generic [ref=e3808]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3809] [cursor=pointer]: ×
+            - cell "李国骏" [ref=e3810]
+            - cell "待开始" [ref=e3811]:
+              - generic [ref=e3812]: 待开始
+            - cell "0%" [ref=e3813]:
+              - generic [ref=e3816]: 0%
+            - cell "✓ 通过" [ref=e3817]:
+              - generic [ref=e3818]: ✓ 通过
+            - cell "开发中 周晓、邹晓东、钟万伟 0%" [ref=e3819]:
+              - generic [ref=e3820]:
+                - generic [ref=e3821]:
+                  - generic "开发认领 · 进行中" [ref=e3822]: 开发中
+                  - generic [ref=e3823]: 周晓、邹晓东、钟万伟
+                - generic [ref=e3826]: 0%
+            - cell "2026-07-10" [ref=e3827]
+            - cell "2026-07-06" [ref=e3828]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3829]:
+              - generic [ref=e3830]:
+                - button "换人" [ref=e3831] [cursor=pointer]
+                - button "释放" [ref=e3832] [cursor=pointer]
+                - button "编辑" [ref=e3833] [cursor=pointer]
+                - button "+子" [ref=e3834] [cursor=pointer]
+                - button "删除" [ref=e3835] [cursor=pointer]
+          - row "URQ-191 测试 用户需求 中🟡 SAE2.3.3 1111 👤 fay × 👤 吴江兵 × 测试 待开始 0% 待确认 开发中 fay、吴江兵 0% 2026-07-06 换人 释放 编辑 +子 删除" [ref=e3836]:
+            - cell "URQ-191" [ref=e3837]: URQ-191
+            - cell "测试" [ref=e3838] [cursor=pointer]
+            - cell "用户需求" [ref=e3839]:
+              - generic [ref=e3840]: 用户需求
+            - cell "中🟡" [ref=e3841]:
+              - generic [ref=e3842]: 中🟡
+            - cell "SAE2.3.3" [ref=e3843]
+            - cell "1111" [ref=e3844]
+            - cell "👤 fay × 👤 吴江兵 ×" [ref=e3845]:
+              - generic [ref=e3846]:
+                - text: 👤 fay
+                - generic "移除" [ref=e3847] [cursor=pointer]: ×
+              - generic [ref=e3848]:
+                - text: 👤 吴江兵
+                - generic "移除" [ref=e3849] [cursor=pointer]: ×
+            - cell "测试" [ref=e3850]
+            - cell "待开始" [ref=e3851]:
+              - generic [ref=e3852]: 待开始
+            - cell "0%" [ref=e3853]:
+              - generic [ref=e3856]: 0%
+            - cell "待确认" [ref=e3857]
+            - cell "开发中 fay、吴江兵 0%" [ref=e3858]:
+              - generic [ref=e3859]:
+                - generic [ref=e3860]:
+                  - generic "开发认领 · 进行中" [ref=e3861]: 开发中
+                  - generic [ref=e3862]: fay、吴江兵
+                - generic [ref=e3865]: 0%
+            - cell [ref=e3866]
+            - cell "2026-07-06" [ref=e3867]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3868]:
+              - generic [ref=e3869]:
+                - button "换人" [ref=e3870] [cursor=pointer]
+                - button "释放" [ref=e3871] [cursor=pointer]
+                - button "编辑" [ref=e3872] [cursor=pointer]
+                - button "+子" [ref=e3873] [cursor=pointer]
+                - button "删除" [ref=e3874] [cursor=pointer]
+          - 'row "URQ-178 一键离线 用户需求 中🟡 SAE2.3.4 #用户希望不需要有些店铺不在一键登录的管控组中 1. 因为京东店铺留言是一点一点进来的，上线太早了会有留言进来，留言进线，AI是无法清理的，其他的是只要人工客服… 待认领 周晓 已上线 0% 待确认 提报 周晓 100% 2026-07-03 认领 * 编辑 +子 删除" [ref=e3875]':
+            - cell "URQ-178" [ref=e3876]: URQ-178
+            - cell "一键离线" [ref=e3877] [cursor=pointer]
+            - cell "用户需求" [ref=e3878]:
+              - generic [ref=e3879]: 用户需求
+            - cell "中🟡" [ref=e3880]:
+              - generic [ref=e3881]: 中🟡
+            - cell "SAE2.3.4" [ref=e3882]
+            - cell "#用户希望不需要有些店铺不在一键登录的管控组中 1. 因为京东店铺留言是一点一点进来的，上线太早了会有留言进来，留言进线，AI是无法清理的，其他的是只要人工客服…" [ref=e3883]
+            - cell "待认领" [ref=e3884]:
+              - generic [ref=e3885]: 待认领
+            - cell "周晓" [ref=e3886]
+            - cell "已上线" [ref=e3887]:
+              - generic [ref=e3888]: 已上线
+            - cell "0%" [ref=e3889]:
+              - generic [ref=e3892]: 0%
+            - cell "待确认" [ref=e3893]
+            - cell "提报 周晓 100%" [ref=e3894]:
+              - generic [ref=e3895]:
+                - generic [ref=e3896]:
+                  - generic "提报 · 已完成" [ref=e3897]: 提报
+                  - generic [ref=e3898]: 周晓
+                - generic [ref=e3902]: 100%
+            - cell [ref=e3903]
+            - cell "2026-07-03" [ref=e3904]
+            - cell "认领 * 编辑 +子 删除" [ref=e3905]:
+              - generic [ref=e3906]:
+                - button "认领 *" [ref=e3907] [cursor=pointer]
+                - button "编辑" [ref=e3908] [cursor=pointer]
+                - button "+子" [ref=e3909] [cursor=pointer]
+                - button "删除" [ref=e3910] [cursor=pointer]
+          - 'row "URQ-177 抖店一键离线建议 用户需求 中🟡 SAE2.3.5 ##抖店没有接待才能离线 1. 用户建议可以先回复完后，esc掉然后离线 待认领 周晓 待开始 0% 待确认 提报 周晓 100% 2026-07-03 认领 * 编辑 +子 删除" [ref=e3911]':
+            - cell "URQ-177" [ref=e3912]: URQ-177
+            - cell "抖店一键离线建议" [ref=e3913] [cursor=pointer]
+            - cell "用户需求" [ref=e3914]:
+              - generic [ref=e3915]: 用户需求
+            - cell "中🟡" [ref=e3916]:
+              - generic [ref=e3917]: 中🟡
+            - cell "SAE2.3.5" [ref=e3918]
+            - cell "##抖店没有接待才能离线 1. 用户建议可以先回复完后，esc掉然后离线" [ref=e3919]
+            - cell "待认领" [ref=e3920]:
+              - generic [ref=e3921]: 待认领
+            - cell "周晓" [ref=e3922]
+            - cell "待开始" [ref=e3923]:
+              - generic [ref=e3924]: 待开始
+            - cell "0%" [ref=e3925]:
+              - generic [ref=e3928]: 0%
+            - cell "待确认" [ref=e3929]
+            - cell "提报 周晓 100%" [ref=e3930]:
+              - generic [ref=e3931]:
+                - generic [ref=e3932]:
+                  - generic "提报 · 已完成" [ref=e3933]: 提报
+                  - generic [ref=e3934]: 周晓
+                - generic [ref=e3938]: 100%
+            - cell [ref=e3939]
+            - cell "2026-07-03" [ref=e3940]
+            - cell "认领 * 编辑 +子 删除" [ref=e3941]:
+              - generic [ref=e3942]:
+                - button "认领 *" [ref=e3943] [cursor=pointer]
+                - button "编辑" [ref=e3944] [cursor=pointer]
+                - button "+子" [ref=e3945] [cursor=pointer]
+                - button "删除" [ref=e3946] [cursor=pointer]
+          - row "URQ-176 拼多多因网络波动导致藏消息兜底方案开发 用户需求 中🟡 SAE2.3.3 👤 钟万伟 × 钟万伟 测试中 0% 待确认 测试中 未指派 0% 2026-07-02 换人 释放 编辑 +子 删除" [ref=e3947]:
+            - cell "URQ-176" [ref=e3948]: URQ-176
+            - cell "拼多多因网络波动导致藏消息兜底方案开发" [ref=e3949] [cursor=pointer]
+            - cell "用户需求" [ref=e3950]:
+              - generic [ref=e3951]: 用户需求
+            - cell "中🟡" [ref=e3952]:
+              - generic [ref=e3953]: 中🟡
+            - cell "SAE2.3.3" [ref=e3954]
+            - cell [ref=e3955]
+            - cell "👤 钟万伟 ×" [ref=e3956]:
+              - generic [ref=e3957]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3958] [cursor=pointer]: ×
+            - cell "钟万伟" [ref=e3959]
+            - cell "测试中" [ref=e3960]:
+              - generic [ref=e3961]: 测试中
+            - cell "0%" [ref=e3962]:
+              - generic [ref=e3965]: 0%
+            - cell "待确认" [ref=e3966]
+            - cell "测试中 未指派 0%" [ref=e3967]:
+              - generic [ref=e3968]:
+                - generic [ref=e3969]:
+                  - generic "测试认领 · 进行中" [ref=e3970]: 测试中
+                  - generic [ref=e3971]: 未指派
+                - generic [ref=e3974]: 0%
+            - cell [ref=e3975]
+            - cell "2026-07-02" [ref=e3976]
+            - cell "换人 释放 编辑 +子 删除" [ref=e3977]:
+              - generic [ref=e3978]:
+                - button "换人" [ref=e3979] [cursor=pointer]
+                - button "释放" [ref=e3980] [cursor=pointer]
+                - button "编辑" [ref=e3981] [cursor=pointer]
+                - button "+子" [ref=e3982] [cursor=pointer]
+                - button "删除" [ref=e3983] [cursor=pointer]
+          - row "URQ-172 开发模型选择切换功能 研发需求 紧急🔴 SAE2.3.5 用户可选择标准(默认) 中级 高级三档模型，不同模型消耗算力不同，根据模型比例配置来。 👤 邹晓东 × 👤 钟万伟 × 邹晓东 开发中 0% ✓ 通过 开发中 邹晓东、钟万伟 0% 2026-07-10 2026-07-01 换人 释放 编辑 +子 删除" [ref=e3984]:
+            - cell "URQ-172" [ref=e3985]: URQ-172
+            - cell "开发模型选择切换功能" [ref=e3986] [cursor=pointer]
+            - cell "研发需求" [ref=e3987]:
+              - generic [ref=e3988]: 研发需求
+            - cell "紧急🔴" [ref=e3989]:
+              - generic [ref=e3990]: 紧急🔴
+            - cell "SAE2.3.5" [ref=e3991]
+            - cell "用户可选择标准(默认) 中级 高级三档模型，不同模型消耗算力不同，根据模型比例配置来。" [ref=e3992]
+            - cell "👤 邹晓东 × 👤 钟万伟 ×" [ref=e3993]:
+              - generic [ref=e3994]:
+                - text: 👤 邹晓东
+                - generic "移除" [ref=e3995] [cursor=pointer]: ×
+              - generic [ref=e3996]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e3997] [cursor=pointer]: ×
+            - cell "邹晓东" [ref=e3998]
+            - cell "开发中" [ref=e3999]:
+              - generic [ref=e4000]: 开发中
+            - cell "0%" [ref=e4001]:
+              - generic [ref=e4004]: 0%
+            - cell "✓ 通过" [ref=e4005]:
+              - generic [ref=e4006]: ✓ 通过
+            - cell "开发中 邹晓东、钟万伟 0%" [ref=e4007]:
+              - generic [ref=e4008]:
+                - generic [ref=e4009]:
+                  - generic "开发认领 · 进行中" [ref=e4010]: 开发中
+                  - generic [ref=e4011]: 邹晓东、钟万伟
+                - generic [ref=e4014]: 0%
+            - cell "2026-07-10" [ref=e4015]
+            - cell "2026-07-01" [ref=e4016]
+            - cell "换人 释放 编辑 +子 删除" [ref=e4017]:
+              - generic [ref=e4018]:
+                - button "换人" [ref=e4019] [cursor=pointer]
+                - button "释放" [ref=e4020] [cursor=pointer]
+                - button "编辑" [ref=e4021] [cursor=pointer]
+                - button "+子" [ref=e4022] [cursor=pointer]
+                - button "删除" [ref=e4023] [cursor=pointer]
+          - row "URQ-171 electron版本升级 用户需求 中🟡 SAE2.3.5 👤 钟万伟 × 钟万伟 测试中 0% ✓ 通过 开发中 钟万伟 0% 2026-07-10 2026-06-30 换人 释放 编辑 +子 删除" [ref=e4024]:
+            - cell "URQ-171" [ref=e4025]: URQ-171
+            - cell "electron版本升级" [ref=e4026] [cursor=pointer]
+            - cell "用户需求" [ref=e4027]:
+              - generic [ref=e4028]: 用户需求
+            - cell "中🟡" [ref=e4029]:
+              - generic [ref=e4030]: 中🟡
+            - cell "SAE2.3.5" [ref=e4031]
+            - cell [ref=e4032]
+            - cell "👤 钟万伟 ×" [ref=e4033]:
+              - generic [ref=e4034]:
+                - text: 👤 钟万伟
+                - generic "移除" [ref=e4035] [cursor=pointer]: ×
+            - cell "钟万伟" [ref=e4036]
+            - cell "测试中" [ref=e4037]:
+              - generic [ref=e4038]: 测试中
+            - cell "0%" [ref=e4039]:
+              - generic [ref=e4042]: 0%
+            - cell "✓ 通过" [ref=e4043]:
+              - generic [ref=e4044]: ✓ 通过
+            - cell "开发中 钟万伟 0%" [ref=e4045]:
+              - generic [ref=e4046]:
+                - generic [ref=e4047]:
+                  - generic "开发认领 · 进行中" [ref=e4048]: 开发中
+                  - generic [ref=e4049]: 钟万伟
+                - generic [ref=e4052]: 0%
+            - cell "2026-07-10" [ref=e4053]
+            - cell "2026-06-30" [ref=e4054]
+            - cell "换人 释放 编辑 +子 删除" [ref=e4055]:
+              - generic [ref=e4056]:
+                - button "换人" [ref=e4057] [cursor=pointer]
+                - button "释放" [ref=e4058] [cursor=pointer]
+                - button "编辑" [ref=e4059] [cursor=pointer]
+                - button "+子" [ref=e4060] [cursor=pointer]
+                - button "删除" [ref=e4061] [cursor=pointer]
+          - row "URQ-170 仅发送商品卡的情况，可以配置AI的回复 用户需求 中🟡 SAE2.3.3 待认领 李国骏 待开始 0% 待确认 提报 李国骏 100% 2026-06-29 认领 * 编辑 +子 删除" [ref=e4062]:
+            - cell "URQ-170" [ref=e4063]: URQ-170
+            - cell "仅发送商品卡的情况，可以配置AI的回复" [ref=e4064] [cursor=pointer]
+            - cell "用户需求" [ref=e4065]:
+              - generic [ref=e4066]: 用户需求
+            - cell "中🟡" [ref=e4067]:
+              - generic [ref=e4068]: 中🟡
+            - cell "SAE2.3.3" [ref=e4069]
+            - cell [ref=e4070]
+            - cell "待认领" [ref=e4071]:
+              - generic [ref=e4072]: 待认领
+            - cell "李国骏" [ref=e4073]
+            - cell "待开始" [ref=e4074]:
+              - generic [ref=e4075]: 待开始
+            - cell "0%" [ref=e4076]:
+              - generic [ref=e4079]: 0%
+            - cell "待确认" [ref=e4080]
+            - cell "提报 李国骏 100%" [ref=e4081]:
+              - generic [ref=e4082]:
+                - generic [ref=e4083]:
+                  - generic "提报 · 已完成" [ref=e4084]: 提报
+                  - generic [ref=e4085]: 李国骏
+                - generic [ref=e4089]: 100%
+            - cell [ref=e4090]
+            - cell "2026-06-29" [ref=e4091]
+            - cell "认领 * 编辑 +子 删除" [ref=e4092]:
+              - generic [ref=e4093]:
+                - button "认领 *" [ref=e4094] [cursor=pointer]
+                - button "编辑" [ref=e4095] [cursor=pointer]
+                - button "+子" [ref=e4096] [cursor=pointer]
+                - button "删除" [ref=e4097] [cursor=pointer]
+          - row "URQ-169 全平台店铺搜索商品 用户需求 中🟡 SAE2.3.3 分组内添加商品时，目前只能单个店铺搜索，希望可以全平台店铺一起搜索， 待认领 臧东 待开始 0% 待确认 提报 臧东 100% 2026-06-27 认领 * 编辑 +子 删除" [ref=e4098]:
+            - cell "URQ-169" [ref=e4099]: URQ-169
+            - cell "全平台店铺搜索商品" [ref=e4100] [cursor=pointer]
+            - cell "用户需求" [ref=e4101]:
+              - generic [ref=e4102]: 用户需求
+            - cell "中🟡" [ref=e4103]:
+              - generic [ref=e4104]: 中🟡
+            - cell "SAE2.3.3" [ref=e4105]
+            - cell "分组内添加商品时，目前只能单个店铺搜索，希望可以全平台店铺一起搜索，" [ref=e4106]
+            - cell "待认领" [ref=e4107]:
+              - generic [ref=e4108]: 待认领
+            - cell "臧东" [ref=e4109]
+            - cell "待开始" [ref=e4110]:
+              - generic [ref=e4111]: 待开始
+            - cell "0%" [ref=e4112]:
+              - generic [ref=e4115]: 0%
+            - cell "待确认" [ref=e4116]
+            - cell "提报 臧东 100%" [ref=e4117]:
+              - generic [ref=e4118]:
+                - generic [ref=e4119]:
+                  - generic "提报 · 已完成" [ref=e4120]: 提报
+                  - generic [ref=e4121]: 臧东
+                - generic [ref=e4125]: 100%
+            - cell [ref=e4126]
+            - cell "2026-06-27" [ref=e4127]
+            - cell "认领 * 编辑 +子 删除" [ref=e4128]:
+              - generic [ref=e4129]:
+                - button "认领 *" [ref=e4130] [cursor=pointer]
+                - button "编辑" [ref=e4131] [cursor=pointer]
+                - button "+子" [ref=e4132] [cursor=pointer]
+                - button "删除" [ref=e4133] [cursor=pointer]
+      - generic [ref=e4134]:
+        - button "上一页" [disabled] [ref=e4135]
+        - button "1" [ref=e4136] [cursor=pointer]
+        - button "2" [ref=e4137] [cursor=pointer]
+        - button "3" [ref=e4138] [cursor=pointer]
+        - button "4" [ref=e4139] [cursor=pointer]
+        - button "5" [ref=e4140] [cursor=pointer]
+        - button "6" [ref=e4141] [cursor=pointer]
+        - button "7" [ref=e4142] [cursor=pointer]
+        - generic [ref=e4143]: ...
+        - button "10" [ref=e4144] [cursor=pointer]
+        - button "下一页" [ref=e4145] [cursor=pointer]
+  - generic [ref=e3256]:
+    - generic [ref=e3257]:
+      - heading "自动备注功能，通过设置关键字及意图，将备注的文字信息，自动点击平台的[订单备注]按钮，输入进去（工单看板增加自动备注按钮开关，点击自动备注需提示）" [level=2] [ref=e3258]
+      - button "×" [ref=e3259] [cursor=pointer]
+    - generic [ref=e3260]:
+      - generic [ref=e3261]:
+        - generic [ref=e3262]:
+          - generic [ref=e3263]: 编号
+          - generic [ref=e3264]: URQ-181
+        - generic [ref=e3265]:
+          - generic [ref=e3266]: 类型
+          - generic [ref=e3268]: 用户需求
+        - generic [ref=e3269]:
+          - generic [ref=e3270]: 所属计划
+          - generic [ref=e3271]: SAE2.3.5
+        - generic [ref=e3272]:
+          - generic [ref=e3273]: 优先级
+          - generic [ref=e3275]: 紧急🔴
+        - generic [ref=e3276]:
+          - generic [ref=e3277]: 开发状态
+          - generic [ref=e3279]: 待开始
+        - generic [ref=e3280]:
+          - generic [ref=e3281]: 开发进度
+          - generic [ref=e3285]: 0%
+        - generic [ref=e3286]:
+          - generic [ref=e3287]: 认领人
+          - generic [ref=e3288]: 周晓、邹晓东、钟万伟
+        - generic [ref=e3289]:
+          - generic [ref=e3290]: 预计上线
+          - generic [ref=e3291]: 2026-07-10
+        - generic [ref=e3292]:
+          - generic [ref=e3293]: 是否需要设计
+          - generic [ref=e3294]: 待设计
+        - generic [ref=e3295]:
+          - generic [ref=e3296]: 评审是否通过
+          - generic [ref=e3297]: 已通过
+        - generic [ref=e3298]:
+          - generic [ref=e3299]: 提出时间
+          - generic [ref=e3300]: 2026-07-06
+        - generic [ref=e3301]:
+          - generic [ref=e3302]: 提出人
+          - generic [ref=e3303]: 李国骏
+      - generic [ref=e3304]:
+        - generic [ref=e4146]:
+          - generic [ref=e4147]: 🔄 需求生命周期
+          - generic [ref=e4148]:
+            - text: 当前：开发认领
+            - button "推进至 测试认领 →" [ref=e4149] [cursor=pointer]
+        - generic [ref=e4150]:
+          - generic [ref=e4151]:
+            - generic [ref=e4152]: ✓
+            - generic [ref=e4153]: 提报
+            - generic [ref=e4154]: 已完成
+            - generic [ref=e4155]:
+              - generic [ref=e4156]: 李国骏
+              - text: 🔗
+            - generic [ref=e4159]: 100%
+            - button "编辑" [ref=e4161] [cursor=pointer]
+          - generic [ref=e4162]:
+            - generic [ref=e4163]: ✓
+            - generic [ref=e4164]: 研发评审
+            - generic [ref=e4165]: 已完成
+            - generic [ref=e4167]: 颜世俊
+            - generic [ref=e4170]: 100%
+            - button "编辑" [ref=e4172] [cursor=pointer]
+          - generic [ref=e4173]:
+            - generic [ref=e4174]: "3"
+            - generic [ref=e4175]: 开发认领
+            - generic [ref=e4176]: 进行中
+            - generic [ref=e4177]:
+              - generic [ref=e4178]: 周晓
+              - generic [ref=e4179]: 邹晓东
+              - generic [ref=e4180]: 钟万伟
+              - text: 🔗
+            - generic [ref=e4182]: 0% · 3人
+            - button "编辑" [ref=e4184] [cursor=pointer]
+          - generic [ref=e4185]:
+            - generic [ref=e4186]: "4"
+            - generic [ref=e4187]: 测试认领
+            - generic [ref=e4188]: 未开始
+            - generic [ref=e4189]: 未指派
+            - generic [ref=e4191]: 0%
+            - generic [ref=e4192]:
+              - button "编辑" [ref=e4193] [cursor=pointer]
+              - button "推进→" [ref=e4194] [cursor=pointer]
+        - generic [ref=e4195]:
+          - generic [ref=e4197]: 👥 成员进度
+          - generic [ref=e4198]:
+            - generic [ref=e4199]:
+              - generic [ref=e4200]: 提报
+              - generic [ref=e4201]: 阶段进度 100%
+            - generic [ref=e4202]:
+              - generic "李国骏" [ref=e4203]
+              - generic [ref=e4206]: 100%
+          - generic [ref=e4207]:
+            - generic [ref=e4208]:
+              - generic [ref=e4209]: 研发评审
+              - generic [ref=e4210]: 阶段进度 100%
+            - generic [ref=e4211]:
+              - generic "颜世俊" [ref=e4212]
+              - generic [ref=e4215]: 100%
+          - generic [ref=e4216]:
+            - generic [ref=e4217]:
+              - generic [ref=e4218]: 开发认领
+              - generic [ref=e4219]: （开发进度） 阶段进度 0%
+            - generic [ref=e4220]:
+              - generic "周晓" [ref=e4221]
+              - generic [ref=e4223]: 0%
+            - generic [ref=e4224]:
+              - generic "邹晓东" [ref=e4225]
+              - generic [ref=e4227]: 0%
+            - generic [ref=e4228]:
+              - generic "钟万伟" [ref=e4229]
+              - generic [ref=e4231]: 0%
+        - generic [ref=e4232]:
+          - generic [ref=e4233]:
+            - generic [ref=e4234]: 🚧 卡点（0）
+            - button "＋ 新增卡点" [ref=e4235] [cursor=pointer]
+          - generic [ref=e4236]: 暂无卡点
+        - generic [ref=e4237]:
+          - generic [ref=e4239]: 🙋 认领记录（留痕）
+          - generic [ref=e4241]:
+            - text: 当前认领人：周晓、邹晓东、钟万伟
+            - generic [ref=e4242]: （历史认领，本功能上线前的认领无操作留痕；此后的认领/换人/释放会记录在下方）
+        - generic [ref=e4243]:
+          - generic [ref=e4245]: 🕒 流转记录（留痕）
+          - generic [ref=e4246]:
+            - generic [ref=e4247]:
+              - text: 提报 → 研发评审 · 超级管理员 2026-07-06 09:34
+              - generic [ref=e4248]: 评审通过
+            - generic [ref=e4249]:
+              - text: 研发评审 → 开发认领 · 系统回填 2026-07-07 04:22
+              - generic [ref=e4250]: 历史认领批量回填到开发认领
+      - generic [ref=e3306]:
+        - generic [ref=e3307]: 需求描述
+        - generic [ref=e3308]: 暂无描述
+      - generic [ref=e3309]:
+        - generic [ref=e3310]: 需求图片/附件（1）
+        - generic [ref=e3312] [cursor=pointer]: 🖼️ paste_1783315853741.png
+    - generic [ref=e3313]:
+      - button "关闭" [ref=e3314] [cursor=pointer]
+      - button "✏️ 编辑" [ref=e3315] [cursor=pointer]
+  - generic [ref=e37]:
+    - generic [ref=e38]: 问题详情
+    - button "✕" [ref=e39] [cursor=pointer]
+  - button "✕" [ref=e45] [cursor=pointer]

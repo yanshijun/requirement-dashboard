@@ -128,7 +128,12 @@ function mapFromFeishu(record) {
     createTime: fromFeishuDate(f["提出时间"]),
     submitter: String(f["提出人"] || ""),
     note: String(f["备注"] || ""),
-    parentId: String(f["父需求ID"] || "")
+    parentId: String(f["父需求ID"] || ""),
+    attachments: Array.isArray(f["需求附件"]) ? f["需求附件"].map(a => ({
+      file_token: a.file_token || "",
+      name: a.name || "附件",
+      type: a.type || ""
+    })) : []
   };
 }
 
@@ -153,6 +158,10 @@ function mapToFeishu(item) {
   if (deadline) fields["预计上线日期"] = deadline;
   const createTime = toFeishuDate(item.createTime);
   if (createTime) fields["提出时间"] = createTime;
+  // 需求附件：add/update 时写入（含空数组以支持删除）；批量导入无此字段则跳过
+  if (Array.isArray(item.attachments)) {
+    fields["需求附件"] = item.attachments.map(a => ({ file_token: a.file_token }));
+  }
   return fields;
 }
 
@@ -505,6 +514,29 @@ exports.handler = async function (event) {
           Authorization: "Bearer " + token,
           "Content-Type": `multipart/form-data; boundary=${boundary}`
         },
+        body: combined
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.code !== 0) throw new Error("上传失败: " + JSON.stringify(uploadData));
+      return ok({ file_token: uploadData.data.file_token, name: filename, type: mimetype || "" });
+    }
+
+    // ===== 需求附件：上传文件到需求 base（附件字段要求文件属于本 base） =====
+    if (action === "req-upload") {
+      const { filename, mimetype, base64 } = body;
+      if (!base64 || !filename) return err("缺少文件数据", 400);
+      const buf = Buffer.from(base64, "base64");
+      const boundary = "----FormBoundary" + Date.now();
+      const parts = [
+        `--${boundary}\r\nContent-Disposition: form-data; name="file_name"\r\n\r\n${filename}`,
+        `--${boundary}\r\nContent-Disposition: form-data; name="parent_type"\r\n\r\nbitable_file`,
+        `--${boundary}\r\nContent-Disposition: form-data; name="parent_node"\r\n\r\n${APP_TOKEN}`,
+        `--${boundary}\r\nContent-Disposition: form-data; name="size"\r\n\r\n${buf.length}`,
+      ].join("\r\n") + `\r\n--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${mimetype || "application/octet-stream"}\r\n\r\n`;
+      const combined = Buffer.concat([Buffer.from(parts), buf, Buffer.from(`\r\n--${boundary}--`)]);
+      const uploadRes = await fetch(`${BASE}/drive/v1/medias/upload_all`, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": `multipart/form-data; boundary=${boundary}` },
         body: combined
       });
       const uploadData = await uploadRes.json();

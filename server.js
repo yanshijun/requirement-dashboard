@@ -9,6 +9,9 @@ const { handler: reqbugsHandler } = require('./netlify/functions/reqbugs');
 const { handler: plansHandler } = require('./netlify/functions/plans');
 const { handler: authHandler } = require('./netlify/functions/auth');
 const { handler: usersHandler } = require('./netlify/functions/users');
+const { handler: collabHandler } = require('./netlify/functions/collab');
+const { handler: reqsHandler } = require('./netlify/functions/reqs');
+const { handler: aiHandler } = require('./netlify/functions/ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +37,21 @@ app.post('/api/upload', async (req, res) => {
   };
   try {
     const result = await uploadHandler(event);
+    res.status(result.statusCode).set(result.headers).send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/ai', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await aiHandler(event);
     res.status(result.statusCode).set(result.headers).send(result.body);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -167,6 +185,40 @@ app.all('/api/users', async (req, res) => {
   try {
     const result = await usersHandler(event);
     res.status(result.statusCode).set(result.headers).send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/collab', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await collabHandler(event);
+    res.status(result.statusCode).set(result.headers);
+    if (result.isBase64Encoded) res.send(Buffer.from(result.body, 'base64'));
+    else res.send(result.body);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.all('/api/reqs', async (req, res) => {
+  const event = {
+    httpMethod: req.method,
+    queryStringParameters: req.query || {},
+    body: req.method === 'POST' ? JSON.stringify(req.body) : null,
+    headers: req.headers
+  };
+  try {
+    const result = await reqsHandler(event);
+    res.status(result.statusCode).set(result.headers);
+    if (result.isBase64Encoded) res.send(Buffer.from(result.body, 'base64'));
+    else res.send(result.body);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

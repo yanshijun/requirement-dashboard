@@ -1,0 +1,381 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e9]:
+    - heading "📋 客服GPT SAE版 · 需求池看板" [level=1] [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e47]: 更新 17:50:31
+      - generic [ref=e878]: 超级管理员
+      - button "🔢 重新编号" [ref=e879] [cursor=pointer]
+      - button "📥 导入数据" [ref=e880] [cursor=pointer]
+      - button "＋ 新增需求" [ref=e881] [cursor=pointer]
+      - button "🔄 刷新" [ref=e12] [cursor=pointer]
+      - button "退出" [ref=e13] [cursor=pointer]
+  - generic [ref=e24]:
+    - generic [ref=e25] [cursor=pointer]: 📋 需求列表
+    - generic [ref=e26] [cursor=pointer]: 📊 管理面板
+    - generic [ref=e27] [cursor=pointer]: 🗂 开发看板
+    - generic [ref=e28] [cursor=pointer]: 👤 人员任务
+    - generic [ref=e29] [cursor=pointer]: 🗒 今日收集
+    - generic [ref=e30] [cursor=pointer]: 📅 排班表
+    - generic [ref=e31] [cursor=pointer]: 📝 问题记录
+    - generic [ref=e32] [cursor=pointer]: 👥 客户群责人
+    - generic [ref=e33] [cursor=pointer]: 🐛 创新项目
+    - generic [ref=e882] [cursor=pointer]: 👤 用户管理
+  - generic [ref=e34]:
+    - generic [ref=e1713]:
+      - textbox "💬 快速录入反馈标题..." [ref=e1714]
+      - combobox [ref=e1715]:
+        - option "销售反馈" [selected]
+        - option "线上客户"
+        - option "其他"
+      - button "＋ 快速添加" [ref=e1716] [cursor=pointer]
+      - button "📝 详细填写" [ref=e1717] [cursor=pointer]
+      - button "🔄 刷新" [ref=e1718] [cursor=pointer]
+    - generic [ref=e1719]:
+      - generic [ref=e1720]:
+        - generic [ref=e1721]:
+          - generic [ref=e1722]: 待跟进
+          - generic [ref=e1723]: "20"
+        - generic [ref=e1724] [cursor=pointer]:
+          - generic [ref=e1725]:
+            - generic [ref=e1726]: 线上客户
+            - generic [ref=e1727]: 紧急🔴
+          - generic [ref=e1728]: 售前或者售后接收的顾客图片可以单独设一条固定问答回复
+          - generic [ref=e1729]: 🆔 客户ID：17264
+          - generic [ref=e1730]: 根据订单状态售前售后的可以分开设置针对图片的问答
+          - generic [ref=e1731]:
+            - generic [ref=e1732]: 👤 方文健
+            - generic [ref=e1733]: 2026-07-07
+          - generic [ref=e1734]:
+            - button "开始跟进" [ref=e1735]
+            - button "编辑" [ref=e1736]
+            - button "删除" [ref=e1737]
+        - generic [ref=e1738] [cursor=pointer]:
+          - generic [ref=e1740]: 销售反馈
+          - generic [ref=e1741]: 商品学习之学习新商品
+          - generic [ref=e1742]: 🆔 客户ID：7310
+          - generic [ref=e1743]: 学习新商品新增多一层算力消耗的确定，因为涉及算力消耗，给到客户一个更强的提醒
+          - generic [ref=e1744]:
+            - generic [ref=e1745]: 👤 李国骏
+            - generic [ref=e1746]: 2026-07-07
+          - generic [ref=e1747]:
+            - button "开始跟进" [ref=e1748]
+            - button "编辑" [ref=e1749]
+            - button "删除" [ref=e1750]
+        - generic [ref=e1751] [cursor=pointer]:
+          - generic [ref=e1753]: 线上客户
+          - generic [ref=e1754]: 单个店铺后台内的功能选项聚合在一个窗口
+          - generic [ref=e1755]: 🆔 客户ID：17250
+          - generic [ref=e1756]: 单个店铺后台内的功能选项聚合在一个窗口 但是多店铺之间的后台还是照旧相互隔离的，就不用多开太多页面，现在是要频繁跳转，使用起来并不方便
+          - generic [ref=e1757]:
+            - generic [ref=e1758]: 👤 方文健
+            - generic [ref=e1759]: 2026-07-07
+          - generic [ref=e1760]:
+            - button "开始跟进" [ref=e1761]
+            - button "编辑" [ref=e1762]
+            - button "删除" [ref=e1763]
+        - generic [ref=e1764] [cursor=pointer]:
+          - generic [ref=e1765]:
+            - generic [ref=e1766]: 销售反馈
+            - generic [ref=e1767]: 紧急🔴
+          - generic [ref=e1768]: 一键自动分组
+          - generic [ref=e1769]: 🆔 客户ID：16648
+          - generic [ref=e1770]: 主要是方便于店铺内多商品的客户进行商品分组添加问答
+          - generic [ref=e1771]:
+            - generic [ref=e1772]: 👤 李国骏
+            - generic [ref=e1773]: 2026-07-07
+          - generic [ref=e1774]:
+            - button "开始跟进" [ref=e1775]
+            - button "编辑" [ref=e1776]
+            - button "删除" [ref=e1777]
+        - generic [ref=e1778] [cursor=pointer]:
+          - generic [ref=e1780]: 销售反馈
+          - generic [ref=e1781]: 历史消息
+          - generic [ref=e1782]: 点击更正问题，买家已发送商品卡信息，我们也能读取到关联的商品ID，但更正问题时指向的是添加通用问答
+          - generic [ref=e1784]: 2026-07-07
+          - generic [ref=e1785]:
+            - button "开始跟进" [ref=e1786]
+            - button "编辑" [ref=e1787]
+            - button "删除" [ref=e1788]
+        - generic [ref=e1789] [cursor=pointer]:
+          - generic [ref=e1791]: 销售反馈
+          - generic [ref=e1792]: 历史消息
+          - generic [ref=e1793]: 历史消息的消息如果是一个商品卡消息类型，需要展示商品ID，现在只会展示一个商品卡的图片，不知道是针对哪个商品的
+          - generic [ref=e1795]: 2026-07-07
+          - generic [ref=e1796]:
+            - button "开始跟进" [ref=e1797]
+            - button "编辑" [ref=e1798]
+            - button "删除" [ref=e1799]
+        - generic [ref=e1800] [cursor=pointer]:
+          - generic [ref=e1802]: 销售反馈
+          - generic [ref=e1803]: 自动学习新商品
+          - generic [ref=e1804]: 除千牛、京麦、1688、小红书，开启自动学习新商品后，无需再次手动确认学习，直接静默学习，学习完成后，自动在软件通知推送一则消息 学习的店铺 学习的商品数量 消耗的算力 如： 云起未来 50 500
+          - generic [ref=e1806]: 2026-07-07
+          - generic [ref=e1807]:
+            - button "开始跟进" [ref=e1808]
+            - button "编辑" [ref=e1809]
+            - button "删除" [ref=e1810]
+        - generic [ref=e1811] [cursor=pointer]:
+          - generic [ref=e1813]: 线上客户
+          - generic [ref=e1814]: 顾客进线同时发商品卡和消息，ai只回复商品卡的信息
+          - generic [ref=e1815]:
+            - generic [ref=e1816]: 👤 小徐
+            - generic [ref=e1817]: 2026-07-04
+          - generic [ref=e1818]:
+            - button "开始跟进" [ref=e1819]
+            - button "编辑" [ref=e1820]
+            - button "删除" [ref=e1821]
+        - generic [ref=e1822] [cursor=pointer]:
+          - generic [ref=e1824]: 线上客户
+          - generic [ref=e1825]: 显示店铺的位置不能拖动，看不清店铺名字
+          - generic [ref=e1826]:
+            - generic [ref=e1827]: 👤 小徐
+            - generic [ref=e1828]: 2026-06-30
+          - generic [ref=e1829]:
+            - button "开始跟进" [ref=e1830]
+            - button "编辑" [ref=e1831]
+            - button "删除" [ref=e1832]
+        - generic [ref=e1833] [cursor=pointer]:
+          - generic [ref=e1835]: 线上客户
+          - generic [ref=e1836]: 或者有没有一种兜底话术例如AI识别到对方的语言方面无法直接判断，可发出直接兜底的话术出来，例如AI告知客户可描述的详细一些？就是自动识别上下文中知识库没有的回复方案就用这种兜底话术？
+          - generic [ref=e1837]:
+            - generic [ref=e1838]: 👤 小徐
+            - generic [ref=e1839]: 2026-06-26
+          - generic [ref=e1840]:
+            - button "开始跟进" [ref=e1841]
+            - button "编辑" [ref=e1842]
+            - button "删除" [ref=e1843]
+        - generic [ref=e1844] [cursor=pointer]:
+          - generic [ref=e1846]: 线上客户
+          - generic [ref=e1847]: 在商品绑定的问答界面添加搜索
+          - generic [ref=e1848]: 单个商品绑定问答太多，需要搜索
+          - generic [ref=e1849]:
+            - generic [ref=e1850]: 👤 小徐
+            - generic [ref=e1851]: 2026-06-24
+          - generic [ref=e1852]:
+            - button "开始跟进" [ref=e1853]
+            - button "编辑" [ref=e1854]
+            - button "删除" [ref=e1855]
+        - generic [ref=e1856] [cursor=pointer]:
+          - generic [ref=e1858]: 线上客户
+          - generic [ref=e1859]: 拼多多触发考试能不能记录哪个消息触发的，或者让我们机器人进行考试
+          - generic [ref=e1860]: 🆔 客户ID：58
+          - generic [ref=e1861]: 晚上触发拼多多平台违规，希望我们可以记录违规消息。或者是让我们al进行考试。十个小时不回复客户说情况比较严重
+          - generic [ref=e1862]:
+            - generic [ref=e1863]: 👤 杨国桦
+            - generic [ref=e1864]: 2026-06-23
+          - generic [ref=e1865]:
+            - button "开始跟进" [ref=e1866]
+            - button "编辑" [ref=e1867]
+            - button "删除" [ref=e1868]
+        - generic [ref=e1869] [cursor=pointer]:
+          - generic [ref=e1871]: 线上客户
+          - generic [ref=e1872]: 转接配置需求
+          - generic [ref=e1873]: 🆔 客户ID：15715
+          - generic [ref=e1874]: 能不能设置这样的，Ai优先转给A组，当A组客服都不在线的情况下就转给B组
+          - generic [ref=e1875]:
+            - generic [ref=e1876]: 👤 杨国桦
+            - generic [ref=e1877]: 2026-06-21
+          - generic [ref=e1878]:
+            - button "开始跟进" [ref=e1879]
+            - button "编辑" [ref=e1880]
+            - button "删除" [ref=e1881]
+        - generic [ref=e1882] [cursor=pointer]:
+          - generic [ref=e1884]: 线上客户
+          - generic [ref=e1885]: 全店铺一键学习新商品
+          - generic [ref=e1887]: 2026-06-13
+          - generic [ref=e1888]:
+            - button "开始跟进" [ref=e1889]
+            - button "编辑" [ref=e1890]
+            - button "删除" [ref=e1891]
+        - generic [ref=e1892] [cursor=pointer]:
+          - generic [ref=e1893]:
+            - generic [ref=e1894]: 线上客户
+            - generic [ref=e1895]: 高🟠
+          - generic [ref=e1896]: 顾客下单后自动发送一条信息
+          - generic [ref=e1897]: 🆔 客户ID：15845
+          - generic [ref=e1898]: 顾客下单后自动发送一条信息，不仅限于咨询的顾客，未咨询的也要发送，使用场景较多：有定制化需求的类目、电器类目、虚拟产品类目、所有包含使用说明、用法用量以及注意事项的类目
+          - generic [ref=e1899]:
+            - generic [ref=e1900]: 👤 方文健
+            - generic [ref=e1901]: 2026-06-10
+          - generic [ref=e1902]:
+            - button "开始跟进" [ref=e1903]
+            - button "编辑" [ref=e1904]
+            - button "删除" [ref=e1905]
+        - generic [ref=e1906] [cursor=pointer]:
+          - generic [ref=e1907]:
+            - generic [ref=e1908]: 销售反馈
+            - generic [ref=e1909]: 高🟠
+          - generic [ref=e1910]: 转接失败收藏会话或者标星
+          - generic [ref=e1911]: 如果转接失败会有标记标星或者收藏会话的话，这样客户就算没有子账号在手机上也可以知道哪个需要处理售后而不是必须要回到电脑旁处理。
+          - generic [ref=e1912]: 💬 目前拼多多转接失败是会收藏会话
+          - generic [ref=e1913]:
+            - generic [ref=e1914]: 👤 方文健
+            - generic [ref=e1915]: 2026-06-09
+          - generic [ref=e1916]:
+            - button "开始跟进" [ref=e1917]
+            - button "编辑" [ref=e1918]
+            - button "删除" [ref=e1919]
+        - generic [ref=e1920] [cursor=pointer]:
+          - generic [ref=e1922]: 线上客户
+          - generic [ref=e1923]: 抖店主链接里面有三个子链接
+          - generic [ref=e1924]: 🆔 客户ID：4//22
+          - generic [ref=e1925]: 抖店一个主链接里面有三个子链接，绑定主链接下面的子链接商品ID
+          - generic [ref=e1927]: 2026-05-28
+          - generic [ref=e1928]:
+            - button "开始跟进" [ref=e1929]
+            - button "编辑" [ref=e1930]
+            - button "删除" [ref=e1931]
+        - generic [ref=e1932] [cursor=pointer]:
+          - generic [ref=e1934]: 线上客户
+          - generic [ref=e1935]: sku回复
+          - generic [ref=e1936]: 🆔 客户ID：415541
+          - generic [ref=e1937]: 商品名【小米手环10V10NEC能手环健康防水手表陶瓷特别版】下单了黑色，ai回复【亲亲~看到您已下单陶瓷特别版】。正确应该获取sku回复：看到已下单黑色
+          - generic [ref=e1939]: 2026-05-03
+          - generic [ref=e1940]:
+            - button "开始跟进" [ref=e1941]
+            - button "编辑" [ref=e1942]
+            - button "删除" [ref=e1943]
+        - generic [ref=e1944] [cursor=pointer]:
+          - generic [ref=e1946]: 线上客户
+          - generic [ref=e1947]: 咨询转化率
+          - generic [ref=e1948]: 🆔 客户ID：207109
+          - generic [ref=e1949]: 智控中心更新询单转化率数据
+          - generic [ref=e1951]: 2026-04-24
+          - generic [ref=e1952]:
+            - button "开始跟进" [ref=e1953]
+            - button "编辑" [ref=e1954]
+            - button "删除" [ref=e1955]
+        - generic [ref=e1956] [cursor=pointer]:
+          - generic [ref=e1958]: 线上客户
+          - generic [ref=e1959]: 批量导入失败提示
+          - generic [ref=e1960]: 🆔 客户ID：215773
+          - generic [ref=e1961]: 问答批量导入后点击确认，点击不动。格式可能是错误的，但没提示
+          - generic [ref=e1963]: 2026-04-24
+          - generic [ref=e1964]:
+            - button "开始跟进" [ref=e1965]
+            - button "编辑" [ref=e1966]
+            - button "删除" [ref=e1967]
+      - generic [ref=e1968]:
+        - generic [ref=e1969]:
+          - generic [ref=e1970]: 跟进中
+          - generic [ref=e1971]: "0"
+        - generic [ref=e1972]: 暂无
+      - generic [ref=e1973]:
+        - generic [ref=e1974]:
+          - generic [ref=e1975]: 已确认
+          - generic [ref=e1976]: "7"
+        - generic [ref=e1977] [cursor=pointer]:
+          - generic [ref=e1978]:
+            - generic [ref=e1979]: 线上客户
+            - generic [ref=e1980]: 已转需求
+          - generic [ref=e1981]: 商品问答添加分组标题，用来标记商品知识
+          - generic [ref=e1982]: 🆔 客户ID：15018/15360
+          - generic [ref=e1983]: 商品问答添加分组标题，用来标记商品知识，更清晰维护商品知识
+          - generic [ref=e1984]:
+            - generic [ref=e1985]: 👤 杨国桦
+            - generic [ref=e1986]: 2026-07-02
+          - generic [ref=e1987]:
+            - generic [ref=e1988]: ✅ 已转需求
+            - button "编辑" [ref=e1989]
+            - button "删除" [ref=e1990]
+        - generic [ref=e1991] [cursor=pointer]:
+          - generic [ref=e1992]:
+            - generic [ref=e1993]: 线上客户
+            - generic [ref=e1994]: 已转需求
+          - generic [ref=e1995]: 语音消息在历史消息里面可以更正答复
+          - generic [ref=e1996]: 📋 需求状态：待开始
+          - generic [ref=e1998]: 2026-06-26
+          - generic [ref=e1999]:
+            - generic [ref=e2000]: ✅ 已转需求
+            - button "编辑" [ref=e2001]
+            - button "删除" [ref=e2002]
+        - generic [ref=e2003] [cursor=pointer]:
+          - generic [ref=e2004]:
+            - generic [ref=e2005]: 销售反馈
+            - generic [ref=e2006]: 已转需求
+          - generic [ref=e2007]: 客户希望可以ai回复的内容，也能设置自定义关键词转接
+          - generic [ref=e2008]: 📋 需求状态：待开始
+          - generic [ref=e2009]: 🆔 客户ID：16549
+          - generic [ref=e2010]: Ai回复内容可以设置关键词转接
+          - generic [ref=e2011]:
+            - generic [ref=e2012]: 👤 臧东
+            - generic [ref=e2013]: 2026-06-09
+          - generic [ref=e2014]:
+            - generic [ref=e2015]: ✅ 已转需求
+            - button "编辑" [ref=e2016]
+            - button "删除" [ref=e2017]
+        - generic [ref=e2018] [cursor=pointer]:
+          - generic [ref=e2019]:
+            - generic [ref=e2020]: 销售反馈
+            - generic [ref=e2021]: 已转需求
+          - generic [ref=e2022]: 问答中关联商品id，需要筛选未绑定商品的功能
+          - generic [ref=e2023]: 📋 需求状态：待开始
+          - generic [ref=e2024]: 🆔 客户ID：16663
+          - generic [ref=e2025]: 设置问答绑定添加商品id时，是否可以出一个筛选只显示未绑定过的商品，客户一个店有几百个品，需要绑定多个同类型的商品时，查找商品时比较麻烦
+          - generic [ref=e2026]:
+            - generic [ref=e2027]: 👤 臧东
+            - generic [ref=e2028]: 2026-06-07
+          - generic [ref=e2029]:
+            - generic [ref=e2030]: ✅ 已转需求
+            - button "编辑" [ref=e2031]
+            - button "删除" [ref=e2032]
+        - generic [ref=e2033] [cursor=pointer]:
+          - generic [ref=e2034]:
+            - generic [ref=e2035]: 线上客户
+            - generic [ref=e2036]: 已转需求
+          - generic [ref=e2037]: 把预警的顾客全转接
+          - generic [ref=e2038]: 📋 需求状态：待开始
+          - generic [ref=e2039]: 🆔 客户ID：15715
+          - generic [ref=e2040]: 晚上没有人工在线，ai转不出去第二天早上弄一个自动转按钮，点击自动把预警的顾客全转接走
+          - generic [ref=e2041]:
+            - generic [ref=e2042]: 👤 杨国桦
+            - generic [ref=e2043]: 2026-06-06
+          - generic [ref=e2044]:
+            - generic [ref=e2045]: ✅ 已转需求
+            - button "编辑" [ref=e2046]
+            - button "删除" [ref=e2047]
+        - generic [ref=e2048] [cursor=pointer]:
+          - generic [ref=e2049]:
+            - generic [ref=e2050]: 销售反馈
+            - generic [ref=e2051]: 已转需求
+          - generic [ref=e2052]: 跟单看板需求
+          - generic [ref=e2053]: 📋 需求状态：待开始
+          - generic [ref=e2054]: 🆔 客户ID：207109
+          - generic [ref=e2055]: 目前使用过程中遇到的一些问题： 1.设置的跟单，但是不知道哪些订单有触发，想知道设置了跟单触达了多少次 2.如果设置的跟单是属于未下单催拍催付，我想知道触发的客户里面有多少是付款成功了（最好能查询触发多久时间内） 3.已签收的订单最好能有时间限制，多久时间内，我这边已签收场景会用到的就是邀评，一般平台的要求就是一个月内的订单邀评才有效果，超期的邀评就没用了，我发现有的几个月之前的订单也会触发，就是只看到有完成的订单，没有识别订单时间 4.对邀评的订单除了设置时间触发，最好能识别客户聊天的情绪状态，我发现有的聊天客户属于负面情况，也会触发邀评，这种反而变成了邀差评
+          - generic [ref=e2057]: 2026-04-24
+          - generic [ref=e2058]:
+            - generic [ref=e2059]: ✅ 已转需求
+            - button "编辑" [ref=e2060]
+            - button "删除" [ref=e2061]
+        - generic [ref=e2062] [cursor=pointer]:
+          - generic [ref=e2063]:
+            - generic [ref=e2064]: 销售反馈
+            - generic [ref=e2065]: 已转需求
+          - generic [ref=e2066]: 界面这边预警工单，能不能设置一下不要自动消除，有时候软件卡死重登就没了
+          - generic [ref=e2067]: 📋 需求状态：待开始
+          - generic [ref=e2068]: 🆔 客户ID：SAE27305
+          - generic [ref=e2069]: 重新登录店铺或者重启软件，之前的预警列表就清除了，数据不是持久化保留
+          - generic [ref=e2071]: 2026-04-02
+          - generic [ref=e2072]:
+            - generic [ref=e2073]: ✅ 已转需求
+            - button "编辑" [ref=e2074]
+            - button "删除" [ref=e2075]
+      - generic [ref=e2076]:
+        - generic [ref=e2077]:
+          - generic [ref=e2078]: 已关闭
+          - generic [ref=e2079]: "1"
+        - generic [ref=e2080] [cursor=pointer]:
+          - generic [ref=e2081]:
+            - generic [ref=e2082]: 销售反馈
+            - generic [ref=e2083]: 已转需求
+          - generic [ref=e2084]: 累计业绩返利的代理商希望看到他推荐代理的业绩情况
+          - generic [ref=e2085]: 📋 需求状态：已上线
+          - generic [ref=e2086]: 采用层级引荐 + 累计业绩返利的代理合作模式： 由核心代理 A 负责渠道拓展，向我方引荐 B、C、D 等多个下游代理客户； 为 A 设定年度业绩目标额，核算口径包含A 自身业绩 + 其引荐的所有下游代理客户总业绩； 当上述累计业绩达成约定目标（如 1000 万元），年底我方将按照总业绩额，额外向 A 支付2% 的代理返点作为渠道激励。
+          - generic [ref=e2088]: 2026-03-20
+          - generic [ref=e2089]:
+            - button "编辑" [ref=e2090]
+            - button "删除" [ref=e2091]
+  - generic [ref=e37]:
+    - generic [ref=e38]: 问题详情
+    - button "✕" [ref=e39] [cursor=pointer]
+  - button "✕" [ref=e45] [cursor=pointer]

@@ -1,0 +1,2 @@
+[     850ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3399/:0
+[    1440ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3399/api/auth?action=check:0

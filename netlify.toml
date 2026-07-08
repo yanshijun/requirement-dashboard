@@ -19,6 +19,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/ai"
+  to = "/.netlify/functions/ai"
+  status = 200
+
+[[redirects]]
   from = "/api/upload"
   to = "/.netlify/functions/upload"
   status = 200
@@ -51,6 +56,16 @@
 [[redirects]]
   from = "/api/users"
   to = "/.netlify/functions/users"
+  status = 200
+
+[[redirects]]
+  from = "/api/collab"
+  to = "/.netlify/functions/collab"
+  status = 200
+
+[[redirects]]
+  from = "/api/reqs"
+  to = "/.netlify/functions/reqs"
   status = 200
 
 [[headers]]

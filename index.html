@@ -64,6 +64,7 @@ tr:hover td{background:#fafbff}
 .tag-s4{background:#f6ffed;color:#52c41a}
 .tag-s5{background:#fafafa;color:#bfbfbf}
 .tag-s6{background:#f9f0ff;color:#722ed1}
+.tag-s7{background:#fff7e6;color:#fa8c16}
 .prog{display:flex;align-items:center;gap:6px;min-width:90px}
 .prog-bar{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden}
 .prog-fill{height:100%;background:#3370ff;border-radius:3px;transition:width .3s}
@@ -253,6 +254,181 @@ tr.bug-row-active td{background:#f0f5ff!important}
 .login-box button:hover{background:#2860e0}
 .login-box button:disabled{opacity:.5;cursor:not-allowed}
 .login-err{color:#cf1322;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px}
+/* ===== 需求生命周期（横向阶段流） ===== */
+.lc-wrap{background:#f7f8fa;border-radius:10px;padding:16px 16px 14px;margin:6px 0 4px}
+.lc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.lc-head .lc-title{font-size:13px;font-weight:700;color:#1a1a2e}
+.lc-head .lc-cur{font-size:12px;color:#1677ff;font-weight:600}
+.lc-flow{display:flex;align-items:flex-start}
+.lc-stage{flex:1;min-width:0;position:relative;text-align:center;padding:0 4px}
+.lc-stage:not(:last-child)::after{content:'';position:absolute;top:17px;left:50%;width:100%;height:2px;background:#e3e8f0;z-index:0}
+.lc-stage.done:not(:last-child)::after{background:#52c41a}
+.lc-dot{position:relative;z-index:1;width:36px;height:36px;border-radius:50%;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;background:#c8ccd4}
+.lc-stage.done .lc-dot{background:#52c41a}
+.lc-stage.doing .lc-dot{background:#1677ff;box-shadow:0 0 0 4px rgba(22,119,255,.15)}
+.lc-stage.blocked .lc-dot{background:#f5222d;box-shadow:0 0 0 4px rgba(245,34,50,.15)}
+.lc-sname{font-size:12px;font-weight:600;color:#1a1a2e}
+.lc-sstatus{font-size:11px;margin-top:2px;font-weight:600}
+.lc-sowner{font-size:11px;color:#666;margin-top:3px;line-height:1.5}
+.lc-sowner .none{color:#bbb}
+.lc-owner-chip{display:inline-block;background:#f0f5ff;color:#3370ff;border-radius:3px;padding:0 5px;font-size:11px;margin:1px}
+.lc-spct{font-size:10px;color:#888;margin-top:2px}
+.lc-mstage{background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:8px 12px;margin-bottom:8px}
+.lc-mstage-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.lc-mrow{display:flex;align-items:center;gap:8px;padding:3px 0}
+.lc-mname{width:82px;font-size:12px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.lc-mbar{flex:1;height:7px;background:#eef0f4;border-radius:4px;overflow:hidden}
+.lc-mbar>i{display:block;height:100%;border-radius:4px}
+.lc-mpct{font-size:11px;font-weight:600;min-width:38px;text-align:right}
+.ls-mbox{border:1px solid #e8e8e8;border-radius:8px;padding:6px 8px;min-height:40px}
+.ls-empty{color:#bbb;font-size:12px;padding:8px 2px}
+.ls-mrow{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid #f5f5f5}
+.ls-mrow:last-child{border-bottom:none}
+.ls-mrow input[type=range]{flex:1}
+.ls-mname{width:76px;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.ls-mpct{font-size:12px;color:#1677ff;font-weight:600;min-width:38px;text-align:right}
+.ls-mdel{background:#fff1f0;color:#f5222d;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:13px;line-height:1;flex-shrink:0}
+.lc-prog{height:4px;background:#e8ecf3;border-radius:2px;margin:6px 8px 0;overflow:hidden}
+.lc-prog>i{display:block;height:100%;background:#1677ff;border-radius:2px}
+.lc-sbtns{margin-top:7px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.lc-sbtns button{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #d9d9d9;background:#fff;color:#555;cursor:pointer}
+.lc-sbtns button.adv{border-color:#1677ff;background:#1677ff;color:#fff}
+.lc-sbtns button:hover{opacity:.85}
+.lc-sblk{margin-top:5px}
+.lc-sblk .b{display:inline-block;font-size:10px;color:#f5222d;background:#fff1f0;border:1px solid #ffccc7;border-radius:4px;padding:0 6px}
+.lc-sec{margin-top:16px}
+.lc-sec-h{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px}
+.lc-blocker{background:#fff;border:1px solid #f0f0f0;border-left:3px solid #f5222d;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px}
+.lc-blocker.resolved{border-left-color:#52c41a}
+.lc-blocker .r1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.6}
+.lc-blocker .r2{color:#888;margin-top:3px;font-size:11px;line-height:1.6}
+.lc-badge{display:inline-block;border-radius:10px;font-size:10px;padding:1px 8px;font-weight:600}
+.lc-timeline{position:relative;padding-left:16px}
+.lc-tl{position:relative;padding:0 0 10px 4px;font-size:12px;color:#555;line-height:1.6}
+.lc-tl::before{content:'';position:absolute;left:-12px;top:4px;width:8px;height:8px;border-radius:50%;background:#1677ff}
+.lc-tl::after{content:'';position:absolute;left:-9px;top:12px;bottom:-2px;width:1px;background:#e0e6f0}
+.lc-tl:last-child::after{display:none}
+/* 我的待办 */
+.mt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.mt-sec-h{font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:8px;padding-left:8px;border-left:3px solid #3370ff}
+.mt-list{display:flex;flex-direction:column;gap:8px}
+.mt-card{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid #eef0f4;border-radius:8px;padding:11px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.12s}
+.mt-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.1);border-color:#d6e4ff}
+.mt-title{font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.4}
+.mt-meta{font-size:12px;color:#666;margin-top:4px}
+.mt-r{text-align:right;flex-shrink:0}
+.mt-empty{color:#aaa;font-size:13px;padding:14px;text-align:center;background:#fafbfc;border-radius:8px}
+/* 管理面板 */
+.mt-kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.mt-kpi .k{background:#fff;border:1px solid #eef0f4;border-radius:8px;padding:13px 12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.mt-kpi .k .n{font-size:24px;font-weight:700}
+.mt-kpi .k .l{font-size:11px;color:#888;margin-top:3px}
+.mt-funnel{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.mt-funnel .f{flex:1;min-width:120px;background:#f7f8fa;border-radius:8px;padding:10px 14px;border-left:4px solid #ccc}
+.mt-funnel .f .fn{font-size:22px;font-weight:700}
+.mt-funnel .f .fl{font-size:12px;color:#666;margin-top:2px}
+.mt-ptable{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.mt-ptable th{background:#f7f8fa;padding:9px 12px;text-align:left;font-weight:600;color:#666;font-size:12px;border-bottom:1px solid #eef0f4}
+.mt-ptable td{padding:9px 12px;border-bottom:1px solid #f5f5f5;vertical-align:top}
+.mt-ptable tr.prow{cursor:pointer}
+.mt-ptable tr.prow:hover td{background:#f6f9ff}
+.mt-ptable .pnum{font-weight:700}
+.mt-sub td{background:#fafbfc}
+.mt-sub .si{padding:5px 8px;cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:8px;font-size:12px}
+.mt-sub .si:hover{background:#eef4ff}
+/* 视图切换 */
+.mt-view-toggle{display:inline-flex;border:1px solid #e3e6ee;border-radius:7px;overflow:hidden}
+.mt-view-toggle button{border:none;background:#fff;color:#666;font-size:12px;padding:6px 12px;cursor:pointer;line-height:1}
+.mt-view-toggle button+button{border-left:1px solid #e3e6ee}
+.mt-view-toggle button.on{background:#1677ff;color:#fff}
+/* 按人矩阵：阶段单元格 */
+.mt-matrix td{vertical-align:middle}
+.mt-cell{display:flex;align-items:center;gap:6px}
+.mt-cell .c{font-size:15px;font-weight:700;min-width:16px}
+.mt-cell .b{flex:1;max-width:56px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden}
+.mt-cell .b i{display:block;height:100%}
+.mt-cell .p{font-size:11px;color:#999;min-width:30px;text-align:right}
+/* 按阶段泳道 */
+.mt-lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mt-lane{background:#f7f8fa;border-radius:10px;padding:8px;min-height:120px}
+.mt-lane-h{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;padding:6px 8px 8px;border-top:3px solid #ccc;margin:-8px -8px 8px;border-radius:10px 10px 0 0;background:#fff}
+.mt-lane-h b{color:#333;background:#f0f2f7;border-radius:10px;padding:1px 9px;font-size:12px}
+.mt-lane-body{display:flex;flex-direction:column;gap:8px}
+.mt-lane-card{background:#fff;border:1px solid #eef0f4;border-radius:8px;padding:9px 11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.12s}
+.mt-lane-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.1);border-color:#d6e4ff}
+.mt-lane-card .t{font-size:13px;font-weight:600;color:#1a1a2e;line-height:1.35;margin-bottom:5px}
+.mt-lane-card .m{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.mt-lane-card .m .ow{color:#3370ff}
+.mt-lane-card .pb{height:6px;background:#eef0f4;border-radius:3px;overflow:hidden}
+.mt-lane-card .pb i{display:block;height:100%}
+.mt-lane-card .pp{font-size:11px;text-align:right;margin-top:2px;font-weight:600}
+.mt-lane-empty{color:#bbb;font-size:12px;text-align:center;padding:16px 0}
+@media(max-width:720px){.mt-lanes{grid-template-columns:1fr}}
+/* 决策台：可点KPI / 预警 / 趋势 / 重点行 */
+.mt-k-click{cursor:pointer;transition:.12s}
+.mt-k-click:hover{box-shadow:0 3px 12px rgba(0,0,0,.12);border-color:#d6e4ff}
+.mt-view-toggle{flex-wrap:wrap;margin-bottom:12px}
+.mt-alert{background:#fff7e6;border:1px solid #ffe58f;color:#d46b08;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+.mt-trend{display:flex;gap:8px;align-items:flex-end;height:130px;padding:14px 6px 0;background:#fafbfc;border-radius:8px;margin-bottom:6px}
+.mt-tw{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.mt-tbars{flex:1;display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center}
+.mt-tb{width:15px;border-radius:3px 3px 0 0;position:relative;min-height:2px}
+.mt-tb span{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:10px;color:#888}
+.mt-tb.a{background:#1677ff}.mt-tb.s{background:#52c41a}
+.mt-tl{font-size:10px;color:#999;margin-top:5px}
+.mt-legend{font-size:11px;font-weight:400;color:#666;margin-left:10px}
+.mt-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px;vertical-align:middle}
+.mt-legend i.a{background:#1677ff}.mt-legend i.s{background:#52c41a}
+.mt-cyc{font-size:12px;color:#666;margin-bottom:16px;padding-left:2px}
+.mt-focus{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.mt-frow{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #eef0f4;border-radius:7px;padding:8px 11px;cursor:pointer;font-size:13px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.mt-frow:hover{border-color:#d6e4ff;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.mt-fpri{flex-shrink:0}
+.mt-fname{flex:1;min-width:0;font-weight:600;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-fno{font-size:11px;color:#aaa;flex-shrink:0}
+.mt-fown{color:#3370ff;font-size:12px;flex-shrink:0;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-fprog{display:flex;align-items:center;gap:5px;font-size:11px;color:#888;flex-shrink:0}
+.mt-fprog .pb{width:52px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden;display:inline-block}
+.mt-fprog .pb i{display:block;height:100%}
+.mt-ftail{margin-left:auto;font-size:12px;color:#666;flex-shrink:0;text-align:right;white-space:nowrap}
+.mt-overload{background:#fff1f0;color:#cf1322;border:1px solid #ffccc7;border-radius:8px;padding:0 6px;font-size:10px;font-weight:600}
+/* 📄 计划报告 */
+.mt-rep-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#f7f9ff;border:1px solid #e3ecff;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px;color:#555}
+.mt-rep-filter input[type=date]{border:1px solid #d9d9d9;border-radius:5px;padding:3px 6px;font-size:12px}
+.mt-signals{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.mt-sig{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #eef0f4;border-radius:9px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.mt-sig .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.mt-sig .tx{display:flex;flex-direction:column;line-height:1.35;min-width:0}
+.mt-sig .tx b{font-size:12px;color:#1a1a2e}
+.mt-sig .tx i{font-size:11px;color:#888;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt-sig.green .dot{background:#52c41a;box-shadow:0 0 0 3px #52c41a22}
+.mt-sig.amber .dot{background:#fa8c16;box-shadow:0 0 0 3px #fa8c1622}
+.mt-sig.red .dot{background:#f5222d;box-shadow:0 0 0 3px #f5222d22}
+.mt-kpi-sm{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:12px}
+.mt-kpi-sm .n{font-size:20px!important}
+.mt-subh{font-size:12px;font-weight:600;color:#666;margin:10px 0 6px}
+.mt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.mt-chip{background:#f5f7fa;border:1px solid #e8ebf0;border-radius:20px;padding:2px 10px;font-size:12px;color:#555}
+.mt-chip b{color:#1677ff;margin-left:2px}
+.mt-ai-report{background:#fff;border:1px solid #eef0f4;border-left:3px solid #1677ff;border-radius:8px;padding:12px 16px;font-size:13px}
+.mt-ai-note{background:#fffbe6;border:1px solid #ffe58f;color:#ad6800;border-radius:7px;padding:7px 12px;font-size:12px;margin-bottom:8px}
+.mt-dupgrp{border:1px solid #ffe0e0;border-radius:7px;padding:6px;margin-bottom:8px;background:#fffafa}
+.mt-dupno{font-size:12px;font-weight:700;color:#cf1322;padding:2px 4px 6px}
+.mt-plan-sel{border:1px solid #d6e0f0;border-radius:7px;padding:5px 9px;font-size:12px;color:#333;background:#f7f9ff;cursor:pointer;max-width:180px}
+.mt-plan-sel:hover{border-color:#3370ff}
+/* 我的待办：横向泳道（评审/开发/测试/卡点 各一列） */
+.mt-todo-lanes{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
+.mt-todo-lanes .mt-lane{flex:1 1 260px;min-width:240px;max-width:400px}
+.mt-todo-lanes .mt-lane-card .t{white-space:normal}
+@media(max-width:720px){.mt-todo-lanes{flex-direction:column}.mt-todo-lanes .mt-lane{max-width:none;width:100%}}
+.chip-box{min-height:34px;border:1px solid #d9d9d9;border-radius:6px;padding:5px 6px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.chip-box .empty{color:#bbb;font-size:12px}
+.chip{background:#e6f0ff;color:#1677ff;border-radius:12px;padding:2px 4px 2px 10px;font-size:12px;display:inline-flex;align-items:center;gap:2px}
+.chip span{cursor:pointer;font-weight:700;padding:0 5px;color:#3370ff;line-height:1}
+.chip span:hover{color:#f5222d}
+.ls-quick{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.ls-quick button{font-size:11px;padding:2px 9px;border:1px solid #d9d9d9;border-radius:5px;background:#fff;color:#555;cursor:pointer}
+.ls-quick button:hover{border-color:#1677ff;color:#1677ff}
 </style>
 </head>
 <body>
@@ -288,6 +464,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
   <div class="ms-wrap" id="fStatusWrap">
     <button type="button" class="ms-btn" id="fStatusBtn" onclick="toggleStatusPanel(event)"><span id="fStatusLabel">全部状态</span><span style="color:#aaa">▾</span></button>
     <div class="ms-panel" id="fStatusPanel">
+      <label><input type="checkbox" value="专题探讨" onchange="onStatusFilterChange()">专题探讨</label>
       <label><input type="checkbox" value="待开始" onchange="onStatusFilterChange()">待开始</label>
       <label><input type="checkbox" value="开发中" onchange="onStatusFilterChange()">开发中</label>
       <label><input type="checkbox" value="联调中" onchange="onStatusFilterChange()">联调中</label>
@@ -304,6 +481,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('list',this)">📋 需求列表</div>
+  <div class="tab" id="tabMyTodo" onclick="switchTab('mytodo',this)"><span id="myTodoLabel">📌 我的待办</span><span id="myTodoBadge" class="ms-cnt" style="display:none">0</span></div>
   <div class="tab" onclick="switchTab('kanban',this)">🗂 开发看板</div>
   <div class="tab" onclick="switchTab('person',this)">👤 人员任务</div>
   <div class="tab" onclick="switchTab('feedback',this)">🗒 今日收集</div>
@@ -348,6 +526,10 @@ tr.bug-row-active td{background:#f0f5ff!important}
         <textarea id="fDesc" placeholder="支持 Markdown 格式，例如：# 背景\n描述背景...\n\n## 目标\n- 目标1" oninput="if(document.getElementById('tabPrev').classList.contains('active'))renderDescPreview()"></textarea>
         <div class="md-preview md-body" id="descPreview"></div>
       </div>
+      <div class="form-row"><label>需求图片/附件 <span style="color:#aaa;font-weight:400;font-size:11px">支持粘贴或选择文件</span></label>
+        <div id="fAttList" class="iss-attach-list" style="margin-bottom:8px;min-height:30px;padding:8px;border:1px dashed #d9d9d9;border-radius:6px" tabindex="0"><span style="color:#aaa;font-size:12px">弹窗内任意位置 Ctrl+V 即可粘贴图片，或下方选择文件</span></div>
+        <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="uploadReqAtt(this)" style="font-size:12px">
+      </div>
       <div class="form-grid">
         <div class="form-row"><label>所属计划</label>
           <div style="display:flex;gap:6px;align-items:center">
@@ -358,8 +540,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
         <div class="form-row"><label>优先级</label>
           <select id="fFPri"><option>中🟡</option><option>紧急🔴</option><option>高🟠</option><option>低🟢</option></select></div>
         <div class="form-row"><label>开发状态</label>
-          <select id="fFStatus"><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select></div>
-        <div class="form-row"><label>开发进度 (%)</label><input id="fFProg" type="number" min="0" max="100" value="0"></div>
+          <select id="fFStatus"><option>专题探讨</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select></div>
         <div class="form-row"><label>需求认领人</label>
           <div style="position:relative">
             <input id="fFPerson" placeholder="选择或输入姓名" autocomplete="off" onclick="showPersonDropdown()" oninput="filterPersonDropdown()">
@@ -599,6 +780,11 @@ function applyPermissions() {
   // 用户管理 Tab 仅 admin 可见
   const usersTab = document.getElementById('tabUsers');
   if (usersTab) usersTab.style.display = _currentUser.role === 'admin' ? '' : 'none';
+  // 我的待办 对所有登录用户可见；admin 显示为管理面板
+  const myTodoTab = document.getElementById('tabMyTodo');
+  if (myTodoTab) myTodoTab.style.display = '';
+  const myTodoLabel = document.getElementById('myTodoLabel');
+  if (myTodoLabel) myTodoLabel.textContent = _currentUser.role === 'admin' ? '📊 管理面板' : '📌 我的待办';
   // 需求列表写操作按钮
   const listWrite = canWrite('list');
   const btnReorder = document.getElementById('btnReorder');
@@ -607,8 +793,8 @@ function applyPermissions() {
   if (btnReorder) btnReorder.style.display = listWrite ? '' : 'none';
   if (btnImport) btnImport.style.display = listWrite ? '' : 'none';
   if (btnAddReq) btnAddReq.style.display = listWrite ? '' : 'none';
-  // 如果当前 Tab 没有权限，自动切换到第一个有权限的 Tab
-  if (!getTabPerm(curTab)) {
+  // 如果当前 Tab 没有权限，自动切换到第一个有权限的 Tab（我的待办对所有人开放，跳过）
+  if (curTab !== 'mytodo' && !getTabPerm(curTab)) {
     const firstTab = ALL_TABS.find(t => getTabPerm(t));
     if (firstTab) {
       const el = document.querySelector(`.tabs .tab[onclick*="'${firstTab}'"]`);
@@ -777,13 +963,13 @@ function buildPlanSelects(selectVal) {
 }
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
-const COLS = ['待开始','开发中','联调中','测试中','待上线','已上线','已暂缓'];
+const COLS = ['专题探讨','待开始','开发中','联调中','测试中','待上线','已上线','已暂缓'];
 const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note','parentId'];
 
 // ===== API =====
 async function api(action, body, qs = '') {
   const ts = `${qs?'&':'?'}_t=${Date.now()}`;
-  const url = action === 'get' ? `/api/feishu${qs}${ts}` : `/api/feishu?action=${action}`;
+  const url = action === 'get' ? `/api/reqs${qs}${ts}` : `/api/reqs?action=${action}`;
   const opt = action === 'get'
     ? { method: 'GET' }
     : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
@@ -808,6 +994,7 @@ async function loadData(silent = false) {
     document.getElementById('lastUpdate').textContent = '更新 ' + new Date().toLocaleTimeString();
     buildPersonFilter();
     render();
+    loadMyTodos(true);   // 载入我的待办角标（需 allData 就绪）
   } catch(e) {
     document.getElementById('mainContent').innerHTML = `<div class="err-box">❌ 加载失败：${e.message}</div>`;
   }
@@ -909,7 +1096,7 @@ function filtered() {
 
 // ===== 标签 =====
 const priMap = {'紧急🔴':'tag-p1','高🟠':'tag-p2','中🟡':'tag-p3','低🟢':'tag-p4'};
-const statMap = {'待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','待上线':'tag-s6','已上线':'tag-s4','已暂缓':'tag-s5'};
+const statMap = {'专题探讨':'tag-s7','待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','待上线':'tag-s6','已上线':'tag-s4','已暂缓':'tag-s5'};
 const hasPerson = p => p && p !== '待认领';
 const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
@@ -922,6 +1109,35 @@ const reviewTag = r => {
   return `<span style="font-size:12px">${r}</span>`;
 };
 const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
+// 需求列表「当前阶段」列：展示生命周期 当前阶段 / 进度 / 负责人
+const _lcStageColorList = {'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16'};
+function stageCell(d){
+  const life = (typeof MYTODO!=='undefined' && MYTODO.lifeMap) ? MYTODO.lifeMap[d.id] : null;
+  const cur = (life && life.currentStage) || '提报';
+  const st = (life && life.stages && life.stages[cur]) || {status:(cur==='提报'?'已完成':'未开始'), members:[]};
+  const members = _lcStageMembers(d, cur, st);
+  const sc = _lcStageColorList[cur] || '#8c8c8c';
+  const prog = _lcStageProgress(members, st.status);
+  // 每人一行：姓名 + 各自进度条 + 百分比（完成显示 ✓）——多人任务每个人的进度/完成情况一目了然，如实取各人进度
+  const rows = members.length ? members.map(m=>{
+    const p = Math.max(0, Math.min(100, parseInt(m.progress)||0));
+    const mDone = p>=100;
+    const barColor = mDone?'#52c41a':(p>0?'#1677ff':'#d0d4db');
+    return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+      <span style="font-size:11px;color:#555;width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(m.name)}">${_escH(m.name)}</span>
+      <div style="flex:1;height:5px;background:#eef0f4;border-radius:3px;overflow:hidden;max-width:60px"><div style="width:${p}%;height:100%;background:${barColor}"></div></div>
+      <span style="font-size:10px;color:${mDone?'#52c41a':'#888'};width:30px;text-align:right">${mDone?'✓完成':p+'%'}</span>
+    </div>`;
+  }).join('') : '<div style="font-size:11px;color:#bbb;margin-top:2px">未指派</div>';
+  return `<div style="min-width:150px">
+    <div style="margin-bottom:2px;white-space:nowrap">
+      <span class="tag" style="background:${sc}22;color:${sc};font-size:11px;padding:0 6px" title="${cur} · ${st.status||''}">${_mtStagePhaseLabel(cur, st.status, prog)}</span>
+      <span style="font-size:10px;color:#aaa">共${prog}%</span>
+    </div>
+    ${rows}
+  </div>`;
+}
+
 
 function toggleExpand(parentId) {
   if (expandedParents.has(parentId)) {
@@ -960,9 +1176,9 @@ function jumpToKanban(filter) {
   }
   // '全部需求' (filter === '') 不设置额外筛选
 
-  // 切换到开发看板并刷新
-  const kanbanTab = document.querySelectorAll('.tab')[1];
-  switchTab('kanban', kanbanTab);
+  // 切换到开发看板并刷新（按 onclick 选，避免标签顺序变化导致取错）
+  const kanbanTab = document.querySelector('.tabs .tab[onclick*="\'kanban\'"]');
+  if (kanbanTab) switchTab('kanban', kanbanTab);
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1000,6 +1216,7 @@ function renderList(data) {
   const totalParent = allData.filter(d=>!d.parentId).length;
   const totalChild = allData.filter(d=>!!d.parentId).length;
   const urgent = statsData.filter(d=>d.priority==='紧急🔴').length;
+  const topic = statsData.filter(d=>d.status==='专题探讨').length;
   const todo = statsData.filter(d=>!d.status||d.status==='待开始').length;
   const doing = statsData.filter(d=>d.status==='开发中').length;
   const liaodiao = statsData.filter(d=>d.status==='联调中').length;
@@ -1011,6 +1228,7 @@ function renderList(data) {
   const stats = `<div class="stat-row">
     <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${totalParent}<span style="font-size:14px;color:#999;font-weight:400"> + ${totalChild}子</span></div><div class="lbl">全部需求</div></div>
     <div class="stat-card" onclick="jumpToKanban('紧急🔴')"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
+    <div class="stat-card" onclick="jumpToKanban('专题探讨')"><div class="num" style="color:#fa8c16">${topic}</div><div class="lbl">专题探讨</div></div>
     <div class="stat-card" onclick="jumpToKanban('待开始')"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
     <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
     <div class="stat-card" onclick="jumpToKanban('联调中')"><div class="num" style="color:#13c2c2">${liaodiao}</div><div class="lbl">联调中</div></div>
@@ -1060,7 +1278,6 @@ function renderList(data) {
     const children = getChildren(d.id);
     const hasChildren = children.length > 0;
     const isExpanded = expandedParents.has(d.id);
-    const displayProgress = hasChildren ? calcParentProgress(d.id) : d.progress;
     const arrow = hasChildren
       ? `<span class="expand-arrow ${isExpanded?'expanded':''}" onclick="event.stopPropagation();toggleExpand('${d.id}')" style="margin-right:4px">&#9654;</span>`
       : '<span style="display:inline-block;width:16px"></span>';
@@ -1073,14 +1290,17 @@ function renderList(data) {
     <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td style="font-size:12px;color:#666;white-space:nowrap">${d.submitter||''}</td>
-    <td>${statTag(d.status)}</td><td>${progBar(displayProgress)}</td>
+    <td>${statTag(d.status)}</td>
     <td>${reviewTag(d.review)}</td>
+    <td>${stageCell(d)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.createTime||''}</td>
     <td><div class="actions">
       ${hasPerson(d.person)
         ? `<button class="btn btn-switch btn-sm" onclick="openClaim('${d.id}')">换人</button><button class="btn btn-release btn-sm" onclick="releaseClaim('${d.id}')">释放</button>`
-        : `<button class="btn btn-claim btn-sm" onclick="openClaim('${d.id}')">认领</button>`
+        : (canClaim(d)
+            ? `<button class="btn btn-claim btn-sm" onclick="openClaim('${d.id}')"${!reviewPassed(d)?' title="⚠ 未通过评审，将以管理员身份强制认领" style="border-color:#faad14;color:#d46b08"':''}>认领${!reviewPassed(d)?' *':''}</button>`
+            : `<span class="tag-unclaimed" title="评审通过后可认领" style="opacity:.6;cursor:not-allowed">🔒 待评审</span>`)
       }
       <button class="btn btn-ghost btn-sm" onclick="openEdit('${d.id}')">编辑</button>
       <button class="btn btn-ghost btn-sm" style="color:#722ed1;border-color:#d3adf7" onclick="openAddChild('${d.id}')">+子</button>
@@ -1096,14 +1316,18 @@ function renderList(data) {
     <td style="white-space:nowrap;font-size:12px">${c.plan||''}</td>
     <td style="color:#666;font-size:12px;max-width:260px">${(c.desc||'').substring(0,60)}${(c.desc||'').length>60?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(c.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${c.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
-    <td>${statTag(c.status)}</td><td>${progBar(c.progress)}</td>
+    <td style="font-size:12px;color:#666;white-space:nowrap">${c.submitter||''}</td>
+    <td>${statTag(c.status)}</td>
     <td>${reviewTag(c.review)}</td>
+    <td>${stageCell(c)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.deadline||''}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.createTime||''}</td>
     <td><div class="actions">
       ${hasPerson(c.person)
         ? `<button class="btn btn-switch btn-sm" onclick="openClaim('${c.id}')">换人</button><button class="btn btn-release btn-sm" onclick="releaseClaim('${c.id}')">释放</button>`
-        : `<button class="btn btn-claim btn-sm" onclick="openClaim('${c.id}')">认领</button>`
+        : (canClaim(c)
+            ? `<button class="btn btn-claim btn-sm" onclick="openClaim('${c.id}')"${!reviewPassed(c)?' title="⚠ 未通过评审，将以管理员身份强制认领" style="border-color:#faad14;color:#d46b08"':''}>认领${!reviewPassed(c)?' *':''}</button>`
+            : `<span class="tag-unclaimed" title="评审通过后可认领" style="opacity:.6;cursor:not-allowed">🔒 待评审</span>`)
       }
       <button class="btn btn-ghost btn-sm" onclick="openEdit('${c.id}')">编辑</button>
       <button class="btn btn-danger btn-sm" onclick="deleteItem('${c.id}','${(c.name||'').replace(/'/g,'')}')">删除</button>
@@ -1147,7 +1371,7 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>进度</th><th>评审</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>评审</th><th>当前阶段</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>${pageButtons}</div>`;
 }
@@ -1289,6 +1513,10 @@ function switchTab(tab,el) {
       document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
       loadBugs();
     }
+  } else if (tab === 'mytodo') {
+    if (toolbar) toolbar.style.display = 'none';
+    if (MYTODO.loaded) { renderMyTodos(); loadMyTodos(true); }
+    else { document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>'; loadMyTodos(); }
   } else if (tab === 'users') {
     if (toolbar) toolbar.style.display = 'none';
     document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
@@ -1388,13 +1616,13 @@ function openAdd() {
   buildPlanSelects(getPlans()[0]);
   document.getElementById('fFPri').value='中🟡';
   document.getElementById('fFStatus').value='待开始';
-  document.getElementById('fFProg').value='0';
   document.getElementById('fFDate').value='';
   // 默认当前日期
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('fFCreateTime').value=today;
   document.getElementById('fFDesign').value='待设计';
   document.getElementById('fFReview').value='待确认';
+  _reqAttachments=[];renderReqAtt();_bindReqModalPaste();
   switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
 }
@@ -1410,7 +1638,6 @@ function openEdit(id) {
   buildPlanSelects(d.plan || getPlans()[0]);
   document.getElementById('fFPri').value=d.priority||'中🟡';
   document.getElementById('fFStatus').value=d.status||'待开始';
-  document.getElementById('fFProg').value=d.progress||0;
   document.getElementById('fFPerson').value=d.person||'';
   document.getElementById('fFDate').value=d.deadline||'';
   document.getElementById('fFCreateTime').value=d.createTime||'';
@@ -1419,6 +1646,7 @@ function openEdit(id) {
   document.getElementById('fFReview').value=d.review||'待确认';
   document.getElementById('fFNote').value=d.note||'';
   document.getElementById('fParentId').value=d.parentId||'';
+  _reqAttachments=(d.attachments||[]).slice();renderReqAtt();_bindReqModalPaste();
   switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
   closeDetail();
@@ -1438,12 +1666,12 @@ function openAddChild(parentId) {
   buildPlanSelects(parent.plan || getPlans()[0]);
   document.getElementById('fFPri').value=parent.priority||'中🟡';
   document.getElementById('fFStatus').value='待开始';
-  document.getElementById('fFProg').value='0';
   document.getElementById('fFDate').value='';
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('fFCreateTime').value=today;
   document.getElementById('fFDesign').value='待设计';
   document.getElementById('fFReview').value='待确认';
+  _reqAttachments=[];renderReqAtt();_bindReqModalPaste();
   switchDescTab('edit');
   document.getElementById('modal').style.display='flex';
 }
@@ -1485,8 +1713,12 @@ async function saveItem() {
   if(!name){alert('需求名称不能为空');return;}
   const submitter=document.getElementById('fSubmitter').value.trim();
   if(!submitter){alert('提出人不能为空');return;}
+  if(_reqAttachments.some(a=>a.uploading)){alert('附件上传中，请稍候');return;}
   const btn=document.getElementById('saveBtn');
   btn.disabled=true;btn.textContent='保存中...';
+  // 开发进度不再手填：编辑时保留生命周期(成员进度)回写的现值，新增默认 0
+  const _editId=document.getElementById('fId').value;
+  const _curProg=_editId?(parseInt(((Array.isArray(allData)?allData:[]).find(x=>x.id===_editId)||{}).progress)||0):0;
   const item={
     id:document.getElementById('fId').value||undefined,
     no:document.getElementById('fNo').value.trim(),
@@ -1495,7 +1727,7 @@ async function saveItem() {
     plan:document.getElementById('fFPlan').value,
     priority:document.getElementById('fFPri').value,
     status:document.getElementById('fFStatus').value,
-    progress:parseInt(document.getElementById('fFProg').value)||0,
+    progress:_curProg,
     person:document.getElementById('fFPerson').value.trim(),
     deadline:document.getElementById('fFDate').value,
     createTime:document.getElementById('fFCreateTime').value,
@@ -1503,7 +1735,9 @@ async function saveItem() {
     design:document.getElementById('fFDesign').value,
     review:document.getElementById('fFReview').value,
     note:document.getElementById('fFNote').value.trim(),
-    parentId:document.getElementById('fParentId').value||''
+    parentId:document.getElementById('fParentId').value||'',
+    operator:_lcOperator(),
+    attachments:_reqAttachments.filter(a=>a.file_token).map(a=>({file_token:a.file_token,name:a.name,type:a.type}))
   };
   try{
     const res = await api(item.id?'update':'add',item);
@@ -1530,6 +1764,67 @@ async function saveItem() {
   btn.disabled=false;btn.textContent='💾 保存';
 }
 
+// ===== 需求图片/附件（参考创新项目 Bug 上传） =====
+let _reqAttachments = [];
+let _reqPasteHandler = null;
+function renderReqAtt(){
+  const w=document.getElementById('fAttList');if(!w)return;
+  if(!_reqAttachments.length){w.innerHTML='<span style="color:#aaa;font-size:12px">弹窗内任意位置 Ctrl+V 即可粘贴图片，或下方选择文件</span>';return;}
+  w.innerHTML=_reqAttachments.map((a,i)=>{
+    const isImg=a.type&&a.type.startsWith('image/');
+    const icon=isImg?'🖼️':'📎';
+    const thumb=a.uploading
+      ? `<div class="iss-attach-icon" style="color:#faad14">⏳</div>`
+      : `<div class="iss-attach-icon" onclick="previewReqAtt(${i})" title="点击预览/下载">${icon}</div>`;
+    return `<div class="iss-attach-item">${thumb}<div class="iss-attach-name" title="${_escH(a.name)}">${_escH(a.name)}</div>${a.uploading?'':`<button class="iss-attach-del" onclick="rmReqAtt(${i})">×</button>`}</div>`;
+  }).join('');
+}
+function previewReqAtt(i){
+  const a=_reqAttachments[i];if(!a||!a.file_token)return;
+  previewFeishuFile(a.file_token,a.name||'',a.type||'');
+}
+function rmReqAtt(i){_reqAttachments.splice(i,1);renderReqAtt();}
+async function uploadReqAtt(input){
+  const files=Array.from(input.files||[]);if(!files.length)return;
+  for(const file of files){
+    if(file.size>10*1024*1024){alert('文件 '+file.name+' 超过10MB');continue;}
+    const idx=_reqAttachments.push({name:file.name,type:file.type,uploading:true})-1;
+    renderReqAtt();
+    try{
+      const reader=new FileReader();
+      const dataUrl=await new Promise((ok,no)=>{reader.onload=()=>ok(reader.result);reader.onerror=no;reader.readAsDataURL(file);});
+      const res=await fetch('/api/reqs?action=att-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,mimetype:file.type,base64:dataUrl.split(',')[1]})});
+      const data=await res.json();if(data.error)throw new Error(data.error);
+      _reqAttachments[idx]={name:file.name,type:file.type,file_token:data.file_token};
+    }catch(e){_reqAttachments.splice(idx,1);alert('上传 '+file.name+' 失败：'+e.message);}
+    renderReqAtt();
+  }
+  input.value='';
+}
+async function _handleReqPaste(e){
+  const items=Array.from((e.clipboardData||window.clipboardData)?.items||[]);
+  const imgItems=items.filter(it=>it.kind==='file'&&it.type.startsWith('image/'));
+  if(!imgItems.length)return;
+  e.preventDefault();
+  for(const it of imgItems){
+    const file=it.getAsFile();if(!file)continue;
+    const ext=(file.type.split('/')[1]||'png').toLowerCase();
+    const named=file.name && file.name!=='image.png'
+      ? file
+      : new File([file], `paste_${Date.now()}.${ext}`, {type:file.type});
+    await uploadReqAtt({files:[named]});
+  }
+}
+function _bindReqModalPaste(){
+  if(_reqPasteHandler)return;
+  _reqPasteHandler=function(e){
+    const m=document.getElementById('modal');
+    if(!m||m.style.display==='none')return;
+    _handleReqPaste(e);
+  };
+  document.addEventListener('paste',_reqPasteHandler);
+}
+
 async function deleteItem(id,name) {
   const item = allData.find(x => x.id === id);
   const children = item ? getChildren(id) : [];
@@ -1546,7 +1841,27 @@ async function deleteItem(id,name) {
 }
 
 // ===== 认领 =====
-let _claimId = null, _claimSelected = new Set();
+let _claimId = null, _claimSelected = new Set(), _claimForce = false;
+
+// 评审门禁：飞书「评审是否通过」=已通过 或 生命周期「研发评审」阶段=已完成，任一满足即放行
+function reviewPassed(d){
+  if(!d) return false;
+  if(d.review === '已通过') return true;
+  const life = (typeof MYTODO!=='undefined' && MYTODO.lifeMap) ? MYTODO.lifeMap[d.id] : null;
+  const st = life && life.stages && life.stages['研发评审'];
+  return !!(st && st.status === '已完成');
+}
+function isAdmin(){ return !!(_currentUser && _currentUser.role === 'admin'); }
+function canClaim(d){ return reviewPassed(d) || isAdmin(); }
+// 认领后自动推进生命周期到目标阶段（默认「开发认领」）；已在该阶段或更后则不动，不回退
+async function lcAutoAdvance(reqId, toStage){
+  const tgt = LC_STAGES.indexOf(toStage);
+  if(tgt < 0) return;
+  const life = (typeof MYTODO!=='undefined' && MYTODO.lifeMap) ? MYTODO.lifeMap[reqId] : null;
+  const cur = (life && life.currentStage) || LC_STAGES[0];
+  if(LC_STAGES.indexOf(cur) >= tgt) return;
+  await lcApi('stage-advance', { reqId, toStage, operator: _lcOperator(), remark: '认领后自动推进到'+toStage });
+}
 
 const DEFAULT_MEMBERS = ['吴江兵','江宇岭','江鹏','潘徐莉','沈明杰','覃显华','钟万伟','周晓','颜世俊','邹晓东'];
 function getExcluded() { const s = localStorage.getItem('zhikong_members_excluded'); return new Set(s ? JSON.parse(s) : []); }
@@ -1598,19 +1913,27 @@ function refreshClaimList() {
 
 function openClaim(id) {
   const d = allData.find(x => x.id === id); if (!d) return;
-  _claimId = id;
   const current = (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+  // 评审门禁：未认领且未通过评审时，普通用户禁止认领
+  if (!current.length && !canClaim(d)) {
+    alert('该需求尚未通过评审，暂不能认领。\n请先完成研发评审（或将「评审是否通过」置为「已通过」）。');
+    return;
+  }
+  // admin 越权：未通过评审仍可认领，标记强制并提示
+  _claimForce = (!current.length && !reviewPassed(d) && isAdmin());
+  _claimId = id;
   _claimSelected = new Set(current);
   document.getElementById('claimReqName').innerHTML =
     (d.no ? `<span style="color:#aaa">${d.no}</span> · ` : '') +
     `<strong>${d.name || ''}</strong>` +
-    (current.length ? `<br><span style="color:#888;font-size:12px">当前认领人：${current.join('、')}</span>` : '<br><span style="color:#faad14;font-size:12px">当前待认领</span>');
+    (current.length ? `<br><span style="color:#888;font-size:12px">当前认领人：${current.join('、')}</span>` : '<br><span style="color:#faad14;font-size:12px">当前待认领</span>') +
+    (_claimForce ? '<br><span style="display:inline-block;margin-top:6px;padding:4px 8px;background:#fffbe6;border:1px solid #ffe58f;border-radius:5px;color:#d46b08;font-size:12px">⚠ 该需求尚未通过评审，你正以管理员身份强制认领</span>' : '');
   document.querySelector('#claimModal .modal-head h2').textContent = current.length ? '🔄 更换认领人' : '🙋 认领需求';
   document.getElementById('claimBtn').textContent = current.length ? '✅ 确认换人' : '✅ 确认认领';
   refreshClaimList();
   document.getElementById('claimModal').style.display = 'flex';
 }
-function closeClaim() { document.getElementById('claimModal').style.display = 'none'; _claimId = null; _claimSelected = new Set(); }
+function closeClaim() { document.getElementById('claimModal').style.display = 'none'; _claimId = null; _claimSelected = new Set(); _claimForce = false; }
 
 async function releaseClaim(id) {
   const d = allData.find(x => x.id === id); if (!d) return;
@@ -1619,13 +1942,21 @@ async function releaseClaim(id) {
   if (!confirm(`确认释放 ${label} 的认领？需求将回到待认领状态。`)) return;
   d.person = '';
   buildPersonFilter(); render();
-  try { await api('update', { ...d, person: '' }); loadData(true); }
+  try {
+    await api('update', { ...d, person: '' });
+    lcApi('claim-log-add', { reqId: id, action: '释放', persons: '', operator: _lcOperator(), remark: '释放了 '+persons.join('、') }).catch(()=>{});
+    loadData(true);
+  }
   catch(e) { alert('释放失败：' + e.message); loadData(); }
 }
 
 async function doClaim() {
   if (!_claimSelected.size) { alert('请至少选择一位认领人'); return; }
   const d = allData.find(x => x.id === _claimId); if (!d) return;
+  if (_claimForce && !confirm('该需求尚未通过评审，确认以管理员身份强制认领？')) return;
+  const prevPersons = (d.person||'').split(',').map(p=>p.trim()).filter(hasPerson);
+  const logAction = prevPersons.length ? '换人' : '认领';
+  const reqId = d.id;
   const btn = document.getElementById('claimBtn');
   btn.disabled = true; btn.textContent = '提交中...';
   const person = [..._claimSelected].join(',');
@@ -1649,6 +1980,8 @@ async function doClaim() {
   closeClaim();
   try {
     await api('update', { ...d, person });
+    lcApi('claim-log-add', { reqId, action: logAction, persons: person, operator: _lcOperator(), remark: logAction==='换人' ? ('由 '+(prevPersons.join('、')||'-')+' 变更') : '' }).catch(()=>{});
+    await lcAutoAdvance(reqId, '开发认领').catch(()=>{});   // 认领即进入「开发认领」阶段（待开发）
     loadData(true);
   } catch(e) { alert('认领失败：' + e.message); loadData(); }
   btn.disabled = false; btn.textContent = '✅ 确认认领';
@@ -1657,7 +1990,11 @@ async function doClaim() {
 async function releaseOnePerson(id, personToRemove) {
   const d = allData.find(x => x.id === id); if (!d) return;
   const remaining = (d.person||'').split(',').map(p=>p.trim()).filter(p=>p && p!==personToRemove).join(',');
-  try { await api('update', { ...d, person: remaining }); await loadData(); }
+  try {
+    await api('update', { ...d, person: remaining });
+    lcApi('claim-log-add', { reqId: id, action: '移除', persons: remaining, operator: _lcOperator(), remark: '移除了 '+personToRemove }).catch(()=>{});
+    await loadData();
+  }
   catch(e) { alert('释放失败：' + e.message); }
 }
 
@@ -1721,13 +2058,16 @@ function openDetail(id) {
       <div><div style="font-size:12px;color:#888">提出时间</div><div style="margin-top:3px;font-size:13px">${d.createTime||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">提出人</div><div style="margin-top:3px;font-size:13px">${d.submitter||'-'}</div></div>
     </div>
+    <div id="lcContainer" class="lc-wrap"><div style="color:#aaa;font-size:12px">⏳ 生命周期加载中…</div></div>
     <div style="margin-bottom:12px">
       <div style="font-size:12px;color:#888;margin-bottom:8px">需求描述</div>
       <div class="md-body" style="background:#f7f8fa;padding:14px 16px;border-radius:8px;min-height:60px">${d.desc ? (() => { try { return (typeof marked !== 'undefined' ? marked.parse(d.desc) : d.desc.replace(/\n/g,'<br>')); } catch(e) { return d.desc.replace(/\n/g,'<br>'); } })() : '<span style="color:#ccc">暂无描述</span>'}</div>
     </div>
+    ${(d.attachments&&d.attachments.length)?`<div style="margin-bottom:12px"><div style="font-size:12px;color:#888;margin-bottom:8px">需求图片/附件（${d.attachments.length}）</div><div style="display:flex;flex-wrap:wrap;gap:8px">${d.attachments.map(a=>{const icon=(a.type&&a.type.startsWith('image/'))?'🖼️':'📎';return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f7f8fa;border:1px solid #e8e8e8;border-radius:6px;font-size:12px;cursor:pointer;color:#3370ff" onclick="previewFeishuFile('${a.file_token}','${_escH(a.name||'')}','${a.type||''}')">${icon} ${_escH(a.name||'附件')}</span>`;}).join('')}</div></div>`:''}
     ${d.note?`<div><div style="font-size:12px;color:#888;margin-bottom:4px">备注</div><div style="font-size:13px;color:#666;line-height:1.7">${d.note}</div></div>`:''}` + childrenHtml;
   document.getElementById('detailEditBtn').onclick=()=>openEdit(id);
   document.getElementById('detailModal').style.display='flex';
+  loadLifecycle(d);
 }
 function closeDetail(){document.getElementById('detailModal').style.display='none';}
 
@@ -1908,10 +2248,10 @@ function fbTodayStr() { return new Date().toISOString().split('T')[0]; }
 
 async function fbApi(action, body) {
   if (action === 'list') {
-    const res = await fetch(`/api/feishu?table=feedback&_t=${Date.now()}`);
+    const res = await fetch(`/api/reqs?table=feedback&_t=${Date.now()}`);
     return res.json();
   }
-  const res = await fetch(`/api/feishu?action=fb-${action}`, {
+  const res = await fetch(`/api/reqs?action=fb-${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -2121,10 +2461,10 @@ async function fbTransfer(id) {
 // ===== 排班表 =====
 async function schApi(action, body) {
   if (action === 'list') {
-    const res = await fetch(`/api/feishu?table=schedule&_t=${Date.now()}`);
+    const res = await fetch(`/api/reqs?table=schedule&_t=${Date.now()}`);
     return res.json();
   }
-  const res = await fetch(`/api/feishu?action=sch-${action}`, {
+  const res = await fetch(`/api/reqs?action=sch-${action}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -2814,7 +3154,7 @@ async function issHandleFiles(files) {
         r.onerror = rej;
         r.readAsDataURL(uploadFile);
       });
-      const resp = await fetch('/api/upload', {
+      const resp = await fetch('/api/reqs?action=att-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename, mimetype, base64 })
@@ -2898,7 +3238,7 @@ async function issPreviewAttach(fileToken, type, name) {
   </div>`;
   document.body.insertAdjacentHTML('beforeend', loadingHtml);
   try {
-    const proxyUrl = `/api/feishu?action=iss-file-url`;
+    const proxyUrl = `/api/reqs?action=att-get`;
     const body = document.getElementById('issPreviewBody');
     if (!body) return;
     if (isImg) {
@@ -3743,7 +4083,7 @@ async function previewFeishuFile(fileToken,name,type){
   </div>`;
   document.body.insertAdjacentHTML('beforeend',html);
   try{
-    const res=await fetch('/api/feishu?action=iss-file-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:fileToken})});
+    const res=await fetch('/api/reqs?action=att-get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:fileToken})});
     const ct=res.headers.get('content-type')||'';
     const body=document.getElementById('issPreviewBody');if(!body)return;
     if(isImg){
@@ -3756,7 +4096,7 @@ async function previewFeishuFile(fileToken,name,type){
         body.innerHTML=`<img src="${URL.createObjectURL(blob)}" style="max-width:100%;max-height:70vh;border-radius:6px">`;
       }
     }else{
-      let url='/api/feishu?action=iss-file-url';
+      let url='/api/reqs?action=att-get';
       if(ct.includes('application/json')){const d=await res.json();url=d.url||url;}
       body.innerHTML=`<a href="${url}" target="_blank" class="btn btn-ghost">📥 下载 ${name}</a>`;
     }
@@ -3787,7 +4127,7 @@ async function uploadBugAtt(input){
     try{
       const reader=new FileReader();
       const dataUrl=await new Promise((ok,no)=>{reader.onload=()=>ok(reader.result);reader.onerror=no;reader.readAsDataURL(file);});
-      const res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,mimetype:file.type,base64:dataUrl.split(',')[1]})});
+      const res=await fetch('/api/reqs?action=att-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,mimetype:file.type,base64:dataUrl.split(',')[1]})});
       const data=await res.json();if(data.error)throw new Error(data.error);
       _bugAttachments.push({name:file.name,type:file.type,file_token:data.file_token});
     }catch(e){alert('上传 '+file.name+' 失败：'+e.message);}
@@ -3889,7 +4229,7 @@ async function exportBugsHtml(){
       for(const a of r.attachments){
         if(!a.file_token){imgs.push({name:a.name,b64:'',isImg:false});continue;}
         try{
-          const res=await fetch('/api/feishu?action=iss-file-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:a.file_token})});
+          const res=await fetch('/api/reqs?action=att-get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_token:a.file_token})});
           const ct=res.headers.get('content-type')||'';
           if(ct.includes('application/json')){
             const d=await res.json();imgs.push({name:a.name,b64:'',url:d.url||'',isImg:a.type&&a.type.startsWith('image/')});
@@ -4055,6 +4395,1063 @@ async function deleteUser(id) {
   if (data.error) alert(data.error);
   else loadUsers();
 }
+
+// ==================== 需求生命周期（挂在需求详情内） ====================
+const LC_STAGES = ['提报','研发评审','开发认领','测试认领'];
+const LC_AUTO_STAGES = { '提报':'submitter', '开发认领':'person' }; // 负责人自动关联需求字段
+const LC_STAGE_STATUS = ['未开始','进行中','已完成'];
+const LC_DEPTS = ['销售部','研发部','开发部','测试部','产品部','其他'];
+const LC_BLK_STATUS = ['待处理','协调中','已解决'];
+const _lcStatusColor = {'未开始':'#8c8c8c','进行中':'#1677ff','已完成':'#52c41a'};
+const _lcBlkColor = {'待处理':'#f5222d','协调中':'#fa8c16','已解决':'#52c41a'};
+
+let _lcReqId = null;
+let _lcDefaults = {};
+let _lcData = null;
+let _lcBlockers = [];
+let _lcLogs = [];
+let _lcClaimLogs = [];
+let _lcAudit = [];   // 操作留痕（字段/阶段/卡点变更）
+let _lcStageEditKey = null;
+let _lcBlockerEditId = null;
+const _lcClaimColor = {'认领':'#1677ff','换人':'#722ed1','释放':'#f5222d','移除':'#fa8c16'};
+
+function _splitNames(v){ return (v||'').split(/[,，、]/).map(x=>x.trim()).filter(Boolean); }
+function _lcFmtNames(v){ return _splitNames(v).join('、'); }
+// 阶段成员(含个人进度)：提报=提出人(100%)、开发认领=认领人(各自开发进度，姓名自动来自需求)；研发评审/测试认领取存储成员
+function _lcStageMembers(reqLike, stage, storedStage){
+  const stored=(storedStage&&Array.isArray(storedStage.members))?storedStage.members:[];
+  const progOf=nm=>{ const m=stored.find(x=>x.name===nm); return m?(parseInt(m.progress)||0):0; };
+  if(stage==='提报') return _splitNames(reqLike&&reqLike.submitter).map(n=>({name:n,progress:100}));
+  if(stage==='开发认领') return _splitNames(reqLike&&reqLike.person).map(n=>({name:n,progress:progOf(n)}));
+  return stored.map(m=>({name:m.name,progress:parseInt(m.progress)||0}));
+}
+function _lcStageProgress(members,status){ if(!members||!members.length) return status==='已完成'?100:0; return Math.round(members.reduce((s,m)=>s+(parseInt(m.progress)||0),0)/members.length); }
+// 生命周期「开发认领」阶段进度（用于回写飞书「开发进度」字段）：
+//   还没推进到开发阶段→0；正处于开发阶段→负责人平均进度(或状态已完成=100)；已推进过开发阶段→100
+function _lcDevProgress(data, reqLike){
+  if(!data) return null;
+  const idxCur=LC_STAGES.indexOf(data.currentStage||'提报');
+  const idxDev=LC_STAGES.indexOf('开发认领');
+  if(idxCur>idxDev) return 100;   // 已推进到测试认领等更后阶段，开发必然完成
+  if(idxCur<idxDev) return 0;     // 还停在提报/研发评审，开发尚未开始
+  const st=(data.stages&&data.stages['开发认领'])||{status:'进行中',members:[]};
+  return _lcStageProgress(_lcStageMembers(reqLike,'开发认领',st), st.status);
+}
+// 生命周期阶段 → 开发状态（列表「状态」列）对齐：前向映射、不覆盖手动置的后期/终态
+const LC_KEEP_STATUS=['联调中','待上线','已上线','已暂缓'];
+function _lcAlignedStatus(data, curStatus){
+  if(!data) return curStatus;
+  if(LC_KEEP_STATUS.includes(curStatus)) return curStatus;   // 手动后期/终态不被阶段覆盖
+  const idx=LC_STAGES.indexOf(data.currentStage||'提报');
+  const idxDev=LC_STAGES.indexOf('开发认领'), idxTest=LC_STAGES.indexOf('测试认领');
+  if(idx>=idxTest) return '测试中';
+  if(idx===idxDev) return '开发中';
+  return curStatus==='专题探讨'?'专题探讨':'待开始';           // 提报/研发评审：开发未开始
+}
+// 生命周期「研发评审」阶段是否已完成（评审通过）：当前阶段已越过评审，或评审阶段 status=已完成
+function _lcReviewDone(data){
+  if(!data) return false;
+  const st=data.stages && data.stages['研发评审'];
+  if(st && st.status==='已完成') return true;
+  return LC_STAGES.indexOf(data.currentStage||'提报') > LC_STAGES.indexOf('研发评审');
+}
+// 阶段变化后，把「开发进度」和「开发状态」一起对齐回写到需求（无变化跳过、失败不阻塞）
+async function _lcSyncDevProgress(){
+  if(!_lcReqId||!_lcData) return;
+  const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===_lcReqId);
+  if(!r) return;
+  const dev=_lcDevProgress(_lcData,{submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+  const newStatus=_lcAlignedStatus(_lcData, r.status);
+  const newReview=_lcReviewDone(_lcData) ? '已通过' : r.review;   // 评审阶段完成 → 评审列=已通过
+  const progChanged=(dev!=null)&&((parseInt(r.progress)||0)!==dev);
+  const statusChanged=newStatus!==r.status;
+  const reviewChanged=newReview!==r.review;
+  if(!progChanged && !statusChanged && !reviewChanged) return;   // 都没变，不写
+  const payload={...r};                                       // 展开完整对象只改进度/状态/评审，避免清空其他字段
+  payload.operator=_lcOperator(); payload.source='auto-align';   // 自动对齐留痕可追溯、可区分
+  if(progChanged) payload.progress=dev;
+  if(statusChanged) payload.status=newStatus;
+  if(reviewChanged) payload.review=newReview;
+  try{
+    await api('update', payload);
+    if(progChanged) r.progress=dev;
+    if(statusChanged) r.status=newStatus;
+    if(reviewChanged) r.review=newReview;
+    render();                                         // 刷新列表「进度」「状态」「评审」「当前阶段」列
+    if(MYTODO.loaded) loadMyTodos(true);              // 刷新管理面板/待办
+  }catch(e){ console.warn('阶段同步(进度/状态/评审)回写失败:', e); }
+}
+function _lcToday(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function _lcOperator(){ return (_currentUser && (_currentUser.displayName||_currentUser.display_name||_currentUser.name||_currentUser.username)) || ''; }
+function lcClose(id){ const m=document.getElementById(id); if(m) m.style.display='none'; }
+function _lcFillMembers(){ const dl=document.getElementById('lcMembersList'); if(dl) dl.innerHTML=getMembers().map(m=>`<option value="${_escH(m)}">`).join(''); }
+
+async function lcApi(action, body, qs){
+  const isGet=!body;
+  let url=`/api/collab?action=${action}&_=${Date.now()}`;
+  if(qs) url+=qs;
+  const opts=isGet?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
+  const res=await fetch(url,opts); const data=await res.json();
+  if(data.error) throw new Error(data.error); return data;
+}
+
+async function loadLifecycle(d){
+  _lcReqId=d.id; _lcDefaults={submitter:d.submitter||'', person:d.person||''};
+  const cont=document.getElementById('lcContainer'); if(!cont) return;
+  try{
+    const [life, blockers, logs, claimLogs, audit]=await Promise.all([
+      lcApi('lifecycle',null,`&req_id=${encodeURIComponent(d.id)}`),
+      lcApi('blockers-list',null,`&req_id=${encodeURIComponent(d.id)}`),
+      lcApi('log-list',null,`&req_id=${encodeURIComponent(d.id)}`),
+      lcApi('claim-log-list',null,`&req_id=${encodeURIComponent(d.id)}`).catch(()=>[]),  // 认领记录为辅助信息，失败不拖垮生命周期
+      lcApi('audit-list',null,`&req_id=${encodeURIComponent(d.id)}`).catch(()=>[])       // 操作留痕，失败不拖垮
+    ]);
+    _lcData=life; _lcBlockers=blockers; _lcLogs=logs; _lcClaimLogs=Array.isArray(claimLogs)?claimLogs:[]; _lcAudit=Array.isArray(audit)?audit:[];
+    renderLifecycle();
+    if(MYTODO.loaded) loadMyTodos(true);   // 同步刷新我的待办角标
+  }catch(e){ cont.innerHTML='<div style="color:#f5222d;font-size:12px">生命周期加载失败：'+e.message+'</div>'; }
+}
+
+function lcBlockerHtml(b){
+  const canW=canWrite('list');
+  const c=_lcBlkColor[b.status]||'#f5222d';
+  const resolved=b.status==='已解决';
+  const ov=b.expectedResolveAt && !resolved && b.expectedResolveAt < _lcToday();
+  const dJson=JSON.stringify(b).replace(/'/g,"&#39;");
+  return `<div class="lc-blocker ${resolved?'resolved':''}">
+    <div class="r1">
+      <span class="lc-badge" style="background:${c}22;color:${c}">${b.status}</span>
+      ${b.stage?`<span class="lc-badge" style="background:#eef2fb;color:#556">${_escH(b.stage)}</span>`:''}
+      ${b.dept?`<span style="color:#888;font-size:11px">${_escH(b.dept)}</span>`:''}
+      <b style="color:#333">${_escH(b.description)}</b>
+      ${canW?`<span style="margin-left:auto;white-space:nowrap"><a onclick='lcEditBlocker(${dJson})' style="color:#3370ff;cursor:pointer;font-size:11px">编辑</a> · <a onclick="lcDelBlocker('${b.id}')" style="color:#f5222d;cursor:pointer;font-size:11px">删除</a></span>`:''}
+    </div>
+    <div class="r2">
+      ${b.follower?`<b style="color:#3370ff">处理人：${_escH(b.follower)}</b>　`:''}${b.impact?`影响：${_escH(b.impact)}　`:''}${b.resourcesNeeded?`待协调：${_escH(b.resourcesNeeded)}　`:''}${b.occurredAt?`产生：${b.occurredAt}　`:''}${b.expectedResolveAt?`预期解决：<span style="${ov?'color:#f5222d;font-weight:600':''}">${b.expectedResolveAt}${ov?' ⚠逾期':''}</span>`:''}
+      ${b.progressNote?`<div>进展：${_escH(b.progressNote)}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderLifecycle(){
+  const cont=document.getElementById('lcContainer'); if(!cont||!_lcData) return;
+  const canW=canWrite('list');
+  const stages=_lcData.stages, cur=_lcData.currentStage;
+  const curIdx=LC_STAGES.indexOf(cur);
+  const reqLike={submitter:_lcDefaults.submitter, person:_lcDefaults.person};
+  const openBlkByStage={};
+  _lcBlockers.forEach(b=>{ if(b.status!=='已解决'){ openBlkByStage[b.stage]=(openBlkByStage[b.stage]||0)+1; } });
+  const info=LC_STAGES.map(s=>{ const st=stages[s]||{status:'未开始',members:[]}; const members=_lcStageMembers(reqLike,s,st); return {s,st,members,prog:_lcStageProgress(members,st.status)}; });
+
+  const stepper=info.map((x,i)=>{
+    const {s,st,members,prog}=x;
+    const hasBlk=(openBlkByStage[s]||0)>0;
+    const cls = st.status==='已完成'?'done':((hasBlk&&s===cur)?'blocked':((st.status==='进行中'||s===cur)?'doing':'todo'));
+    const dot = st.status==='已完成'?'✓':(i+1);
+    const stColor=_lcStatusColor[st.status]||'#8c8c8c';
+    const isAuto=!!LC_AUTO_STAGES[s];
+    const barColor = st.status==='已完成'?'#52c41a':(st.status==='进行中'?'#1677ff':'#d0d4db');
+    return `<div class="lc-stage ${cls}">
+      <div class="lc-dot">${dot}</div>
+      <div class="lc-sname">${s}</div>
+      <div class="lc-sstatus" style="color:${stColor}">${st.status}</div>
+      <div class="lc-sowner">${members.length?members.map(m=>`<span class="lc-owner-chip">${_escH(m.name)}</span>`).join(''):'<span class="none">未指派</span>'}${isAuto?' <span title="自动关联需求'+(s==='提报'?'提出人':'认领人')+'" style="color:#52c41a;font-size:9px">🔗</span>':''}</div>
+      <div class="lc-prog"><i style="width:${prog}%;background:${barColor}"></i></div>
+      <div class="lc-spct">${prog}%${members.length>1?' · '+members.length+'人':''}</div>
+      ${hasBlk?`<div class="lc-sblk"><span class="b">🚧 ${openBlkByStage[s]}</span></div>`:''}
+      ${canW?`<div class="lc-sbtns"><button onclick="lcEditStage('${s}')">编辑</button>${i===curIdx+1?`<button class="adv" onclick="lcAdvance('${s}')">推进→</button>`:''}</div>`:''}
+    </div>`;
+  }).join('');
+  const advHead = (canW && curIdx>=0 && curIdx<LC_STAGES.length-1)
+    ? `<button class="btn btn-primary btn-sm" onclick="lcAdvance('${LC_STAGES[curIdx+1]}')">推进至 ${LC_STAGES[curIdx+1]} →</button>` : '';
+
+  // 成员进度明细：每阶段列出每人各自进度条（开发/测试进度一目了然）
+  const memberDetail = info.filter(x=>x.members.length).map(x=>{
+    const sc=_lcStageColorList[x.s]||'#8c8c8c';
+    const tail = x.s==='开发认领'?'（开发进度）':(x.s==='测试认领'?'（测试进度）':'');
+    const rows=x.members.map(m=>`<div class="lc-mrow"><span class="lc-mname" title="${_escH(m.name)}">${_escH(m.name)}</span><div class="lc-mbar"><i style="width:${m.progress}%;background:${sc}"></i></div><span class="lc-mpct" style="color:${sc}">${m.progress}%</span></div>`).join('');
+    return `<div class="lc-mstage"><div class="lc-mstage-h"><span class="lc-badge" style="background:${sc}22;color:${sc}">${x.s}</span><span style="color:#999;font-size:11px">${tail} 阶段进度 ${x.prog}%</span></div>${rows}</div>`;
+  }).join('') || '<div style="color:#aaa;font-size:12px">暂无成员</div>';
+
+  const blkList=_lcBlockers.length?_lcBlockers.map(lcBlockerHtml).join(''):'<div style="color:#aaa;font-size:12px">暂无卡点</div>';
+  const _curClaimers=_splitNames(_lcDefaults.person);
+  // 「当前认领人」是状态摘要、不是一次操作 → 移出留痕时间线，作为独立摘要条（无操作人/时间，不带时间线圆点）
+  const claimSummary=`<div style="font-size:12px;color:#555;margin-bottom:10px;padding:6px 10px;background:#f7f9ff;border-radius:6px;border-left:3px solid #1677ff">👥 <b>当前认领人：</b>${_curClaimers.length?_escH(_curClaimers.join('、')):'<span style="color:#faad14">待认领</span>'}</div>`;
+  // 统一操作记录：合并 审计(字段/阶段/卡点) + 流转(阶段推进) + 认领，按时间倒序
+  const _merged=[];
+  _lcAudit.forEach(a=>{
+    let text;
+    if(a.action==='update'||a.action==='stage-edit') text=`${_escH(a.field||'')} <span style="color:#999">${_escH(a.oldValue||'空')}</span> → <b>${_escH(a.newValue||'空')}</b>`;
+    else if(a.action==='create') text=`🆕 新建需求 ${_escH(a.remark||'')}`;
+    else if(a.action==='delete') text=`🗑 删除需求 ${_escH(a.remark||'')}`;
+    else if(a.action==='import') text=`📥 ${_escH(a.remark||'批量导入')}`;
+    else if(a.action==='blocker-add') text=`🚧 新增卡点：${_escH(a.remark||'')}`;
+    else if(a.action==='blocker-update') text=`🚧 卡点更新：${_escH(a.remark||'')}`;
+    else if(a.action==='blocker-delete') text=`🚧 删除卡点：${_escH(a.remark||'')}`;
+    else text=`${_escH(a.action)} ${_escH(a.field||'')} ${_escH(a.remark||'')}`;
+    _merged.push({time:a.createdAt, operator:a.operator, source:a.source, text});
+  });
+  _lcLogs.forEach(l=>_merged.push({time:l.createdAt, operator:l.operator, source:'manual', text:`🔄 阶段推进 ${_escH(l.fromStage||'')}${l.fromStage?' → ':''}<b>${_escH(l.toStage||'')}</b>${l.remark?` <span style="color:#888">(${_escH(l.remark)})</span>`:''}`}));
+  _lcClaimLogs.forEach(l=>{ const c=_lcClaimColor[l.action]||'#1677ff'; _merged.push({time:l.createdAt, operator:l.operator, source:'manual', text:`<span class="lc-badge" style="background:${c}22;color:${c}">${_escH(l.action||'认领')}</span> ${l.persons?`<b>${_escH(_lcFmtNames(l.persons))}</b>`:'<span style="color:#999">（无认领人）</span>'}${l.remark?` <span style="color:#888">${_escH(l.remark)}</span>`:''}`}); });
+  _merged.sort((a,b)=>new Date(b.time)-new Date(a.time));
+  const auditRows=_merged.length?_merged.map(e=>`<div class="lc-tl">${e.source==='auto-align'?'<span class="lc-badge" style="background:#f0f0f0;color:#888">系统对齐</span> ':''}${e.text}<div style="color:#aaa;font-size:11px;margin-top:2px">${e.operator?'<b style="color:#666">'+_escH(e.operator)+'</b> · ':''}${_fmtBugT(e.time)}</div></div>`).join(''):'<div style="color:#aaa;font-size:12px">暂无操作记录</div>';
+  cont.innerHTML=`
+    <div class="lc-head"><span class="lc-title">🔄 需求生命周期</span><span class="lc-cur">当前：${_escH(cur)} ${advHead}</span></div>
+    <div class="lc-flow">${stepper}</div>
+    <div class="lc-sec">
+      <div class="lc-sec-h"><span>👥 成员进度</span></div>
+      ${memberDetail}
+    </div>
+    <div class="lc-sec">
+      <div class="lc-sec-h"><span>🚧 卡点（${_lcBlockers.length}）</span>${canW?`<button class="btn btn-ghost btn-sm" onclick="lcAddBlocker()">＋ 新增卡点</button>`:''}</div>
+      ${blkList}
+    </div>
+    <div class="lc-sec">
+      <div class="lc-sec-h"><span>📋 操作记录（留痕）</span></div>
+      ${claimSummary}
+      <div class="lc-timeline">${auditRows}</div>
+    </div>`;
+}
+
+// ---- 阶段编辑（成员列表：每人姓名 + 个人进度） ----
+let _lsMembers=[];  // [{name, progress}]
+function renderLsMembers(){
+  const box=document.getElementById('lsMembers'); if(!box) return;
+  const locked=!!LC_AUTO_STAGES[_lcStageEditKey];
+  if(!_lsMembers.length){ box.innerHTML='<div class="ls-empty">'+(locked?(_lcStageEditKey==='开发认领'?'请先在需求中「认领」（设置认领人）':'提报人自动为需求提出人'):'未添加成员，请在下方添加负责人')+'</div>'; return; }
+  box.innerHTML=_lsMembers.map((m,i)=>`
+    <div class="ls-mrow">
+      <span class="ls-mname" title="${_escH(m.name)}">${_escH(m.name)}</span>
+      <input type="range" min="0" max="100" step="5" value="${m.progress}" oninput="_lsMembers[${i}].progress=parseInt(this.value)||0;this.nextElementSibling.textContent=this.value+'%'">
+      <span class="ls-mpct">${m.progress}%</span>
+      ${locked?'':`<button type="button" class="ls-mdel" onclick="lsRemoveMember(${i})">×</button>`}
+    </div>`).join('');
+}
+function lsAddMember(){
+  const inp=document.getElementById('lsMemberInput'); const v=(inp.value||'').trim();
+  if(!v) return;
+  _splitNames(v).forEach(n=>{ if(!_lsMembers.some(m=>m.name===n)) _lsMembers.push({name:n,progress:0}); });
+  inp.value=''; renderLsMembers(); inp.focus();
+}
+function lsRemoveMember(i){ _lsMembers.splice(i,1); renderLsMembers(); }
+function lsStatusSync(){ const st=document.getElementById('lsStatus').value; if(st==='已完成'){ _lsMembers.forEach(m=>m.progress=100); renderLsMembers(); } else if(st==='未开始'){ _lsMembers.forEach(m=>m.progress=0); renderLsMembers(); } }
+function lcEditStage(stageKey){
+  if(!canWrite('list')||!_lcData) return;
+  _lcStageEditKey=stageKey; _lcFillMembers();
+  const st=_lcData.stages[stageKey]||{status:'未开始',members:[]};
+  const isAuto=!!LC_AUTO_STAGES[stageKey];
+  const reqLike={submitter:_lcDefaults.submitter, person:_lcDefaults.person};
+  document.getElementById('lifeStageTitle').textContent='编辑阶段 · '+stageKey;
+  document.getElementById('lsAddRow').style.display=isAuto?'none':'';
+  document.getElementById('lsAutoHint').style.display=isAuto?'':'none';
+  if(isAuto) document.getElementById('lsAutoHint').textContent='📌 成员自动关联'+(stageKey==='提报'?'需求「提出人」':'需求「认领人」')+'（在需求中修改，可多人）；此处填各人进度与阶段状态';
+  _lsMembers=_lcStageMembers(reqLike, stageKey, st).map(m=>({name:m.name, progress:m.progress}));
+  document.getElementById('lsMemberInput').value=''; renderLsMembers();
+  document.getElementById('lsStatus').value=st.status||'未开始';
+  document.getElementById('lifeStageModal').style.display='flex';
+}
+async function lcSaveStage(){
+  if(!_lcData||!_lcStageEditKey) return;
+  const isAuto=!!LC_AUTO_STAGES[_lcStageEditKey];
+  if(!isAuto && _lsMembers.length===0){ alert('每个阶段负责人必填，请至少添加一位负责人'); return; }
+  const stages=JSON.parse(JSON.stringify(_lcData.stages));
+  stages[_lcStageEditKey]={
+    status:document.getElementById('lsStatus').value,
+    members: _lcStageEditKey==='提报' ? [] : _lsMembers.map(m=>({name:m.name, progress:parseInt(m.progress)||0}))
+  };
+  const btn=document.getElementById('lsSaveBtn'); btn.disabled=true; btn.textContent='保存中…';
+  try{
+    await lcApi('lifecycle-save',{reqId:_lcReqId,currentStage:_lcData.currentStage,stages,operator:_lcOperator()});
+    lcClose('lifeStageModal');
+    await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+    await _lcSyncDevProgress();   // 回写开发进度到飞书，保持两套进度一致
+  }catch(e){ alert('保存失败：'+e.message); }
+  finally{ btn.disabled=false; btn.textContent='保存'; }
+}
+async function lcAdvance(toStage){
+  if(!canWrite('list')||!_lcReqId) return;
+  // 每个阶段负责人必填：推进前校验目标阶段已有负责人
+  if(toStage==='开发认领'){
+    if(!(_lcDefaults.person||'').trim()){ alert('「开发认领」负责人自动关联需求「认领人」。请先在需求中「认领」（指定认领人）再推进。'); return; }
+  } else {
+    const mem=(_lcData && _lcData.stages && _lcData.stages[toStage] && _lcData.stages[toStage].members)||[];
+    if(!mem.length){ alert('请先为「'+toStage+'」阶段设置负责人（每个阶段负责人必填），再推进。'); return; }
+  }
+  const remark=prompt(`将需求推进到「${toStage}」阶段（之前阶段将标记为已完成，操作留痕）。\n可填写流转备注（可留空）：`,'');
+  if(remark===null) return;
+  try{
+    await lcApi('stage-advance',{reqId:_lcReqId,toStage,operator:_lcOperator(),remark});
+    await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+    await _lcSyncDevProgress();   // 回写开发进度到飞书（推进到测试认领→100%，推进到开发认领→当前进度）
+  }catch(e){ alert('推进失败：'+e.message); }
+}
+
+// ---- 卡点 增删改 ----
+function lcAddBlocker(){
+  if(!canWrite('list')) return;
+  _lcBlockerEditId=null; _lcFillMembers();
+  document.getElementById('lifeBlockerTitle').textContent='新增卡点';
+  document.getElementById('lbDept').value=LC_DEPTS[0];
+  document.getElementById('lbStage').value=(_lcData&&_lcData.currentStage)||'';
+  document.getElementById('lbDesc').value='';
+  document.getElementById('lbImpact').value='';
+  document.getElementById('lbOccurred').value=_lcToday();
+  document.getElementById('lbResources').value='';
+  document.getElementById('lbResolve').value='';
+  document.getElementById('lbFollower').value='';
+  document.getElementById('lbNote').value='';
+  document.getElementById('lbStatus').value='待处理';
+  document.getElementById('lifeBlockerModal').style.display='flex';
+}
+function lcEditBlocker(b){
+  if(!canWrite('list')) return;
+  _lcBlockerEditId=b.id; _lcFillMembers();
+  document.getElementById('lifeBlockerTitle').textContent='编辑卡点';
+  document.getElementById('lbDept').value=b.dept||LC_DEPTS[0];
+  document.getElementById('lbStage').value=b.stage||'';
+  document.getElementById('lbDesc').value=b.description||'';
+  document.getElementById('lbImpact').value=b.impact||'';
+  document.getElementById('lbOccurred').value=b.occurredAt||'';
+  document.getElementById('lbResources').value=b.resourcesNeeded||'';
+  document.getElementById('lbResolve').value=b.expectedResolveAt||'';
+  document.getElementById('lbFollower').value=b.follower||'';
+  document.getElementById('lbNote').value=b.progressNote||'';
+  document.getElementById('lbStatus').value=b.status||'待处理';
+  document.getElementById('lifeBlockerModal').style.display='flex';
+}
+async function lcSaveBlocker(){
+  const description=document.getElementById('lbDesc').value.trim();
+  if(!description){ alert('卡点描述不能为空'); return; }
+  if(!document.getElementById('lbFollower').value.trim()){ alert('处理人不能为空'); return; }
+  const body={
+    reqId:_lcReqId,
+    dept:document.getElementById('lbDept').value,
+    stage:document.getElementById('lbStage').value,
+    description, impact:document.getElementById('lbImpact').value.trim(),
+    occurredAt:document.getElementById('lbOccurred').value,
+    resourcesNeeded:document.getElementById('lbResources').value.trim(),
+    expectedResolveAt:document.getElementById('lbResolve').value,
+    follower:document.getElementById('lbFollower').value.trim(),
+    progressNote:document.getElementById('lbNote').value.trim(),
+    status:document.getElementById('lbStatus').value
+  };
+  const btn=document.getElementById('lbSaveBtn'); btn.disabled=true; btn.textContent='保存中…';
+  try{
+    if(_lcBlockerEditId) await lcApi('blockers-update',{...body,id:_lcBlockerEditId,operator:_lcOperator()});
+    else await lcApi('blockers-add',{...body,operator:_lcOperator()});
+    lcClose('lifeBlockerModal');
+    await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+  }catch(e){ alert('保存失败：'+e.message); }
+  finally{ btn.disabled=false; btn.textContent='保存'; }
+}
+async function lcDelBlocker(id){
+  if(!confirm('确认删除该卡点？')) return;
+  try{ await lcApi('blockers-delete',{id,operator:_lcOperator()}); await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person}); }
+  catch(e){ alert('删除失败：'+e.message); }
+}
+
+// ==================== 我的待办（跨需求·个人视角） ====================
+const MYTODO = { loaded:false, lifeMap:{}, blockers:[] };
+
+function _myNames(){
+  const s=new Set();
+  if(_currentUser){ [_currentUser.displayName,_currentUser.display_name,_currentUser.name,_currentUser.username].forEach(n=>{ if(n) s.add(String(n).trim()); }); }
+  return s;
+}
+function _nameMatch(ownerStr, mySet){
+  if(!ownerStr) return false;
+  return ownerStr.split(/[,，、]/).map(x=>x.trim()).some(x=>x && mySet.has(x));
+}
+function _lcCurrentOwner(req, life){
+  const cur=(life&&life.currentStage)||'提报';
+  const st=life&&life.stages&&life.stages[cur];
+  return _lcStageMembers(req,cur,st).map(m=>m.name).join(',');
+}
+// 某人在需求当前阶段的个人进度
+function _lcMemberProgress(req, life, personName){
+  const cur=(life&&life.currentStage)||'提报';
+  const st=life&&life.stages&&life.stages[cur];
+  const m=_lcStageMembers(req,cur,st).find(x=>x.name===personName);
+  return m?m.progress:0;
+}
+function _lcCurStatus(life){
+  const cur=(life&&life.currentStage)||'提报';
+  const st=life&&life.stages&&life.stages[cur];
+  return (st&&st.status)||'进行中';
+}
+
+async function loadMyTodos(silent=false){
+  try{
+    const [lifeMap, blockers]=await Promise.all([
+      lcApi('lifecycle-map'),
+      lcApi('blockers-list')   // 全部卡点
+    ]);
+    MYTODO.lifeMap=lifeMap||{}; MYTODO.blockers=blockers||[]; MYTODO.loaded=true;
+    updateMyTodoBadge();
+    if(curTab==='mytodo') renderMyTodos();
+    else if(curTab==='list'||curTab==='kanban'||curTab==='person') render();  // 刷新「待开发」列
+  }catch(e){
+    if(!silent && curTab==='mytodo') document.getElementById('mainContent').innerHTML='<div style="padding:24px;color:#cf1322">加载失败：'+e.message+'</div>';
+  }
+}
+
+function computeMyTodos(){
+  const mine=_myNames();
+  const stageTodos=[], blockerTodos=[];
+  const reqById={}; _mtScopedReqs().forEach(r=>{ reqById[r.id]=r; });
+  _mtScopedReqs().forEach(r=>{
+    if(r.status==='已上线'||r.status==='已暂缓') return;   // 已交付/暂缓的不计入待办
+    const life=MYTODO.lifeMap[r.id]||null;
+    const cur=(life&&life.currentStage)||'提报';
+    const st=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
+    if(st.status==='已完成') return;                       // 当前阶段已完成，等推进，不算
+    const mineMember=_lcStageMembers(r,cur,st).find(m=>mine.has(m.name));
+    if(mineMember) stageTodos.push({req:r, stage:cur, status:st.status||'进行中', progress:mineMember.progress});
+  });
+  _mtScopedBlockers().forEach(b=>{
+    if(b.status==='已解决') return;
+    if(_nameMatch(b.follower,mine)) blockerTodos.push({blocker:b, req:reqById[b.reqId]||null});
+  });
+  return {stageTodos, blockerTodos};
+}
+
+function updateMyTodoBadge(){
+  const badge=document.getElementById('myTodoBadge'); if(!badge) return;
+  if(!_currentUser){ badge.style.display='none'; return; }
+  const _sp=(typeof _mtPlan!=='undefined')?_mtPlan:''; if(typeof _mtPlan!=='undefined') _mtPlan='';   // 角标始终统计全部计划，不受筛选影响
+  let n;
+  if(_currentUser.role==='admin'){ n=computeAllTodos().openBlk; }
+  else { const {stageTodos, blockerTodos}=computeMyTodos(); n=stageTodos.length+blockerTodos.length; }
+  if(typeof _mtPlan!=='undefined') _mtPlan=_sp;
+  if(n>0){ badge.textContent=n; badge.style.display=''; } else { badge.style.display='none'; }
+}
+
+// ---- 管理面板（admin：全员待办 + 指标） ----
+let _mtExpanded={}, _mtPersonList=[], _mtView=(localStorage.getItem('mt_view')||'overview');
+let _mtPlan=(localStorage.getItem('mt_plan')||'');   // 计划维度筛选（管理面板+我的待办共用，''=全部）
+// 「计划报告」专用：日期范围（按活动时间）。_mtRangeOn 仅在报告计算期间为 true，日期过滤只作用于报告、不污染其它视图。
+let _mtDateRange={from:(localStorage.getItem('mt_range_from')||''), to:(localStorage.getItem('mt_range_to')||'')};
+let _mtRangeOn=false;
+// ===== 管理面板·分析常量与工具（逾期/停滞/工作量/趋势） =====
+const MT_PRI_WEIGHT={'紧急🔴':4,'高🟠':2,'中🟡':1,'低🟢':0.5};
+const MT_PRI_ORDER={'紧急🔴':0,'高🟠':1,'中🟡':2,'低🟢':3};
+const MT_STALL_DAYS=14;        // 生命周期 N 天无活动 = 停滞
+const MT_SOON_DAYS=7;          // 距预计上线 ≤ N 天 = 临近
+const MT_LAG_PROGRESS=60;      // 临近上线但进度 < 此 = 滞后
+const MT_OVERLOAD_SCORE=20;    // 加权工作量 ≥ 此 = 超载
+const MT_STALE_CLAIM_DAYS=30;  // 待认领超过 N 天 = 长期无人认领
+const _mtStageColor={'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16'};
+function _mtIsActive(r){ return r && r.status!=='已上线' && r.status!=='已暂缓'; }
+function _mtDaysAgo(v){ if(!v) return null; const t=new Date(v).getTime(); if(isNaN(t)) return null; return Math.floor((Date.now()-t)/86400000); }
+function _mtDaysUntil(v){ if(!v) return null; const t=new Date(v).getTime(); if(isNaN(t)) return null; return Math.ceil((t-Date.now())/86400000); }
+function _mtDaysBetween(a,b){ const ta=new Date(a).getTime(), tb=new Date(b).getTime(); if(isNaN(ta)||isNaN(tb)) return null; return Math.round((tb-ta)/86400000); }
+function _mtStage(r){ const life=MYTODO.lifeMap[r.id]; return (life&&life.currentStage)||'提报'; }
+// 阶段友好名（进行时态）：研发评审→评审中 / 开发认领→开发中 / 测试认领→测试中，与按人/按阶段视图一致
+const _MT_STAGE_LABEL={'提报':'提报','研发评审':'评审中','开发认领':'开发中','测试认领':'测试中'};
+function _mtStageLabel(stage){ return _MT_STAGE_LABEL[stage]||stage; }
+// 当前阶段的状态（未开始/进行中/已完成）
+function _mtStageStatus(r){ const life=MYTODO.lifeMap[r.id]; const cur=(life&&life.currentStage)||'提报'; const st=life&&life.stages&&life.stages[cur]; return (st&&st.status)||(cur==='提报'?'已完成':'进行中'); }
+// 带状态的阶段标签：待开发 / 开发中 / 开发完成（已完成但未推进下一阶段）
+function _mtStagePhaseLabel(stage, status, prog){
+  const base={'研发评审':'评审','开发认领':'开发','测试认领':'测试'}[stage];
+  if(!base) return stage;                       // 提报
+  // 已完成，或进度已满(负责人全部100%但状态还没手动置"已完成")都算做完，待推进
+  if(status==='已完成' || (typeof prog==='number' && prog>=100)) return base+'完成';
+  if(status==='未开始') return '待'+base;
+  return base+'中';                             // 进行中
+}
+// 当前阶段进度（负责人平均），供标签判断"进度满即完成"
+function _mtStageProg(r){ const life=MYTODO.lifeMap[r.id]; const cur=(life&&life.currentStage)||'提报'; const st=life&&life.stages&&life.stages[cur]; return _lcStageProgress(_lcStageMembers(r,cur,st||{}), st&&st.status); }
+function _mtLastActiveDays(r){ const life=MYTODO.lifeMap[r.id]; return life&&life.updatedAt ? _mtDaysAgo(life.updatedAt) : null; }
+function _mtOpenBlk(reqId){ return (MYTODO.blockers||[]).filter(b=>b.status!=='已解决'&&b.reqId===reqId).length; }
+// 计划维度筛选辅助（用 Array.isArray 形式以避开对 allData 的批量替换）
+function _mtPlans(){ return [...new Set((Array.isArray(allData)?allData:[]).map(r=>r&&r.plan).filter(Boolean))].sort(); }
+function _mtScopedReqs(){ let list=(Array.isArray(allData)?allData:[]); if(_mtPlan) list=list.filter(r=>(r.plan||'')===_mtPlan); if(_mtRangeOn&&(_mtDateRange.from||_mtDateRange.to)) list=list.filter(_mtInRange); return list; }
+// 需求「活动时间」= 生命周期最近更新时间，缺失则回退提出时间；用 YYYY-MM-DD 字符串比较（与全局日期口径一致）
+function _mtActivityTime(r){ const life=MYTODO.lifeMap&&MYTODO.lifeMap[r.id]; const t=(life&&life.updatedAt)||r.createTime||''; return String(t).slice(0,10); }
+function _mtInRange(r){ const d=_mtActivityTime(r); if(!d) return false; if(_mtDateRange.from&&d<_mtDateRange.from) return false; if(_mtDateRange.to&&d>_mtDateRange.to) return false; return true; }
+function mtSetRange(which,v){ _mtDateRange[which]=v||''; try{localStorage.setItem('mt_range_'+which,_mtDateRange[which]);}catch(e){} renderAdminPanel(); }
+function mtQuickRange(days){ if(!days){ _mtDateRange={from:'',to:''}; } else { const to=_lcToday(); const dt=new Date(); dt.setDate(dt.getDate()-days+1); _mtDateRange={from:`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`, to}; } try{localStorage.setItem('mt_range_from',_mtDateRange.from);localStorage.setItem('mt_range_to',_mtDateRange.to);}catch(e){} renderAdminPanel(); }
+function _mtScopedBlockers(){ const bs=MYTODO.blockers||[]; if(!_mtPlan) return bs; const ids=new Set(_mtScopedReqs().map(r=>r.id)); return bs.filter(b=>b.reqId && ids.has(b.reqId)); }
+function _mtPlanSelect(){ return `<select class="mt-plan-sel" onchange="mtSetPlan(this.value)"><option value="">全部计划</option>${_mtPlans().map(p=>`<option value="${_escH(p)}"${_mtPlan===p?' selected':''}>${_escH(p)}</option>`).join('')}</select>`; }
+function mtSetPlan(v){ _mtPlan=v; try{localStorage.setItem('mt_plan',v);}catch(e){} renderMyTodos(); }
+// 阶段元信息：生命周期阶段 → 面板列（评审中/开发中/测试中）
+const MT_STAGE_META=[
+  {key:'研发评审', label:'评审中', color:'#722ed1'},
+  {key:'开发认领', label:'开发中', color:'#1677ff'},
+  {key:'测试认领', label:'测试中', color:'#fa8c16'}
+];
+function mtTogglePerson(idx){ const nm=_mtPersonList[idx]; if(nm==null) return; _mtExpanded[nm]=!_mtExpanded[nm]; renderAdminPanel(); }
+function mtSetView(v){ _mtView=v; try{ localStorage.setItem('mt_view',v); }catch(e){} renderAdminPanel(); }
+// KPI 钻取：点某个状态 → 展示对应明细列表
+let _mtListKind='active';
+function mtShowList(kind){ _mtListKind=kind; _mtView='list'; renderAdminPanel(); }
+// 批量回填：把"已认领但生命周期仍停在提报/研发评审"的需求推进到对应阶段（测试中→测试认领，其余→开发认领）
+async function mtBackfillClaims(){
+  if(!isAdmin()) return;
+  const devIdx=LC_STAGES.indexOf('开发认领');
+  const targets=(Array.isArray(allData)?allData:[]).filter(r=>{   // 回填对全部需求生效，不受计划筛选影响
+    if(!hasPerson(r.person)) return false;
+    if(r.status==='已上线'||r.status==='已暂缓') return false;   // 已交付/暂缓不回填
+    const life=MYTODO.lifeMap[r.id];
+    const cur=(life&&life.currentStage)||'提报';
+    return LC_STAGES.indexOf(cur)<devIdx;   // 仅回填仍停在 提报/研发评审 的
+  });
+  if(!targets.length){ alert('没有需要回填的需求：已认领的需求都已进入「开发认领」或更后阶段。'); return; }
+  if(!confirm('将 '+targets.length+' 条“已认领但仍停在提报/研发评审”的需求批量推进：\n· 开发状态=测试中 → 推进到「测试认领」\n· 其余 → 推进到「开发认领」\n会写流转留痕（操作人标记为“系统回填”）。确认继续？')) return;
+  const mc=document.getElementById('mainContent');
+  let done=0, fail=0, i=0;
+  for(const r of targets){
+    i++;
+    const toStage = r.status==='测试中' ? '测试认领' : '开发认领';
+    try{ await lcApi('stage-advance',{reqId:r.id, toStage, operator:'系统回填', remark:'历史认领批量回填到'+toStage}); done++; }
+    catch(e){ fail++; }
+    const hint=mc.querySelector('#mtBackfillHint'); if(hint) hint.textContent=`回填中… ${i}/${targets.length}`;
+  }
+  await loadMyTodos();   // 刷新 lifeMap 并重渲染面板
+  alert(`回填完成：成功 ${done} 条${fail?('，失败 '+fail+' 条'):''}。`);
+}
+function computeAllTodos(){
+  const perPerson={};
+  const ensure=n=>{ if(!perPerson[n]) perPerson[n]={stage:[],byStage:{'研发评审':[],'开发认领':[],'测试认领':[]},blk:[],overdue:0}; return perPerson[n]; };
+  const stageDist={'提报':0,'研发评审':0,'开发认领':0,'测试认领':0};
+  const stageReqs={'研发评审':[],'开发认领':[],'测试认领':[]};   // 按阶段泳道用
+  const list=_mtScopedReqs();
+  const reqById={}; list.forEach(r=>reqById[r.id]=r);
+  // 每需求未解决卡点数（泳道卡片角标用）
+  const openBlkByReq={};
+  _mtScopedBlockers().forEach(b=>{ if(b.status!=='已解决' && b.reqId){ openBlkByReq[b.reqId]=(openBlkByReq[b.reqId]||0)+1; } });
+  let activeReqs=0;
+  list.forEach(r=>{
+    if(r.status==='已上线'||r.status==='已暂缓') return;
+    const life=MYTODO.lifeMap[r.id]||null;
+    const cur=(life&&life.currentStage)||'提报';
+    const st=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
+    if(stageDist[cur]!==undefined) stageDist[cur]++;
+    activeReqs++;
+    if(st.status==='已完成') return;
+    const members=_lcStageMembers(r,cur,st);
+    members.forEach(m=>{
+      const g=ensure(m.name);
+      const item={req:r,stage:cur,status:st.status||'进行中',progress:m.progress};
+      g.stage.push(item);
+      if(g.byStage[cur]) g.byStage[cur].push(item);
+    });
+    if(stageReqs[cur]){
+      stageReqs[cur].push({req:r, members, prog:_lcStageProgress(members,st.status), status:st.status||'进行中', blk:openBlkByReq[r.id]||0});
+    }
+  });
+  let openBlk=0, overdueBlk=0;
+  _mtScopedBlockers().forEach(b=>{
+    if(b.status==='已解决') return;
+    openBlk++;
+    const ov=b.expectedResolveAt && b.expectedResolveAt<_lcToday();
+    if(ov) overdueBlk++;
+    (b.follower||'').split(/[,，、]/).map(x=>x.trim()).filter(Boolean).forEach(nm=>{
+      const g=ensure(nm); g.blk.push({blocker:b,req:reqById[b.reqId]||null}); if(ov) g.overdue++;
+    });
+  });
+  return {perPerson, stageDist, stageReqs, activeReqs, openBlk, overdueBlk, peopleCount:Object.keys(perPerson).length};
+}
+// 按人矩阵：某阶段单元格（数量 + 平均进度迷你条）
+function _mtStageCell(items,color){
+  if(!items||!items.length) return '<span style="color:#d5d9e0">–</span>';
+  const avg=Math.round(items.reduce((s,t)=>s+(t.progress||0),0)/items.length);
+  return `<div class="mt-cell"><span class="c" style="color:${color}">${items.length}</span><div class="b"><i style="width:${avg}%;background:${color}"></i></div><span class="p">${avg}%</span></div>`;
+}
+// ===== 预警/趋势/重点 计算 =====
+function _mtWarnings(){
+  const today=_lcToday();
+  const overdue=[], lagging=[], stalled=[];
+  _mtScopedReqs().forEach(r=>{
+    if(!_mtIsActive(r)) return;
+    const prog=parseInt(r.progress)||0;
+    if(r.deadline && r.deadline<today){ overdue.push({r, days:_mtDaysAgo(r.deadline)||0}); }
+    else if(r.deadline){ const dleft=_mtDaysUntil(r.deadline); if(dleft!==null && dleft>=0 && dleft<=MT_SOON_DAYS && prog<MT_LAG_PROGRESS){ lagging.push({r, dleft, prog}); } }
+    const la=_mtLastActiveDays(r); if(la!==null && la>=MT_STALL_DAYS && _mtStage(r)!=='提报'){ stalled.push({r, days:la}); }
+  });
+  overdue.sort((a,b)=>b.days-a.days);
+  lagging.sort((a,b)=>(a.dleft-b.dleft)||(a.prog-b.prog));
+  stalled.sort((a,b)=>b.days-a.days);
+  return {overdue, lagging, stalled};
+}
+function _mtTrend(weeks){
+  weeks=weeks||8; const buckets=[], dayMs=86400000, now=Date.now();
+  for(let i=weeks-1;i>=0;i--){ const end=now-i*7*dayMs, start=end-7*dayMs; const sd=new Date(start);
+    buckets.push({label:`${sd.getMonth()+1}/${sd.getDate()}`, start, end, added:0, shipped:0}); }
+  _mtScopedReqs().forEach(r=>{
+    const ct=r.createTime?new Date(r.createTime).getTime():NaN;
+    if(!isNaN(ct)) buckets.forEach(b=>{ if(ct>=b.start&&ct<b.end) b.added++; });
+    if(r.status==='已上线' && r.deadline){ const dt=new Date(r.deadline).getTime(); if(!isNaN(dt)) buckets.forEach(b=>{ if(dt>=b.start&&dt<b.end) b.shipped++; }); }
+  });
+  return buckets;
+}
+function _mtCycle(){
+  const arr=[];
+  _mtScopedReqs().forEach(r=>{ if(r.status==='已上线'&&r.createTime&&r.deadline){ const dd=_mtDaysBetween(r.createTime,r.deadline); if(dd!==null&&dd>=0) arr.push(dd); } });
+  if(!arr.length) return null;
+  arr.sort((a,b)=>a-b);
+  return {avg:Math.round(arr.reduce((s,x)=>s+x,0)/arr.length), med:arr[Math.floor(arr.length/2)], n:arr.length};
+}
+function _mtFocusList(){
+  return _mtScopedReqs().filter(r=>_mtIsActive(r)&&(r.priority==='紧急🔴'||r.priority==='高🟠')).map(r=>({
+    r, stage:_mtStage(r), prog:parseInt(r.progress)||0, owner:_splitNames(r.person),
+    inStageDays:_mtLastActiveDays(r), overdue:!!(r.deadline&&r.deadline<_lcToday()), blk:_mtOpenBlk(r.id)
+  })).sort((a,b)=>(MT_PRI_ORDER[a.r.priority]-MT_PRI_ORDER[b.r.priority])||(b.overdue-a.overdue)||(b.blk-a.blk)||(a.prog-b.prog));
+}
+function _mtFocusRow(f){
+  const sc=_mtStageColor[f.stage]||'#888';
+  return `<div class="mt-frow" onclick="openDetail('${f.r.id}')">
+    <span class="mt-fpri">${priTag(f.r.priority)}</span>
+    <span class="mt-fname" title="${_escH(f.r.name||'')}">${_escH(f.r.name||'(未命名)')}</span>
+    <span class="lc-badge" style="background:${sc}22;color:${sc}">${_mtStageLabel(f.stage)}</span>
+    <span class="mt-fown">${f.owner.length?_escH(f.owner.join('、')):'<span style="color:#faad14">待认领</span>'}</span>
+    <span class="mt-fprog"><span class="pb"><i style="width:${f.prog}%;background:${sc}"></i></span>${f.prog}%</span>
+    ${f.blk?`<span class="lc-badge" style="background:#fff1f0;color:#cf1322">🚧${f.blk}</span>`:''}
+    <span class="mt-ftail">${f.overdue?'<span style="color:#cf1322;font-weight:600">逾期</span>':(f.inStageDays!=null?('停留'+f.inStageDays+'天'):'')}</span>
+  </div>`;
+}
+function _mtSimpleRow(r, tail){
+  return `<div class="mt-frow" onclick="openDetail('${r.id}')"><span class="mt-fpri">${priTag(r.priority)}</span><span class="mt-fname" title="${_escH(r.name||'')}">${_escH(r.name||'(未命名)')}</span><span class="mt-fno">${_escH(r.no||'')}</span><span class="mt-fown">${_splitNames(r.person).join('、')||'<span style="color:#faad14">待认领</span>'}</span><span class="mt-ftail">${tail||''}</span></div>`;
+}
+
+// ===== 七个视图 =====
+function _mtViewPeople(d){
+  const arr=Object.keys(d.perPerson).map(n=>{ const g=d.perPerson[n];
+    const score=g.stage.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
+    const urg=g.stage.filter(t=>t.req.priority==='紧急🔴').length;
+    return {n,g,score,urg};
+  }).sort((a,b)=>b.score-a.score);
+  _mtPersonList=arr.map(x=>x.n);
+  const rows=arr.map((it,idx)=>{
+    const {n,g,score,urg}=it; const exp=!!_mtExpanded[n];
+    const overloaded=score>=MT_OVERLOAD_SCORE||urg>=4;
+    // 个人总进度 + 完成情况：所有在办任务的平均进度 / 已完成(100%)任务数
+    const _tasks=g.stage||[];
+    const _total=_tasks.length;
+    const _done=_tasks.filter(t=>(parseInt(t.progress)||0)>=100).length;
+    const _avg=_total?Math.round(_tasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/_total):0;
+    const _allDone=_total&&_done===_total;
+    const _progCell=`<div style="display:flex;align-items:center;gap:5px"><div style="flex:1;max-width:72px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden"><i style="display:block;width:${_avg}%;height:100%;background:${_allDone?'#52c41a':'#722ed1'}"></i></div><span style="font-size:11px;color:${_allDone?'#52c41a':'#722ed1'};min-width:30px">${_avg}%</span></div><div style="font-size:10px;color:#999">完成 ${_done}/${_total}${_allDone?' ✓':''}</div>`;
+    let sub='';
+    if(exp){
+      const items=[];
+      MT_STAGE_META.forEach(sm=>{ (g.byStage[sm.key]||[]).forEach(t=>{ items.push(`<div class="si" onclick="openDetail('${t.req.id}')">🚀 <b>${_escH(t.req.name||'')}</b> ${priTag(t.req.priority)} <span class="lc-badge" style="background:${sm.color}22;color:${sm.color}">${sm.label}·${t.status}</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px"><span style="width:70px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden;display:inline-block"><i style="display:block;width:${t.progress||0}%;height:100%;background:${sm.color}"></i></span><span style="font-size:11px;color:${sm.color};min-width:34px;text-align:right">${t.progress||0}%</span></span></div>`); }); });
+      g.blk.forEach(t=>{ const ov=t.blocker.expectedResolveAt&&t.blocker.expectedResolveAt<_lcToday(); items.push(`<div class="si" ${t.req?`onclick="openDetail('${t.req.id}')"`:''}>🚧 ${_escH(t.blocker.description)} <span style="color:#888">${t.req?_escH(t.req.name||''):'(需求已删除)'}</span>${ov?' <span style="color:#f5222d">⚠逾期</span>':''}</div>`); });
+      sub=`<tr class="mt-sub"><td colspan="8">${items.join('')||'<div style="color:#aaa;padding:6px">无</div>'}</td></tr>`;
+    }
+    const cells=MT_STAGE_META.map(sm=>`<td>${_mtStageCell(g.byStage[sm.key],sm.color)}</td>`).join('');
+    return `<tr class="prow" onclick="mtTogglePerson(${idx})"><td>${exp?'▾':'▸'} ${_escH(n)}${overloaded?' <span class="mt-overload">超载</span>':''}</td><td>${_progCell}</td>${cells}<td class="pnum" style="color:${overloaded?'#f5222d':'#722ed1'}">${Math.round(score)}${urg?`<span style="color:#f5222d;font-size:10px"> ·${urg}急</span>`:''}</td><td class="pnum" style="color:#f5222d">${g.blk.length||''}</td><td class="pnum" style="color:${g.overdue?'#f5222d':'#bbb'}">${g.overdue||''}</td></tr>${sub}`;
+  }).join('');
+  const table=arr.length?`<table class="mt-ptable mt-matrix"><thead><tr><th>成员</th><th>总进度</th><th style="color:#722ed1">评审中</th><th style="color:#1677ff">开发中</th><th style="color:#fa8c16">测试中</th><th title="优先级加权：紧急×4 / 高×2 / 中×1 / 低×0.5">工作量</th><th>卡点</th><th>逾期</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="mt-empty">暂无待办数据</div>';
+  return `<div class="mt-sec-h">👥 全员待办 · 按人 × 阶段（总进度=在办任务平均进度 · 完成数；点姓名展开每条任务进度）</div>${table}`;
+}
+function _mtViewStage(d){
+  const lanes=MT_STAGE_META.map(sm=>{
+    const reqs=(d.stageReqs[sm.key]||[]).slice().sort((a,b)=>(b.blk-a.blk)||(a.prog-b.prog));
+    const cards=reqs.length?reqs.map(x=>{
+      const owner=x.members.length?x.members.map(m=>_escH(m.name)).join('、'):'<span style="color:#faad14">未指派</span>';
+      return `<div class="mt-lane-card" onclick="openDetail('${x.req.id}')">
+        <div class="t">${_escH(x.req.name||'(未命名)')}${x.blk?` <span class="lc-badge" style="background:#fff1f0;color:#cf1322">🚧${x.blk}</span>`:''}</div>
+        <div class="m">${priTag(x.req.priority)} <span class="ow">${owner}</span></div>
+        <div class="pb"><i style="width:${x.prog}%;background:${sm.color}"></i></div>
+        <div class="pp" style="color:${sm.color}">${x.prog}%</div>
+      </div>`;
+    }).join(''):'<div class="mt-lane-empty">暂无</div>';
+    return `<div class="mt-lane"><div class="mt-lane-h" style="border-top-color:${sm.color}"><span style="color:${sm.color}">${sm.label}</span><b>${reqs.length}</b></div><div class="mt-lane-body">${cards}</div></div>`;
+  }).join('');
+  return `<div class="mt-sec-h">🏊 各阶段进行中的需求（点卡片进详情）</div><div class="mt-lanes">${lanes}</div>`;
+}
+function _mtViewOverview(d){
+  const shipped=_mtScopedReqs().filter(r=>r.status==='已上线').length;
+  const paused=_mtScopedReqs().filter(r=>r.status==='已暂缓').length;
+  const funnel=`<div class="mt-sec-h">📈 需求全流程分布（含已上线）</div><div class="mt-funnel">${LC_STAGES.map(s=>`<div class="f" style="border-left-color:${_mtStageColor[s]}"><div class="fn" style="color:${_mtStageColor[s]}">${d.stageDist[s]||0}</div><div class="fl">${s}</div></div>`).join('')}<div class="f" style="border-left-color:#52c41a"><div class="fn" style="color:#52c41a">${shipped}</div><div class="fl">✅ 已上线</div></div>${paused?`<div class="f" style="border-left-color:#bbb"><div class="fn" style="color:#999">${paused}</div><div class="fl">⏸ 已暂缓</div></div>`:''}</div>`;
+  const tr=_mtTrend(8); const maxV=Math.max(1,...tr.map(b=>Math.max(b.added,b.shipped)));
+  const bars=tr.map(b=>{ const ah=Math.round(b.added/maxV*100), sh=Math.round(b.shipped/maxV*100);
+    return `<div class="mt-tw"><div class="mt-tbars"><div class="mt-tb a" style="height:${ah}%" title="新增 ${b.added}"><span>${b.added||''}</span></div><div class="mt-tb s" style="height:${sh}%" title="上线 ${b.shipped}"><span>${b.shipped||''}</span></div></div><div class="mt-tl">${b.label}</div></div>`; }).join('');
+  const cyc=_mtCycle();
+  const trend=`<div class="mt-sec-h">🚀 交付趋势 · 近8周<span class="mt-legend"><i class="a"></i>新增<i class="s"></i>上线<span style="color:#aaa;margin-left:6px">（上线按“预计上线日期”估算）</span></span></div>
+    <div class="mt-trend">${bars}</div>
+    <div class="mt-cyc">${cyc?`平均交付周期 <b>${cyc.avg}</b> 天 · 中位数 <b>${cyc.med}</b> 天 <span style="color:#aaa">（基于 ${cyc.n} 条已上线，提出→预计上线；仅供参考）</span>`:'暂无足够“已上线+预计日期”数据计算交付周期'}</div>`;
+  const focus=_mtFocusList().slice(0,6);
+  const focusBlock=`<div class="mt-sec-h">🎯 重点需求 Top（紧急/高优）<a onclick="mtSetView('priority')" style="color:#3370ff;cursor:pointer;font-size:12px;font-weight:400;margin-left:8px">查看全部 →</a></div><div class="mt-focus">${focus.length?focus.map(_mtFocusRow).join(''):'<div class="mt-empty">暂无紧急/高优的流程中需求 🎉</div>'}</div>`;
+  return funnel+trend+focusBlock;
+}
+function _mtViewPriority(){
+  const list=_mtFocusList();
+  const risky=list.filter(f=>f.r.priority==='紧急🔴'&&(f.overdue||(f.inStageDays!=null&&f.inStageDays>=MT_STALL_DAYS))).length;
+  const alert=risky?`<div class="mt-alert">⚠ ${risky} 条紧急需求已逾期或停滞 ${MT_STALL_DAYS} 天以上，建议优先处理</div>`:'';
+  return `<div class="mt-sec-h">🎯 重点需求 · 紧急/高优（${list.length}）</div>${alert}<div class="mt-focus">${list.length?list.map(_mtFocusRow).join(''):'<div class="mt-empty">暂无紧急/高优的流程中需求 🎉</div>'}</div>`;
+}
+function _mtViewWarn(){
+  const w=_mtWarnings();
+  const sec=(title,color,items,fn)=>`<div class="mt-sec-h" style="border-left-color:${color}">${title}（${items.length}）</div><div class="mt-focus">${items.length?items.map(fn).join(''):'<div class="mt-empty">无 🎉</div>'}</div>`;
+  return sec('🔴 已逾期未上线','#f5222d',w.overdue,x=>_mtSimpleRow(x.r,`<span style="color:#f5222d;font-weight:600">逾期${x.days}天</span> · 预计${x.r.deadline} · ${parseInt(x.r.progress)||0}%`))
+    + sec('🟠 进度滞后（临近上线、进度偏低）','#fa8c16',w.lagging,x=>_mtSimpleRow(x.r,`剩${x.dleft}天 · 仅${x.prog}%`))
+    + sec(`⏸ 停滞（≥${MT_STALL_DAYS}天无进展）`,'#8c8c8c',w.stalled,x=>_mtSimpleRow(x.r,`停滞${x.days}天 · ${_mtStageLabel(_mtStage(x.r))}`));
+}
+function _mtViewReview(){
+  const list=_mtScopedReqs();
+  const bypass=list.filter(r=>_mtIsActive(r)&&hasPerson(r.person)&&r.review!=='已通过');
+  const pending=list.filter(r=>_mtIsActive(r)&&(!r.review||r.review==='待确认'));
+  const rejected=list.filter(r=>_mtIsActive(r)&&r.review==='已拒绝');
+  const passed=list.filter(r=>r.review==='已通过').length;
+  const kpi=`<div class="mt-kpi">
+    <div class="k"><div class="n" style="color:#f5222d">${bypass.length}</div><div class="l">未评审即开发</div></div>
+    <div class="k"><div class="n" style="color:#fa8c16">${pending.length}</div><div class="l">待评审积压</div></div>
+    <div class="k"><div class="n" style="color:#cf1322">${rejected.length}</div><div class="l">未通过仍推进</div></div>
+    <div class="k"><div class="n" style="color:#52c41a">${passed}</div><div class="l">已通过评审</div></div>
+  </div>`;
+  const tail=r=>`<span style="color:${r.review==='已拒绝'?'#cf1322':(r.review==='暂缓'?'#d46b08':'#999')}">评审:${r.review||'待确认'}</span> · ${_mtStageLabel(_mtStage(r))} · ${parseInt(r.progress)||0}%`;
+  const sec=(title,color,items)=>`<div class="mt-sec-h" style="border-left-color:${color}">${title}（${items.length}）</div><div class="mt-focus">${items.length?items.map(r=>_mtSimpleRow(r,tail(r))).join(''):'<div class="mt-empty">无</div>'}</div>`;
+  return kpi
+    + `<div class="mt-alert" style="background:#eef4ff;border-color:#adc6ff;color:#1d39c4">合规口径：正常流程应「研发评审通过后再认领开发」。下面列出未按流程走的需求，便于抽查纠偏。</div>`
+    + sec('🔴 未评审即进入开发（有认领人但评审未通过）','#f5222d',bypass)
+    + sec('🟠 待评审积压（等待研发评审确认）','#fa8c16',pending)
+    + (rejected.length?sec('⛔ 评审未通过但仍在推进','#cf1322',rejected):'');
+}
+function _mtViewHealth(){
+  const list=_mtScopedReqs();
+  const byNo={}; list.forEach(r=>{ if(r.no){ (byNo[r.no]=byNo[r.no]||[]).push(r); } });
+  const dupNos=Object.keys(byNo).filter(no=>byNo[no].length>1);
+  const progDone=list.filter(r=>(parseInt(r.progress)||0)>=100&&_mtIsActive(r));
+  const noDeadline=list.filter(r=>_mtIsActive(r)&&hasPerson(r.person)&&!r.deadline);
+  const staleClaim=list.filter(r=>_mtIsActive(r)&&!hasPerson(r.person)&&(_mtDaysAgo(r.createTime)||0)>=MT_STALE_CLAIM_DAYS);
+  const conflict=list.filter(r=>{ if(!_mtIsActive(r)) return false; const st=_mtStage(r);
+    if(r.status==='测试中'&&st==='开发认领') return true;
+    if((r.status==='开发中'||r.status==='联调中')&&(st==='提报'||st==='研发评审')) return true;
+    return false; });
+  const total=dupNos.length+progDone.length+noDeadline.length+staleClaim.length+conflict.length;
+  const top=total===0?'<div class="mt-alert" style="background:#f6ffed;border-color:#b7eb8f;color:#389e0d">✅ 未发现明显的数据异常</div>':`<div class="mt-alert">共发现 ${total} 处待清理的数据问题，建议逐项处理以保证看板数据可信。</div>`;
+  const dupBlock=`<div class="mt-sec-h" style="border-left-color:#cf1322">🔁 重复编号（${dupNos.length}）</div>`+(dupNos.length?`<div class="mt-focus">${dupNos.map(no=>`<div class="mt-dupgrp"><div class="mt-dupno">编号 ${_escH(no)} 出现 ${byNo[no].length} 次</div>${byNo[no].map(r=>_mtSimpleRow(r,statTag(r.status))).join('')}</div>`).join('')}</div>`:'<div class="mt-focus"><div class="mt-empty">无</div></div>');
+  const sec=(title,color,items,tail)=>`<div class="mt-sec-h" style="border-left-color:${color}">${title}（${items.length}）</div><div class="mt-focus">${items.length?items.map(r=>_mtSimpleRow(r,tail(r))).join(''):'<div class="mt-empty">无</div>'}</div>`;
+  return top+dupBlock
+    + sec('⚠ 进度100%但状态未上线','#fa8c16',progDone,r=>statTag(r.status))
+    + sec('📅 已认领但缺预计上线日期','#722ed1',noDeadline,r=>_splitNames(r.person).join('、'))
+    + sec(`🕸 长期无人认领（提出超${MT_STALE_CLAIM_DAYS}天）`,'#8c8c8c',staleClaim,r=>`提出 ${r.createTime||'?'} · ${(_mtDaysAgo(r.createTime)||0)}天前`)
+    + sec('🔀 开发状态与生命周期阶段矛盾','#1677ff',conflict,r=>`开发状态:${r.status} ↔ 阶段:${_mtStageLabel(_mtStage(r))}`);
+}
+// ===== 📄 计划报告（按计划 + 日期范围·活动时间；指标全部前端精确算，AI 只写研判）=====
+// 汇总一个结构化数据对象：所有数字与决策台其它视图同源（复用 computeAllTodos/_mtWarnings 等），
+// 在 _mtRangeOn=true 期间计算，使日期范围叠加到 _mtScopedReqs 上。
+function _mtReportData(){
+  _mtRangeOn=true;
+  try{
+    const reqs=_mtScopedReqs();
+    const d=computeAllTodos();
+    const w=_mtWarnings();
+    // 评审
+    const bypass=reqs.filter(r=>_mtIsActive(r)&&hasPerson(r.person)&&r.review!=='已通过');
+    const pending=reqs.filter(r=>_mtIsActive(r)&&(!r.review||r.review==='待确认'));
+    const rejected=reqs.filter(r=>_mtIsActive(r)&&r.review==='已拒绝');
+    const passed=reqs.filter(r=>r.review==='已通过').length;
+    // 开发进度
+    const shipped=reqs.filter(r=>r.status==='已上线').length;
+    const paused=reqs.filter(r=>r.status==='已暂缓').length;
+    const progDone=reqs.filter(r=>(parseInt(r.progress)||0)>=100&&_mtIsActive(r));
+    const activeList=reqs.filter(_mtIsActive);
+    const avgProg=activeList.length?Math.round(activeList.reduce((s,r)=>s+_mtStageProg(r),0)/activeList.length):0;
+    // 卡点
+    const blk=_mtScopedBlockers();
+    const openBlk=blk.filter(b=>b.status!=='已解决');
+    const resolvedBlk=blk.filter(b=>b.status==='已解决').length;
+    const overdueBlk=openBlk.filter(b=>b.expectedResolveAt&&b.expectedResolveAt<_lcToday());
+    const byDept={}, byStage={};
+    openBlk.forEach(b=>{ const dp=b.dept||'未分类'; byDept[dp]=(byDept[dp]||0)+1; const sg=b.stage||'未分类'; byStage[sg]=(byStage[sg]||0)+1; });
+    const oldest=openBlk.map(b=>({b, days:_mtDaysAgo(b.occurredAt)})).filter(x=>x.days!=null).sort((a,b)=>b.days-a.days).slice(0,6);
+    // 每人（复用 computeAllTodos().perPerson，口径同「按人」视图）
+    const people=Object.keys(d.perPerson).map(n=>{ const g=d.perPerson[n];
+      const score=g.stage.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
+      const urg=g.stage.filter(t=>t.req.priority==='紧急🔴').length;
+      const total=g.stage.length;
+      const done=g.stage.filter(t=>(parseInt(t.progress)||0)>=100).length;
+      const avg=total?Math.round(g.stage.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/total):0;
+      const taskOverdue=g.stage.filter(t=>t.req.deadline&&t.req.deadline<_lcToday()).length;
+      return {name:n, total, done, avg, review:(g.byStage['研发评审']||[]).length, dev:(g.byStage['开发认领']||[]).length, test:(g.byStage['测试认领']||[]).length, blk:g.blk.length, overdueBlk:g.overdue, taskOverdue, score:Math.round(score*10)/10, overloaded:score>=MT_OVERLOAD_SCORE||urg>=4};
+    }).sort((a,b)=>b.score-a.score);
+    // 阶段管线
+    const pipeline={}; LC_STAGES.forEach(s=>pipeline[s]=d.stageDist[s]||0); pipeline['已上线']=shipped; if(paused) pipeline['已暂缓']=paused;
+    return { total:reqs.length, active:d.activeReqs, shipped, paused, avgProg, pipeline,
+      review:{bypass, pending, rejected, passed},
+      progress:{lagging:w.lagging, stalled:w.stalled, progDone},
+      blockers:{open:openBlk, resolved:resolvedBlk, overdue:overdueBlk, byDept, byStage, oldest},
+      overdue:{reqs:w.overdue}, people, openBlk:d.openBlk, overdueBlk:d.overdueBlk };
+  } finally { _mtRangeOn=false; }
+}
+// 红黄绿信号灯（阈值可调）
+function _mtReportSignals(data){
+  const laggingN=data.progress.lagging.length, stalledN=data.progress.stalled.length, overdueN=data.overdue.reqs.length, bypassN=data.review.bypass.length;
+  return [
+    {title:'进度健康', level:data.avgProg>=70?'green':(data.avgProg>=40?'amber':'red'), text:`平均进度 ${data.avgProg}%${laggingN?` · ${laggingN} 条滞后`:''}`},
+    {title:'逾期风险', level:overdueN===0?'green':(overdueN<=3?'amber':'red'), text:overdueN?`${overdueN} 条需求逾期`:'无逾期需求'},
+    {title:'卡点压力', level:data.openBlk===0?'green':(data.overdueBlk===0?'amber':'red'), text:data.openBlk?`${data.openBlk} 个开放${data.overdueBlk?`，${data.overdueBlk} 逾期`:''}`:'无开放卡点'},
+    {title:'评审合规', level:bypassN===0?'green':(bypassN<=2?'amber':'red'), text:bypassN?`${bypassN} 条未评审即开发`:'流程合规'},
+    {title:'推进活跃', level:stalledN===0?'green':(stalledN<=3?'amber':'red'), text:stalledN?`${stalledN} 条停滞≥${MT_STALL_DAYS}天`:'无停滞'}
+  ];
+}
+// 提炼给 AI 的「扁平事实清单」：每条自带标签、数字与名称照抄，AI 只做综合研判、不解析结构（最大限度防误读/编造）
+function _mtReportFacts(data){
+  const f=[];
+  const nm=r=>`${r.no||''} ${r.name||''}（认领人 ${_splitNames(r.person).join('、')||'未认领'}）`;
+  f.push(`【总体】需求总数 ${data.total} 个；进行中 ${data.active} 个；已上线 ${data.shipped} 个；已暂缓 ${data.paused} 个；进行中需求平均进度 ${data.avgProg}%；开放卡点 ${data.openBlk} 个；逾期卡点 ${data.overdueBlk} 个；逾期需求 ${data.overdue.reqs.length} 个。`);
+  f.push(`【阶段管线】${Object.keys(data.pipeline).map(k=>`${k} ${data.pipeline[k]} 个`).join('；')}。`);
+  f.push(`【评审】未评审即开发 ${data.review.bypass.length} 个；待评审积压 ${data.review.pending.length} 个；未通过仍推进 ${data.review.rejected.length} 个；已通过评审 ${data.review.passed} 个。`);
+  data.review.bypass.slice(0,10).forEach(r=>f.push(`  · 未评审即开发：${nm(r)}，评审状态 ${r.review||'待确认'}。`));
+  f.push(`【开发进度】进行中需求平均进度 ${data.avgProg}%；进度滞后（临近上线且偏低）${data.progress.lagging.length} 个；停滞≥${MT_STALL_DAYS}天 ${data.progress.stalled.length} 个；进度100%但未上线 ${data.progress.progDone.length} 个。`);
+  data.progress.lagging.slice(0,8).forEach(x=>f.push(`  · 进度滞后：${nm(x.r)}，进度 ${x.prog}%，距预计上线剩 ${x.dleft} 天。`));
+  data.progress.stalled.slice(0,8).forEach(x=>f.push(`  · 停滞：${nm(x.r)}，已停滞 ${x.days} 天，当前阶段 ${_mtStageLabel(_mtStage(x.r))}。`));
+  f.push(`【卡点】开放 ${data.blockers.open.length} 个；已解决 ${data.blockers.resolved} 个；逾期 ${data.blockers.overdue.length} 个。按部门：${Object.keys(data.blockers.byDept).map(k=>k+' '+data.blockers.byDept[k]+'个').join('、')||'无'}。按阶段：${Object.keys(data.blockers.byStage).map(k=>k+' '+data.blockers.byStage[k]+'个').join('、')||'无'}。`);
+  data.blockers.oldest.slice(0,6).forEach(x=>f.push(`  · 最久未解决卡点：「${x.b.description}」，处理人 ${x.b.follower||'未指派'}，已过 ${x.days} 天。`));
+  f.push(`【逾期需求】共 ${data.overdue.reqs.length} 个（已过预计上线日期且未上线）。`);
+  data.overdue.reqs.slice(0,10).forEach(x=>f.push(`  · 逾期：${nm(x.r)}，逾期 ${x.days} 天，当前阶段进度 ${_mtStageProg(x.r)}%。`));
+  f.push(`【每个人工作情况】共 ${data.people.length} 人（负责量=优先级加权前的在办任务数；工作量分=按优先级加权）。`);
+  data.people.forEach(p=>f.push(`  · ${p.name}：负责 ${p.total} 个（其中评审中 ${p.review}、开发中 ${p.dev}、测试中 ${p.test}），平均进度 ${p.avg}%，已完成 ${p.done} 个，工作量分 ${p.score}，待处理卡点 ${p.blk} 个${p.overdueBlk?`（其中逾期 ${p.overdueBlk} 个）`:''}，本人任务逾期 ${p.taskOverdue} 个${p.overloaded?'，【已超载】':''}。`));
+  return f;
+}
+function _mtMiniBar(p,color){ color=color||'#722ed1'; return `<span style="display:inline-block;width:52px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden;vertical-align:middle"><i style="display:block;width:${Math.max(0,Math.min(100,p))}%;height:100%;background:${color}"></i></span>`; }
+function _mtRepList(items,fn,cap){ cap=cap||8; if(!items||!items.length) return '<div class="mt-empty">无 🎉</div>'; const more=items.length>cap?`<div style="font-size:11px;color:#999;padding:4px 2px">…共 ${items.length} 条，仅显示前 ${cap} 条</div>`:''; return items.slice(0,cap).map(fn).join('')+more; }
+// AI 纯文本 → 轻量 HTML（分节小标题加粗）
+function _mtFmtAi(t){ return _escH(String(t||'')).split('\n').map(l=>{ l=l.trim(); if(!l) return ''; if(/^([一二三四五六七八九十]+、|#|\*|-\s)/.test(l)||/^\d+[\.、\)]/.test(l)) return `<div style="font-weight:700;margin-top:10px;color:#1a1a2e">${l.replace(/[#*]/g,'')}</div>`; return `<div style="margin:2px 0;color:#444;line-height:1.75">${l}</div>`; }).join(''); }
+function _mtViewReport(){
+  const data=_mtReportData();
+  const filterBar=`<div class="mt-rep-filter">📅 活动时间范围：<input type="date" value="${_mtDateRange.from}" onchange="mtSetRange('from',this.value)"> ~ <input type="date" value="${_mtDateRange.to}" onchange="mtSetRange('to',this.value)">
+    <button class="btn btn-ghost btn-sm" onclick="mtQuickRange(30)">近30天</button><button class="btn btn-ghost btn-sm" onclick="mtQuickRange(90)">近90天</button><button class="btn btn-ghost btn-sm" onclick="mtQuickRange(0)">全部</button>
+    <span style="color:#aaa;font-size:11px;margin-left:6px">范围=计划「${_escH(_mtPlan||'全部')}」内、该时段有生命周期活动的需求（无记录按提出时间）</span></div>`;
+  if(!data.total) return filterBar+'<div class="mt-empty">该计划 / 时间范围内暂无需求数据</div>';
+  const sig=_mtReportSignals(data);
+  const signals=`<div class="mt-signals">${sig.map(s=>`<div class="mt-sig ${s.level}"><span class="dot"></span><span class="tx"><b>${s.title}</b><i>${s.text}</i></span></div>`).join('')}</div>`;
+  const kpi=`<div class="mt-kpi">
+    <div class="k"><div class="n" style="color:#1677ff">${data.active}</div><div class="l">流程中需求</div></div>
+    <div class="k"><div class="n" style="color:#52c41a">${data.shipped}</div><div class="l">✅ 已上线</div></div>
+    <div class="k"><div class="n" style="color:#722ed1">${data.avgProg}%</div><div class="l">平均进度</div></div>
+    <div class="k"><div class="n" style="color:#f5222d">${data.overdue.reqs.length}</div><div class="l">逾期需求</div></div>
+    <div class="k"><div class="n" style="color:#fa8c16">${data.openBlk}</div><div class="l">开放卡点</div></div>
+    <div class="k"><div class="n" style="color:#cf1322">${data.overdueBlk}</div><div class="l">逾期卡点</div></div>
+    <div class="k"><div class="n" style="color:#fa8c16">${data.review.bypass.length}</div><div class="l">未评审即开发</div></div>
+  </div>`;
+  const funnel=`<div class="mt-sec-h">📈 需求全流程分布</div><div class="mt-funnel">${Object.keys(data.pipeline).map(s=>{ const col=_mtStageColor[s]||(s==='已上线'?'#52c41a':'#bbb'); return `<div class="f" style="border-left-color:${col}"><div class="fn" style="color:${col}">${data.pipeline[s]}</div><div class="fl">${s}</div></div>`; }).join('')}</div>`;
+  // ② 评审
+  const revKpi=`<div class="mt-kpi mt-kpi-sm">
+    <div class="k"><div class="n" style="color:#f5222d">${data.review.bypass.length}</div><div class="l">未评审即开发</div></div>
+    <div class="k"><div class="n" style="color:#fa8c16">${data.review.pending.length}</div><div class="l">待评审积压</div></div>
+    <div class="k"><div class="n" style="color:#cf1322">${data.review.rejected.length}</div><div class="l">未通过仍推进</div></div>
+    <div class="k"><div class="n" style="color:#52c41a">${data.review.passed}</div><div class="l">已通过评审</div></div>
+  </div>`;
+  const revTail=r=>`<span style="color:#999">评审:${r.review||'待确认'} · ${_mtStageLabel(_mtStage(r))}</span>`;
+  const reviewSec=`<div class="mt-sec-h">✅ 需求评审情况</div>${revKpi}
+    <div class="mt-subh">🔴 未评审即进入开发（${data.review.bypass.length}）</div><div class="mt-focus">${_mtRepList(data.review.bypass,r=>_mtSimpleRow(r,revTail(r)))}</div>
+    <div class="mt-subh">🟠 待评审积压（${data.review.pending.length}）</div><div class="mt-focus">${_mtRepList(data.review.pending,r=>_mtSimpleRow(r,revTail(r)))}</div>`;
+  // ③ 开发进度
+  const progKpi=`<div class="mt-kpi mt-kpi-sm">
+    <div class="k"><div class="n" style="color:#722ed1">${data.avgProg}%</div><div class="l">平均进度</div></div>
+    <div class="k"><div class="n" style="color:#fa8c16">${data.progress.lagging.length}</div><div class="l">进度滞后</div></div>
+    <div class="k"><div class="n" style="color:#8c8c8c">${data.progress.stalled.length}</div><div class="l">停滞≥${MT_STALL_DAYS}天</div></div>
+    <div class="k"><div class="n" style="color:#1677ff">${data.progress.progDone.length}</div><div class="l">进度满未上线</div></div>
+  </div>`;
+  const progSec=`<div class="mt-sec-h">🚧 需求开发进度情况</div>${progKpi}
+    <div class="mt-subh">🟠 进度滞后（临近上线、进度偏低）（${data.progress.lagging.length}）</div><div class="mt-focus">${_mtRepList(data.progress.lagging,x=>_mtSimpleRow(x.r,`剩${x.dleft}天 · 仅${x.prog}%`))}</div>
+    <div class="mt-subh">⏸ 停滞（≥${MT_STALL_DAYS}天无进展）（${data.progress.stalled.length}）</div><div class="mt-focus">${_mtRepList(data.progress.stalled,x=>_mtSimpleRow(x.r,`停滞${x.days}天 · ${_mtStageLabel(_mtStage(x.r))}`))}</div>`;
+  // ④ 卡点
+  const chip=(o)=>Object.keys(o).length?Object.keys(o).map(k=>`<span class="mt-chip">${_escH(k)} <b>${o[k]}</b></span>`).join(''):'<span style="color:#bbb;font-size:12px">无</span>';
+  const blkKpi=`<div class="mt-kpi mt-kpi-sm">
+    <div class="k"><div class="n" style="color:#f5222d">${data.openBlk}</div><div class="l">开放卡点</div></div>
+    <div class="k"><div class="n" style="color:#52c41a">${data.blockers.resolved}</div><div class="l">已解决</div></div>
+    <div class="k"><div class="n" style="color:#cf1322">${data.overdueBlk}</div><div class="l">逾期卡点</div></div>
+  </div>`;
+  const blkSec=`<div class="mt-sec-h">🚦 卡点处理情况</div>${blkKpi}
+    <div class="mt-subh">按部门</div><div class="mt-chips">${chip(data.blockers.byDept)}</div>
+    <div class="mt-subh">按阶段</div><div class="mt-chips">${chip(data.blockers.byStage)}</div>
+    <div class="mt-subh">🕗 最久未解决 Top（${data.blockers.oldest.length}）</div><div class="mt-focus">${data.blockers.oldest.length?data.blockers.oldest.map(x=>`<div class="mt-frow" style="cursor:default"><span class="mt-fname">🚧 ${_escH(x.b.description)}</span><span class="mt-fown">${x.b.follower?_escH(x.b.follower):'<span style="color:#faad14">未指派</span>'}</span><span class="mt-ftail"><b style="color:#cf1322">已过 ${x.days} 天</b></span></div>`).join(''):'<div class="mt-empty">无 🎉</div>'}</div>`;
+  // ⑤ 每人
+  const pRows=data.people.map(p=>`<tr>
+    <td>${_escH(p.name)}${p.overloaded?' <span class="lc-badge" style="background:#fff1f0;color:#cf1322">超载</span>':''}</td>
+    <td>${p.total}</td><td style="color:#722ed1">${p.review||'-'}</td><td style="color:#1677ff">${p.dev||'-'}</td><td style="color:#fa8c16">${p.test||'-'}</td>
+    <td><span style="display:inline-flex;align-items:center;gap:5px">${_mtMiniBar(p.avg)}<span style="font-size:11px;color:#722ed1">${p.avg}%</span></span><div style="font-size:10px;color:#999">完成 ${p.done}/${p.total}</div></td>
+    <td>${p.score}</td>
+    <td>${p.blk?`<span style="color:#cf1322">${p.blk}${p.overdueBlk?`（${p.overdueBlk}逾期）`:''}</span>`:'-'}</td>
+    <td>${p.taskOverdue?`<span style="color:#f5222d;font-weight:600">${p.taskOverdue}</span>`:'-'}</td>
+  </tr>`).join('');
+  const peopleSec=`<div class="mt-sec-h">👥 每个人工作情况（${data.people.length}）</div>${data.people.length?`<div style="overflow-x:auto"><table class="mt-ptable"><thead><tr><th>成员</th><th>负责</th><th style="color:#722ed1">评审中</th><th style="color:#1677ff">开发中</th><th style="color:#fa8c16">测试中</th><th>平均进度/完成</th><th title="优先级加权 紧急×4/高×2/中×1/低×0.5">工作量</th><th>待处理卡点</th><th>任务逾期</th></tr></thead><tbody>${pRows}</tbody></table></div>`:'<div class="mt-empty">该范围内暂无进行中的个人任务</div>'}`;
+  // ⑥ AI 研判
+  const aiSec=`<div class="mt-sec-h">🤖 AI 综合研判</div>
+    <div style="margin-bottom:8px"><button class="btn btn-primary btn-sm" id="mtAiBtn" onclick="_mtGenReport()">🤖 生成 AI 研判</button><span style="font-size:11px;color:#aaa;margin-left:8px">基于上方精确指标由 Qwen 生成阶段研判/风险/每人点评/建议（数字不经 AI 计算）</span></div>
+    <div id="mtAiReport"></div>`;
+  return filterBar+signals+kpi+funnel+reviewSec+progSec+blkSec+peopleSec+aiSec;
+}
+async function _mtGenReport(){
+  const btn=document.getElementById('mtAiBtn'), box=document.getElementById('mtAiReport');
+  if(!box) return;
+  if(btn){ btn.disabled=true; btn.textContent='🤖 生成中…'; }
+  box.innerHTML='<div class="mt-empty">AI 正在分析，请稍候…（首次可能需要十几秒）</div>';
+  try{
+    const data=_mtReportData();
+    const facts=_mtReportFacts(data);
+    const res=await fetch('/api/ai?action=plan-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:_mtPlan||'全部计划', range:_mtDateRange, facts})});
+    const ct=res.headers.get('content-type')||'';
+    if(!ct.includes('application/json')){ await res.text().catch(()=>{}); throw new Error(res.status===404?'后端 /api/ai 路由未加载：请重启服务器（node server.js）或重新部署后再试':('后端返回了非 JSON（HTTP '+res.status+'），请确认 /api/ai 已部署')); }
+    const dj=await res.json();
+    if(!res.ok||dj.error) throw new Error(dj.error||('HTTP '+res.status));
+    const tok=(dj.inputTokens||0)+(dj.outputTokens||0);
+    box.innerHTML=`<div class="mt-ai-note">⚠ 以下为 AI 辅助解读，可能存在个别归纳偏差；<b>请以上方精确数据 / 每人明细表为准</b>。</div><div class="mt-ai-report">${_mtFmtAi(dj.summary)}</div><div style="font-size:11px;color:#bbb;margin-top:10px;border-top:1px dashed #eee;padding-top:6px">Qwen · 本次约 ${tok} tokens · 所有数字均由系统精确统计，AI 仅基于这些数字作文字研判</div>`;
+  }catch(e){
+    box.innerHTML=`<div class="mt-alert" style="background:#fff2f0;border-color:#ffccc7;color:#cf1322">AI 研判生成失败：${_escH(e.message||String(e))}（不影响上方数据看板）</div>`;
+  }finally{ if(btn){ btn.disabled=false; btn.textContent='🤖 生成 AI 研判'; } }
+}
+// KPI 钻取列表
+const MT_LIST_KINDS={
+  active:{title:'🔵 流程中需求', color:'#1677ff'},
+  shipped:{title:'✅ 已上线需求', color:'#52c41a'},
+  overdue:{title:'🔴 逾期需求', color:'#f5222d'},
+  stalled:{title:'⏸ 停滞需求', color:'#8c8c8c'},
+  bypass:{title:'🟠 未评审即开发', color:'#fa8c16'},
+  openblk:{title:'🚧 未解决卡点', color:'#f5222d'},
+  overdueblk:{title:'⚠ 逾期卡点', color:'#fa8c16'}
+};
+function _mtReqTail(r,k){
+  const prog=parseInt(r.progress)||0;
+  const sp=_mtStageProg(r);   // 生命周期当前阶段进度（与阶段标签同源，避免"开发完成·进度0%"矛盾）
+  const phase=_mtStagePhaseLabel(_mtStage(r),_mtStageStatus(r),sp);
+  if(k==='shipped') return `预计上线 ${r.deadline||'-'}`;
+  if(k==='overdue'){ const d=_mtDaysAgo(r.deadline); return `<span style="color:#f5222d;font-weight:600">逾期${d!=null?d+'天':''}</span> · ${r.deadline||''} · ${prog}%`; }
+  if(k==='stalled'){ const d=_mtLastActiveDays(r); return `停滞${d!=null?d+'天':''} · ${phase}`; }
+  if(k==='bypass') return `评审:${r.review||'待确认'} · ${phase}`;
+  return `${phase} · 进度${sp}%`;
+}
+function _mtBlkRow(b){
+  const c={'待处理':'#f5222d','协调中':'#fa8c16','已解决':'#52c41a'}[b.status]||'#f5222d';
+  const ov=b.expectedResolveAt && b.status!=='已解决' && b.expectedResolveAt<_lcToday();
+  const req=(Array.isArray(allData)?allData:[]).find(r=>r.id===b.reqId);
+  const rname=req?_escH(req.name||''):(b.reqId?'(需求已删除)':'(未关联需求)');
+  return `<div class="mt-frow" ${req?`onclick="openDetail('${req.id}')"`:'style="cursor:default"'}>
+    <span class="lc-badge" style="background:${c}22;color:${c}">${b.status}</span>
+    <span class="mt-fname" title="${_escH(b.description)}">🚧 ${_escH(b.description)}</span>
+    <span class="mt-fown">${b.follower?('处理人 '+_escH(b.follower)):'<span style="color:#faad14">未指派</span>'}</span>
+    <span class="mt-ftail">${rname}${b.expectedResolveAt?` · <span style="${ov?'color:#f5222d;font-weight:600':''}">预期 ${b.expectedResolveAt}${ov?' ⚠':''}</span>`:''}</span>
+  </div>`;
+}
+function _mtViewList(){
+  const k=_mtListKind||'active'; const cfg=MT_LIST_KINDS[k]||MT_LIST_KINDS.active;
+  const back=`<div style="margin-bottom:10px"><a onclick="mtSetView('overview')" style="color:#3370ff;cursor:pointer;font-size:13px">← 返回概览</a></div>`;
+  if(k==='openblk'||k==='overdueblk'){
+    let bs=_mtScopedBlockers().filter(b=>b.status!=='已解决');
+    if(k==='overdueblk') bs=bs.filter(b=>b.expectedResolveAt && b.expectedResolveAt<_lcToday());
+    bs=bs.slice().sort((a,b)=>{ const ao=a.expectedResolveAt||'9999', bo=b.expectedResolveAt||'9999'; return ao<bo?-1:ao>bo?1:0; });
+    return `${back}<div class="mt-sec-h" style="border-left-color:${cfg.color}">${cfg.title}（${bs.length}）</div><div class="mt-focus">${bs.length?bs.map(_mtBlkRow).join(''):'<div class="mt-empty">无 🎉</div>'}</div>`;
+  }
+  let list;
+  if(k==='shipped') list=_mtScopedReqs().filter(r=>r.status==='已上线');
+  else if(k==='overdue') list=_mtWarnings().overdue.map(x=>x.r);
+  else if(k==='stalled') list=_mtWarnings().stalled.map(x=>x.r);
+  else if(k==='bypass') list=_mtScopedReqs().filter(r=>_mtIsActive(r)&&hasPerson(r.person)&&r.review!=='已通过');
+  else list=_mtScopedReqs().filter(r=>_mtIsActive(r));
+  if(k!=='overdue'&&k!=='stalled') list=list.slice().sort((a,b)=>((MT_PRI_ORDER[a.priority]==null?9:MT_PRI_ORDER[a.priority])-(MT_PRI_ORDER[b.priority]==null?9:MT_PRI_ORDER[b.priority])));
+  return `${back}<div class="mt-sec-h" style="border-left-color:${cfg.color}">${cfg.title}（${list.length}）</div><div class="mt-focus">${list.length?list.map(r=>_mtSimpleRow(r,_mtReqTail(r,k))).join(''):'<div class="mt-empty">无</div>'}</div>`;
+}
+function renderAdminPanel(){
+  const mc=document.getElementById('mainContent');
+  const d=computeAllTodos();
+  const w=_mtWarnings();
+  const bypass=_mtScopedReqs().filter(r=>_mtIsActive(r)&&hasPerson(r.person)&&r.review!=='已通过').length;
+  const shipped=_mtScopedReqs().filter(r=>r.status==='已上线').length;
+  const kpi=`<div class="mt-kpi">
+    <div class="k mt-k-click" onclick="mtShowList('active')"><div class="n" style="color:#1677ff">${d.activeReqs}</div><div class="l">流程中需求</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('shipped')"><div class="n" style="color:#52c41a">${shipped}</div><div class="l">✅ 已上线</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('overdue')"><div class="n" style="color:#f5222d">${w.overdue.length}</div><div class="l">逾期需求</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('stalled')"><div class="n" style="color:#8c8c8c">${w.stalled.length}</div><div class="l">停滞需求</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('bypass')"><div class="n" style="color:#fa8c16">${bypass}</div><div class="l">未评审即开发</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('openblk')"><div class="n" style="color:#f5222d">${d.openBlk}</div><div class="l">未解决卡点</div></div>
+    <div class="k mt-k-click" onclick="mtShowList('overdueblk')"><div class="n" style="color:#fa8c16">${d.overdueBlk}</div><div class="l">逾期卡点</div></div>
+  </div>`;
+  const views=[['overview','📊 概览'],['report','📄 计划报告'],['people','👥 按人'],['stage','🏊 按阶段'],['priority','🎯 重点需求'],['warn','⚠️ 预警'],['review','✅ 评审合规'],['health','🩺 数据体检']];
+  const toggle=`<div class="mt-view-toggle">${views.map(v=>`<button class="${_mtView===v[0]?'on':''}" onclick="mtSetView('${v[0]}')">${v[1]}</button>`).join('')}</div>`;
+  let body;
+  switch(_mtView){
+    case 'stage': body=_mtViewStage(d); break;
+    case 'priority': body=_mtViewPriority(); break;
+    case 'warn': body=_mtViewWarn(); break;
+    case 'review': body=_mtViewReview(); break;
+    case 'health': body=_mtViewHealth(); break;
+    case 'report': body=_mtViewReport(); break;
+    case 'list': body=_mtViewList(); break;
+    case 'people': body=_mtViewPeople(d); break;
+    case 'overview': default: body=_mtViewOverview(d); break;
+  }
+  mc.innerHTML=`
+    <div class="mt-head"><div><span style="font-size:16px;font-weight:700">📊 管理面板</span><span id="mtBackfillHint" style="font-size:12px;color:#fa8c16;margin-left:10px"></span></div>
+      <div style="display:flex;align-items:center;gap:10px">${_mtPlanSelect()}<button class="btn btn-ghost btn-sm" onclick="mtBackfillClaims()" title="把已认领但仍停在提报/研发评审的需求推进到开发/测试阶段">🧩 补齐认领阶段</button><button class="btn btn-ghost btn-sm" onclick="loadMyTodos()">🔄 刷新</button></div></div>
+    ${toggle}
+    ${_mtView==='report'?'':kpi}
+    ${body}`;
+  enforceReadonly();
+}
+
+// 阶段 → 我该做的动作（评审/开发/测试）
+const MYTODO_ACTION={
+  '研发评审':{label:'待我评审', short:'评审', icon:'🔍', color:'#722ed1', prog:'评审进度'},
+  '开发认领':{label:'待我开发', short:'开发', icon:'💻', color:'#1677ff', prog:'开发进度'},
+  '测试认领':{label:'待我测试', short:'测试', icon:'🧪', color:'#fa8c16', prog:'测试进度'},
+  '提报':{label:'待我提报', short:'提报', icon:'📝', color:'#8c8c8c', prog:'进度'}
+};
+const MYTODO_ORDER=['研发评审','开发认领','测试认领','提报'];
+function renderMyTodos(){
+  if(_currentUser && _currentUser.role==='admin'){ renderAdminPanel(); return; }
+  const mc=document.getElementById('mainContent');
+  const {stageTodos, blockerTodos}=computeMyTodos();
+  const meName=[..._myNames()][0]||'当前账号';
+  const _blkColor={'待处理':'#f5222d','协调中':'#fa8c16','已解决':'#52c41a'};
+
+  // 按“我承担的阶段”分组：评审 / 开发 / 测试
+  const byStage={}; stageTodos.forEach(t=>{ (byStage[t.stage]=byStage[t.stage]||[]).push(t); });
+  // 阶段任务卡（泳道内竖排）
+  const taskCard=(t)=>{
+    const r=t.req; const a=MYTODO_ACTION[t.stage]||MYTODO_ACTION['开发认领']; const sc=a.color;
+    return `<div class="mt-lane-card" onclick="openDetail('${r.id}')">
+      <div class="t">${_escH(r.name||'(未命名)')}</div>
+      <div class="m"><b>${_escH(r.no||'')}</b> ${priTag(r.priority)} <span style="color:#888">${_escH(r.status||'-')}</span></div>
+      <div class="pb"><i style="width:${t.progress||0}%;background:${sc}"></i></div>
+      <div class="pp" style="color:${sc}">${a.prog} ${t.progress||0}%</div>
+    </div>`;
+  };
+  // 卡点卡
+  const blkCard=(t)=>{
+    const b=t.blocker; const c=_blkColor[b.status]||'#f5222d';
+    const ov=b.expectedResolveAt && b.status!=='已解决' && b.expectedResolveAt<_lcToday();
+    const rname=t.req?_escH(t.req.name||''):'(需求已删除)';
+    return `<div class="mt-lane-card" ${t.req?`onclick="openDetail('${t.req.id}')"`:'style="cursor:default;opacity:.75"'}>
+      <div class="t">🚧 ${_escH(b.description)}</div>
+      <div class="m">需求：${rname}${b.stage?` · ${_escH(b.stage)}`:''}</div>
+      ${b.expectedResolveAt?`<div class="pp" style="color:${ov?'#cf1322':'#888'}">${ov?'⚠逾期 ':''}预期解决 ${b.expectedResolveAt}</div>`:''}
+      <div style="margin-top:4px"><span class="lc-badge" style="background:${c}22;color:${c}">${b.status}</span></div>
+    </div>`;
+  };
+  // 组装横向泳道列（评审/开发/测试/提报 + 卡点），只显示有内容的列
+  const cols=[];
+  MYTODO_ORDER.forEach(stg=>{ const arr=byStage[stg]; if(!arr||!arr.length) return; const a=MYTODO_ACTION[stg];
+    cols.push(`<div class="mt-lane"><div class="mt-lane-h" style="border-top-color:${a.color}"><span style="color:${a.color}">${a.icon} ${a.label}</span><b>${arr.length}</b></div><div class="mt-lane-body">${arr.map(taskCard).join('')}</div></div>`);
+  });
+  if(blockerTodos.length){
+    cols.push(`<div class="mt-lane"><div class="mt-lane-h" style="border-top-color:#f5222d"><span style="color:#f5222d">🚧 待我处理的卡点</span><b>${blockerTodos.length}</b></div><div class="mt-lane-body">${blockerTodos.map(blkCard).join('')}</div></div>`);
+  }
+
+  // 头部分类计数：待评审 X · 待开发 Y · 待测试 Z · 卡点 W
+  const cnt=k=>(byStage[k]||[]).length;
+  const parts=[]; MYTODO_ORDER.forEach(stg=>{ if(cnt(stg)) parts.push(MYTODO_ACTION[stg].label.replace('待我','待')+' '+cnt(stg)); });
+  if(blockerTodos.length) parts.push('卡点 '+blockerTodos.length);
+  const summary=parts.length?parts.join(' · '):'暂无待办';
+  const empty=(stageTodos.length+blockerTodos.length===0);
+
+  mc.innerHTML=`
+    <div class="mt-head">
+      <div><span style="font-size:16px;font-weight:700">📌 ${_escH(meName)} 的待办</span>
+        <span style="font-size:12px;color:#888;margin-left:8px">${summary}</span></div>
+      <div style="display:flex;align-items:center;gap:10px">${_mtPlanSelect()}<button class="btn btn-ghost btn-sm" onclick="loadMyTodos()">🔄 刷新</button></div>
+    </div>
+    ${empty?'<div style="background:#f7f8fa;border-radius:8px;padding:14px;color:#888;font-size:13px">当前账号（'+_escH(meName)+'）名下暂无待办。任务按你在各阶段的角色匹配：<b>评审</b>看指派评审人、<b>开发</b>看认领人、<b>测试</b>看指派测试人、<b>卡点</b>看处理人。</div>'
+      :`<div class="mt-todo-lanes">${cols.join('')}</div>`}`;
+  enforceReadonly();
+}
+
 </script>
 
 <!-- 问题记录详情抽屉 -->
@@ -4182,5 +5579,65 @@ async function deleteUser(id) {
     </div>
   </div>
 </div>
+
+<!-- 生命周期 成员自动补全 -->
+<datalist id="lcMembersList"></datalist>
+
+<!-- 生命周期 · 阶段编辑 弹窗 -->
+<div class="modal-bg" id="lifeStageModal" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h2 id="lifeStageTitle">编辑阶段</h2>
+      <button class="modal-close" onclick="lcClose('lifeStageModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="lsAutoHint" style="display:none;font-size:12px;color:#52c41a;background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:8px 10px;margin-bottom:12px"></div>
+      <div class="form-row"><label>负责人及个人进度 <span style="color:red">*</span></label>
+        <div id="lsMembers" class="ls-mbox"></div>
+        <div id="lsAddRow" style="display:flex;gap:6px;margin-top:8px">
+          <input id="lsMemberInput" list="lcMembersList" placeholder="输入姓名，回车或点「添加成员」" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();lsAddMember();}">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="lsAddMember()">添加成员</button>
+        </div>
+      </div>
+      <div class="form-row"><label>阶段状态 <span style="color:#aaa;font-weight:400;font-size:11px">（选「已完成」自动把各人进度置100%）</span></label>
+        <select id="lsStatus" onchange="lsStatusSync()"><option>未开始</option><option>进行中</option><option>已完成</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="lcClose('lifeStageModal')">取消</button>
+      <button class="btn btn-primary" id="lsSaveBtn" onclick="lcSaveStage()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 生命周期 · 卡点 弹窗 -->
+<div class="modal-bg" id="lifeBlockerModal" style="display:none">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <h2 id="lifeBlockerTitle">新增卡点</h2>
+      <button class="modal-close" onclick="lcClose('lifeBlockerModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row"><label>归属部门</label><select id="lbDept"><option>销售部</option><option>研发部</option><option>开发部</option><option>测试部</option><option>产品部</option><option>其他</option></select></div>
+        <div class="form-row"><label>所属阶段</label><select id="lbStage"><option value="">请选择</option><option>销售提报</option><option>研发评审</option><option>开发认领</option><option>测试认领</option></select></div>
+      </div>
+      <div class="form-row"><label>卡点描述 <span style="color:red">*</span></label><textarea id="lbDesc" placeholder="卡在哪里 / 阻塞原因"></textarea></div>
+      <div class="form-grid">
+        <div class="form-row"><label>影响范围</label><input id="lbImpact" placeholder="如：阻塞联调、影响上线"></div>
+        <div class="form-row"><label>问题产生时间</label><input id="lbOccurred" type="date"></div>
+        <div class="form-row"><label>待协调资源</label><input id="lbResources" placeholder="如：测试环境、人力"></div>
+        <div class="form-row"><label>预期解决节点</label><input id="lbResolve" type="date"></div>
+        <div class="form-row"><label>处理人 <span style="color:red">*</span></label><input id="lbFollower" list="lcMembersList" placeholder="负责处理该卡点的人"></div>
+        <div class="form-row"><label>状态</label><select id="lbStatus"><option>待处理</option><option>协调中</option><option>已解决</option></select></div>
+      </div>
+      <div class="form-row"><label>处置进展</label><textarea id="lbNote" style="min-height:54px" placeholder="当前处置进展/协调情况"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="lcClose('lifeBlockerModal')">取消</button>
+      <button class="btn btn-primary" id="lbSaveBtn" onclick="lcSaveBlocker()">保存</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
