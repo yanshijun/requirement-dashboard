@@ -1118,15 +1118,18 @@ function stageCell(d){
   const members = _lcStageMembers(d, cur, st);
   const sc = _lcStageColorList[cur] || '#8c8c8c';
   const prog = _lcStageProgress(members, st.status);
-  // 每人一行：姓名 + 各自进度条 + 百分比（完成显示 ✓）——多人任务每个人的进度/完成情况一目了然，如实取各人进度
-  const rows = members.length ? members.map(m=>{
+  // 每人一行：姓名 + 各自进度条 + 百分比（完成显示 ✓）。有写权限且非「提报」阶段时，点百分比可直接改进度（即时同步+留痕）
+  const editable = (typeof canWrite==='function') && canWrite('list') && cur!=='提报';
+  const rows = members.length ? members.map((m,mi)=>{
     const p = Math.max(0, Math.min(100, parseInt(m.progress)||0));
     const mDone = p>=100;
     const barColor = mDone?'#52c41a':(p>0?'#1677ff':'#d0d4db');
+    const pctStyle = `font-size:10px;color:${mDone?'#52c41a':'#888'};width:34px;text-align:right`+(editable?';cursor:pointer;text-decoration:underline dotted #bbb':'');
+    const pctAttr = editable?` onclick="lcQuickEditProgress(event,'${d.id}','${cur}',${mi})" title="点击修改「${_escH(m.name)}」的进度"`:'';
     return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">
       <span style="font-size:11px;color:#555;width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(m.name)}">${_escH(m.name)}</span>
       <div style="flex:1;height:5px;background:#eef0f4;border-radius:3px;overflow:hidden;max-width:60px"><div style="width:${p}%;height:100%;background:${barColor}"></div></div>
-      <span style="font-size:10px;color:${mDone?'#52c41a':'#888'};width:30px;text-align:right">${mDone?'✓完成':p+'%'}</span>
+      <span style="${pctStyle}"${pctAttr}>${mDone?'✓完成':p+'%'}${editable?' ✎':''}</span>
     </div>`;
   }).join('') : '<div style="font-size:11px;color:#bbb;margin-top:2px">未指派</div>';
   return `<div style="min-width:150px">
@@ -4427,6 +4430,8 @@ function _lcStageMembers(reqLike, stage, storedStage){
   return stored.map(m=>({name:m.name,progress:parseInt(m.progress)||0}));
 }
 function _lcStageProgress(members,status){ if(!members||!members.length) return status==='已完成'?100:0; return Math.round(members.reduce((s,m)=>s+(parseInt(m.progress)||0),0)/members.length); }
+// 阶段级「计划完成日」逾期：设了 due、未完成、且已过今天
+function _lcStageDueOverdue(st){ return !!(st && st.due && st.status!=='已完成' && String(st.due).slice(0,10) < _lcToday()); }
 // 生命周期「开发认领」阶段进度（用于回写飞书「开发进度」字段）：
 //   还没推进到开发阶段→0；正处于开发阶段→负责人平均进度(或状态已完成=100)；已推进过开发阶段→100
 function _lcDevProgress(data, reqLike){
@@ -4457,30 +4462,67 @@ function _lcReviewDone(data){
   return LC_STAGES.indexOf(data.currentStage||'提报') > LC_STAGES.indexOf('研发评审');
 }
 // 阶段变化后，把「开发进度」和「开发状态」一起对齐回写到需求（无变化跳过、失败不阻塞）
-async function _lcSyncDevProgress(){
-  if(!_lcReqId||!_lcData) return;
-  const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===_lcReqId);
-  if(!r) return;
-  const dev=_lcDevProgress(_lcData,{submitter:_lcDefaults.submitter, person:_lcDefaults.person});
-  const newStatus=_lcAlignedStatus(_lcData, r.status);
-  const newReview=_lcReviewDone(_lcData) ? '已通过' : r.review;   // 评审阶段完成 → 评审列=已通过
+// 把某需求的开发进度/状态/评审按生命周期对齐回写（详情同步 + 列表内联改进度 共用）；有变化才写，返回是否变化
+async function _lcAlignReq(reqId, lifeData){
+  const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===reqId);
+  if(!r||!lifeData) return false;
+  const dev=_lcDevProgress(lifeData,{submitter:r.submitter, person:r.person});
+  const newStatus=_lcAlignedStatus(lifeData, r.status);
+  const newReview=_lcReviewDone(lifeData) ? '已通过' : r.review;   // 评审阶段完成 → 评审列=已通过
   const progChanged=(dev!=null)&&((parseInt(r.progress)||0)!==dev);
   const statusChanged=newStatus!==r.status;
   const reviewChanged=newReview!==r.review;
-  if(!progChanged && !statusChanged && !reviewChanged) return;   // 都没变，不写
+  if(!progChanged && !statusChanged && !reviewChanged) return false;   // 都没变，不写
   const payload={...r};                                       // 展开完整对象只改进度/状态/评审，避免清空其他字段
   payload.operator=_lcOperator(); payload.source='auto-align';   // 自动对齐留痕可追溯、可区分
   if(progChanged) payload.progress=dev;
   if(statusChanged) payload.status=newStatus;
   if(reviewChanged) payload.review=newReview;
+  await api('update', payload);
+  if(progChanged) r.progress=dev;
+  if(statusChanged) r.status=newStatus;
+  if(reviewChanged) r.review=newReview;
+  return true;
+}
+async function _lcSyncDevProgress(){
+  if(!_lcReqId||!_lcData) return;
   try{
-    await api('update', payload);
-    if(progChanged) r.progress=dev;
-    if(statusChanged) r.status=newStatus;
-    if(reviewChanged) r.review=newReview;
-    render();                                         // 刷新列表「进度」「状态」「评审」「当前阶段」列
-    if(MYTODO.loaded) loadMyTodos(true);              // 刷新管理面板/待办
+    const changed=await _lcAlignReq(_lcReqId, _lcData);
+    if(changed){ render(); if(MYTODO.loaded) loadMyTodos(true); }   // 刷新列表「进度/状态/评审/当前阶段」+ 面板/待办
   }catch(e){ console.warn('阶段同步(进度/状态/评审)回写失败:', e); }
+}
+// 列表「当前阶段」列内联改进度：点某成员% → 输入新值 → 存生命周期(自动留痕) → 对齐回写 → 刷新
+function lcQuickEditProgress(ev, id, stage, idx){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  if(!canWrite('list')) return;
+  const life=MYTODO.lifeMap && MYTODO.lifeMap[id];
+  const req=(Array.isArray(allData)?allData:[]).find(r=>r.id===id);
+  const st=life && life.stages && life.stages[stage];
+  const members=_lcStageMembers(req||{}, stage, st||{});
+  const m=members[idx]; if(!m) return;
+  const curVal=parseInt(m.progress)||0;
+  const v=prompt(`修改「${m.name}」在「${stage}」阶段的进度（0–100）：`, String(curVal));
+  if(v===null) return;
+  const val=Math.max(0, Math.min(100, parseInt(v)||0));
+  if(val===curVal) return;
+  lcQuickSetProgress(id, stage, m.name, val);
+}
+async function lcQuickSetProgress(id, stage, name, val){
+  const life=MYTODO.lifeMap && MYTODO.lifeMap[id];
+  const req=(Array.isArray(allData)?allData:[]).find(r=>r.id===id);
+  if(!life || !life.stages) return;
+  const stages=JSON.parse(JSON.stringify(life.stages));
+  const st=stages[stage]||{status:'进行中',members:[],due:''};
+  // 显示成员（开发认领来自认领人），改目标成员进度，整体作为存储成员（与详情弹窗保存口径一致）
+  const members=_lcStageMembers(req||{}, stage, st).map(m=>({name:m.name, progress: m.name===name ? val : (parseInt(m.progress)||0)}));
+  st.members = stage==='提报' ? [] : members;
+  stages[stage]=st;
+  try{
+    await lcApi('lifecycle-save',{reqId:id, currentStage:life.currentStage, stages, operator:_lcOperator()});  // 后端 auditStageDiff 自动留痕（阶段·姓名进度 X%→Y%）
+    if(MYTODO.lifeMap) MYTODO.lifeMap[id]=Object.assign({}, life, {stages});   // 本地即时更新
+    await _lcAlignReq(id, {currentStage:life.currentStage, stages});           // 回写开发进度/状态/评审
+    await loadMyTodos(true);                                                    // 刷新 lifeMap + 重渲染列表/面板
+  }catch(e){ alert('进度保存失败：'+(e.message||e)); }
 }
 function _lcToday(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function _lcOperator(){ return (_currentUser && (_currentUser.displayName||_currentUser.display_name||_currentUser.name||_currentUser.username)) || ''; }
@@ -4559,6 +4601,7 @@ function renderLifecycle(){
       <div class="lc-sowner">${members.length?members.map(m=>`<span class="lc-owner-chip">${_escH(m.name)}</span>`).join(''):'<span class="none">未指派</span>'}${isAuto?' <span title="自动关联需求'+(s==='提报'?'提出人':'认领人')+'" style="color:#52c41a;font-size:9px">🔗</span>':''}</div>
       <div class="lc-prog"><i style="width:${prog}%;background:${barColor}"></i></div>
       <div class="lc-spct">${prog}%${members.length>1?' · '+members.length+'人':''}</div>
+      ${st.due?`<div style="font-size:10px;margin-top:2px;color:${_lcStageDueOverdue(st)?'#f5222d':'#8c8c8c'}">📅 ${st.due}${_lcStageDueOverdue(st)?' ⚠逾期'+(_mtDaysAgo(st.due)||0)+'天':''}</div>`:''}
       ${hasBlk?`<div class="lc-sblk"><span class="b">🚧 ${openBlkByStage[s]}</span></div>`:''}
       ${canW?`<div class="lc-sbtns"><button onclick="lcEditStage('${s}')">编辑</button>${i===curIdx+1?`<button class="adv" onclick="lcAdvance('${s}')">推进→</button>`:''}</div>`:''}
     </div>`;
@@ -4649,6 +4692,7 @@ function lcEditStage(stageKey){
   _lsMembers=_lcStageMembers(reqLike, stageKey, st).map(m=>({name:m.name, progress:m.progress}));
   document.getElementById('lsMemberInput').value=''; renderLsMembers();
   document.getElementById('lsStatus').value=st.status||'未开始';
+  document.getElementById('lsDue').value=st.due||'';
   document.getElementById('lifeStageModal').style.display='flex';
 }
 async function lcSaveStage(){
@@ -4658,7 +4702,8 @@ async function lcSaveStage(){
   const stages=JSON.parse(JSON.stringify(_lcData.stages));
   stages[_lcStageEditKey]={
     status:document.getElementById('lsStatus').value,
-    members: _lcStageEditKey==='提报' ? [] : _lsMembers.map(m=>({name:m.name, progress:parseInt(m.progress)||0}))
+    members: _lcStageEditKey==='提报' ? [] : _lsMembers.map(m=>({name:m.name, progress:parseInt(m.progress)||0})),
+    due: document.getElementById('lsDue').value||''
   };
   const btn=document.getElementById('lsSaveBtn'); btn.disabled=true; btn.textContent='保存中…';
   try{
@@ -5172,11 +5217,15 @@ function _mtReportData(){
     }).sort((a,b)=>b.score-a.score);
     // 阶段管线
     const pipeline={}; LC_STAGES.forEach(s=>pipeline[s]=d.stageDist[s]||0); pipeline['已上线']=shipped; if(paused) pipeline['已暂缓']=paused;
+    // 分阶段逾期：按各阶段「计划完成日(due)」判定（评审/开发/测试各自独立）
+    const stageOverdue={'研发评审':[],'开发认领':[],'测试认领':[]};
+    reqs.forEach(r=>{ if(!_mtIsActive(r)) return; const life=MYTODO.lifeMap&&MYTODO.lifeMap[r.id]; if(!life||!life.stages) return; ['研发评审','开发认领','测试认领'].forEach(s=>{ const st=life.stages[s]; if(_lcStageDueOverdue(st)) stageOverdue[s].push({r, due:st.due, days:_mtDaysAgo(st.due)||0}); }); });
+    const stageOverdueTotal=stageOverdue['研发评审'].length+stageOverdue['开发认领'].length+stageOverdue['测试认领'].length;
     return { total:reqs.length, active:d.activeReqs, shipped, paused, avgProg, pipeline,
       review:{bypass, pending, rejected, passed},
       progress:{lagging:w.lagging, stalled:w.stalled, progDone},
       blockers:{open:openBlk, resolved:resolvedBlk, overdue:overdueBlk, byDept, byStage, oldest},
-      overdue:{reqs:w.overdue}, people, openBlk:d.openBlk, overdueBlk:d.overdueBlk };
+      overdue:{reqs:w.overdue}, stageOverdue, stageOverdueTotal, people, openBlk:d.openBlk, overdueBlk:d.overdueBlk };
   } finally { _mtRangeOn=false; }
 }
 // 红黄绿信号灯（阈值可调）
@@ -5184,7 +5233,7 @@ function _mtReportSignals(data){
   const laggingN=data.progress.lagging.length, stalledN=data.progress.stalled.length, overdueN=data.overdue.reqs.length, bypassN=data.review.bypass.length;
   return [
     {title:'进度健康', level:data.avgProg>=70?'green':(data.avgProg>=40?'amber':'red'), text:`平均进度 ${data.avgProg}%${laggingN?` · ${laggingN} 条滞后`:''}`},
-    {title:'逾期风险', level:overdueN===0?'green':(overdueN<=3?'amber':'red'), text:overdueN?`${overdueN} 条需求逾期`:'无逾期需求'},
+    {title:'逾期风险', level:(overdueN+data.stageOverdueTotal)===0?'green':((overdueN+data.stageOverdueTotal)<=3?'amber':'red'), text:(overdueN||data.stageOverdueTotal)?`${overdueN} 需求逾期 · ${data.stageOverdueTotal} 阶段逾期`:'无逾期'},
     {title:'卡点压力', level:data.openBlk===0?'green':(data.overdueBlk===0?'amber':'red'), text:data.openBlk?`${data.openBlk} 个开放${data.overdueBlk?`，${data.overdueBlk} 逾期`:''}`:'无开放卡点'},
     {title:'评审合规', level:bypassN===0?'green':(bypassN<=2?'amber':'red'), text:bypassN?`${bypassN} 条未评审即开发`:'流程合规'},
     {title:'推进活跃', level:stalledN===0?'green':(stalledN<=3?'amber':'red'), text:stalledN?`${stalledN} 条停滞≥${MT_STALL_DAYS}天`:'无停滞'}
@@ -5205,6 +5254,8 @@ function _mtReportFacts(data){
   data.blockers.oldest.slice(0,6).forEach(x=>f.push(`  · 最久未解决卡点：「${x.b.description}」，处理人 ${x.b.follower||'未指派'}，已过 ${x.days} 天。`));
   f.push(`【逾期需求】共 ${data.overdue.reqs.length} 个（已过预计上线日期且未上线）。`);
   data.overdue.reqs.slice(0,10).forEach(x=>f.push(`  · 逾期：${nm(x.r)}，逾期 ${x.days} 天，当前阶段进度 ${_mtStageProg(x.r)}%。`));
+  f.push(`【分阶段逾期】(按各阶段「计划完成日」判定) 评审逾期 ${data.stageOverdue['研发评审'].length} 个；开发逾期 ${data.stageOverdue['开发认领'].length} 个；测试逾期 ${data.stageOverdue['测试认领'].length} 个。`);
+  [['研发评审','评审'],['开发认领','开发'],['测试认领','测试']].forEach(function(p){ data.stageOverdue[p[0]].slice(0,8).forEach(x=>f.push(`  · ${p[1]}逾期：${nm(x.r)}，计划完成 ${x.due}，已逾期 ${x.days} 天。`)); });
   f.push(`【每个人工作情况】共 ${data.people.length} 人（负责量=优先级加权前的在办任务数；工作量分=按优先级加权）。`);
   data.people.forEach(p=>f.push(`  · ${p.name}：负责 ${p.total} 个（其中评审中 ${p.review}、开发中 ${p.dev}、测试中 ${p.test}），平均进度 ${p.avg}%，已完成 ${p.done} 个，工作量分 ${p.score}，待处理卡点 ${p.blk} 个${p.overdueBlk?`（其中逾期 ${p.overdueBlk} 个）`:''}，本人任务逾期 ${p.taskOverdue} 个${p.overloaded?'，【已超载】':''}。`));
   return f;
@@ -5252,6 +5303,19 @@ function _mtViewReport(){
   const progSec=`<div class="mt-sec-h">🚧 需求开发进度情况</div>${progKpi}
     <div class="mt-subh">🟠 进度滞后（临近上线、进度偏低）（${data.progress.lagging.length}）</div><div class="mt-focus">${_mtRepList(data.progress.lagging,x=>_mtSimpleRow(x.r,`剩${x.dleft}天 · 仅${x.prog}%`))}</div>
     <div class="mt-subh">⏸ 停滞（≥${MT_STALL_DAYS}天无进展）（${data.progress.stalled.length}）</div><div class="mt-focus">${_mtRepList(data.progress.stalled,x=>_mtSimpleRow(x.r,`停滞${x.days}天 · ${_mtStageLabel(_mtStage(x.r))}`))}</div>`;
+  // ③.5 分阶段逾期（按各阶段「计划完成日」判定，评审/开发/测试各自独立）
+  const stod=data.stageOverdue;
+  const stodTail=x=>`计划完成 ${x.due} · <b style="color:#f5222d">逾期${x.days}天</b>`;
+  const stodSec=`<div class="mt-sec-h">⏱ 分阶段逾期（按各阶段「计划完成日」判定）</div>
+    <div class="mt-kpi mt-kpi-sm">
+      <div class="k"><div class="n" style="color:#722ed1">${stod['研发评审'].length}</div><div class="l">评审逾期</div></div>
+      <div class="k"><div class="n" style="color:#1677ff">${stod['开发认领'].length}</div><div class="l">开发逾期</div></div>
+      <div class="k"><div class="n" style="color:#fa8c16">${stod['测试认领'].length}</div><div class="l">测试逾期</div></div>
+    </div>
+    <div class="mt-subh">🟣 评审逾期（${stod['研发评审'].length}）</div><div class="mt-focus">${_mtRepList(stod['研发评审'],x=>_mtSimpleRow(x.r,stodTail(x)))}</div>
+    <div class="mt-subh">🔵 开发逾期（${stod['开发认领'].length}）</div><div class="mt-focus">${_mtRepList(stod['开发认领'],x=>_mtSimpleRow(x.r,stodTail(x)))}</div>
+    <div class="mt-subh">🟠 测试逾期（${stod['测试认领'].length}）</div><div class="mt-focus">${_mtRepList(stod['测试认领'],x=>_mtSimpleRow(x.r,stodTail(x)))}</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:8px">提示：需先在需求详情的生命周期里给对应阶段设「计划完成日」，此处才会统计。</div>`;
   // ④ 卡点
   const chip=(o)=>Object.keys(o).length?Object.keys(o).map(k=>`<span class="mt-chip">${_escH(k)} <b>${o[k]}</b></span>`).join(''):'<span style="color:#bbb;font-size:12px">无</span>';
   const blkKpi=`<div class="mt-kpi mt-kpi-sm">
@@ -5277,7 +5341,7 @@ function _mtViewReport(){
   const aiSec=`<div class="mt-sec-h">🤖 AI 综合研判</div>
     <div style="margin-bottom:8px"><button class="btn btn-primary btn-sm" id="mtAiBtn" onclick="_mtGenReport()">🤖 生成 AI 研判</button><span style="font-size:11px;color:#aaa;margin-left:8px">基于上方精确指标由 Qwen 生成阶段研判/风险/每人点评/建议（数字不经 AI 计算）</span></div>
     <div id="mtAiReport"></div>`;
-  return filterBar+signals+kpi+funnel+reviewSec+progSec+blkSec+peopleSec+aiSec;
+  return filterBar+signals+kpi+funnel+reviewSec+progSec+stodSec+blkSec+peopleSec+aiSec;
 }
 async function _mtGenReport(){
   const btn=document.getElementById('mtAiBtn'), box=document.getElementById('mtAiReport');
@@ -5601,6 +5665,8 @@ function renderMyTodos(){
       </div>
       <div class="form-row"><label>阶段状态 <span style="color:#aaa;font-weight:400;font-size:11px">（选「已完成」自动把各人进度置100%）</span></label>
         <select id="lsStatus" onchange="lsStatusSync()"><option>未开始</option><option>进行中</option><option>已完成</option></select></div>
+      <div class="form-row"><label>计划完成日 <span style="color:#aaa;font-weight:400;font-size:11px">（本阶段应完成的日期；过期未完成即"本阶段逾期"，可留空）</span></label>
+        <input id="lsDue" type="date"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="lcClose('lifeStageModal')">取消</button>

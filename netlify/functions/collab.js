@@ -29,7 +29,7 @@ const STAGES = ['提报', '研发评审', '开发认领', '测试认领'];
 // 缺省生命周期：提报默认已完成(需求已提交)，其余未开始；每阶段成员各自进度
 function defaultStages() {
   const o = {};
-  STAGES.forEach((s, i) => { o[s] = { status: i === 0 ? '已完成' : '未开始', members: [] }; });
+  STAGES.forEach((s, i) => { o[s] = { status: i === 0 ? '已完成' : '未开始', members: [], due: '' }; });
   return o;
 }
 function normMembers(raw) {
@@ -60,7 +60,7 @@ function normStages(raw) {
     } else {
       members = [];
     }
-    base[s] = { status: cur.status || base[s].status, members };
+    base[s] = { status: cur.status || base[s].status, members, due: (typeof cur.due === 'string' ? cur.due.slice(0, 10) : '') };
   });
   return base;
 }
@@ -82,6 +82,7 @@ function auditStageDiff(reqId, oldStages, newStages, operator) {
     const o = oldStages[s] || { status: '未开始', members: [] };
     const n = newStages[s] || { status: '未开始', members: [] };
     if ((o.status || '') !== (n.status || '')) out.push({ reqId, entityType: 'stage', action: 'stage-edit', field: `${s}·状态`, oldValue: o.status || '', newValue: n.status || '', operator });
+    if ((o.due || '') !== (n.due || '')) out.push({ reqId, entityType: 'stage', action: 'stage-edit', field: `${s}·计划完成日`, oldValue: o.due || '未设', newValue: n.due || '未设', operator });
     const om = {}; (o.members || []).forEach(m => om[m.name] = parseInt(m.progress) || 0);
     const nm = {}; (n.members || []).forEach(m => nm[m.name] = parseInt(m.progress) || 0);
     Object.keys(nm).forEach(name => {

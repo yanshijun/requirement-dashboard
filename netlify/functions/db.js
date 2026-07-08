@@ -18,7 +18,7 @@ function getPool() {
   return pool;
 }
 
-async function initTables() {
+async function _initTablesOnce() {
   const conn = await getPool().getConnection();
   try {
     await conn.execute(`
@@ -346,6 +346,15 @@ async function initTables() {
   } finally {
     conn.release();
   }
+}
+
+let _initPromise = null;
+// 只在进程生命周期内初始化一次：避免每个 API 请求都重跑 ~16 张 CREATE TABLE。
+// 远程公网 MySQL 高延迟时，每请求重建会累积成多秒卡顿（表现为"生命周期一直在加载"）。
+// 表用 IF NOT EXISTS，跑一次即可；失败则清空缓存以便下次重试。
+function initTables() {
+  if (!_initPromise) _initPromise = _initTablesOnce().catch(e => { _initPromise = null; throw e; });
+  return _initPromise;
 }
 
 module.exports = { getPool, initTables };
