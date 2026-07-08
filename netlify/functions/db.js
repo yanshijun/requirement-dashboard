@@ -2,6 +2,12 @@ const mysql = require('mysql2/promise');
 
 let pool = null;
 
+// 远程公网 MySQL 会关闭空闲连接，连接池可能把这条"已被服务器关掉的死连接"发出来用，
+// 表现为 "Connection lost: The server closed the connection"。对这类错误自动重试一次（池会换新连接）。
+function _isConnLost(e) {
+  const s = ((e && (e.code || e.message)) || '') + '';
+  return /PROTOCOL_CONNECTION_LOST|ECONNRESET|EPIPE|ETIMEDOUT|closed the connection|Can't add new command when connection is in closed state/i.test(s);
+}
 function getPool() {
   if (pool) return pool;
   pool = mysql.createPool({
@@ -12,9 +18,17 @@ function getPool() {
     database: process.env.DB_NAME || 'As_LogData',
     waitForConnections: true,
     connectionLimit: 5,
-    connectTimeout: 10000,
+    connectTimeout: 15000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+    idleTimeout: 30000,        // 空闲 30s 回收，抢在远程服务器关闭之前
     charset: 'utf8mb4'
   });
+  // 在池层包装 execute/query：遇到"连接被关闭"类错误自动重试一次，所有调用方无感获益
+  const rawExecute = pool.execute.bind(pool);
+  const rawQuery = pool.query.bind(pool);
+  pool.execute = async (...a) => { try { return await rawExecute(...a); } catch (e) { if (_isConnLost(e)) return await rawExecute(...a); throw e; } };
+  pool.query = async (...a) => { try { return await rawQuery(...a); } catch (e) { if (_isConnLost(e)) return await rawQuery(...a); throw e; } };
   return pool;
 }
 

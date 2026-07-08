@@ -412,6 +412,13 @@ tr.bug-row-active td{background:#f0f5ff!important}
 .mt-chip b{color:#1677ff;margin-left:2px}
 .mt-ai-report{background:#fff;border:1px solid #eef0f4;border-left:3px solid #1677ff;border-radius:8px;padding:12px 16px;font-size:13px}
 .mt-ai-note{background:#fffbe6;border:1px solid #ffe58f;color:#ad6800;border-radius:7px;padding:7px 12px;font-size:12px;margin-bottom:8px}
+/* 列表「当前阶段」内联可拖动进度滑块（长得像进度条） */
+.lc-inline-prog{-webkit-appearance:none;appearance:none;height:6px;border-radius:4px;cursor:pointer;outline:none;padding:0;vertical-align:middle}
+.lc-inline-prog::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #1677ff;box-shadow:0 1px 3px rgba(0,0,0,.28);cursor:grab;transition:transform .08s}
+.lc-inline-prog:hover::-webkit-slider-thumb{transform:scale(1.12)}
+.lc-inline-prog:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.2)}
+.lc-inline-prog::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #1677ff;box-shadow:0 1px 3px rgba(0,0,0,.28);cursor:grab}
+.lc-inline-prog::-moz-range-track{height:6px;border-radius:4px;background:transparent}
 .mt-dupgrp{border:1px solid #ffe0e0;border-radius:7px;padding:6px;margin-bottom:8px;background:#fffafa}
 .mt-dupno{font-size:12px;font-weight:700;color:#cf1322;padding:2px 4px 6px}
 .mt-plan-sel{border:1px solid #d6e0f0;border-radius:7px;padding:5px 9px;font-size:12px;color:#333;background:#f7f9ff;cursor:pointer;max-width:180px}
@@ -1118,21 +1125,29 @@ function stageCell(d){
   const members = _lcStageMembers(d, cur, st);
   const sc = _lcStageColorList[cur] || '#8c8c8c';
   const prog = _lcStageProgress(members, st.status);
-  // 每人一行：姓名 + 各自进度条 + 百分比（完成显示 ✓）。有写权限且非「提报」阶段时，点百分比可直接改进度（即时同步+留痕）
+  // 每人一行：姓名 + 进度。有写权限且非「提报」阶段 → 进度条为可拖动滑块（拖动即改、松手即时保存+留痕）；否则只读静态条
   const editable = (typeof canWrite==='function') && canWrite('list') && cur!=='提报';
   const rows = members.length ? members.map((m,mi)=>{
     const p = Math.max(0, Math.min(100, parseInt(m.progress)||0));
     const mDone = p>=100;
+    const nameSpan = `<span style="font-size:11px;color:#555;width:44px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(m.name)}">${_escH(m.name)}</span>`;
+    if(editable){
+      return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">${nameSpan}
+        <input type="range" class="lc-inline-prog" min="0" max="100" step="5" value="${p}" title="拖动修改「${_escH(m.name)}」进度，松手即保存"
+          style="flex:1;max-width:96px;background:linear-gradient(90deg,${sc} ${p}%,#eef0f4 ${p}%)"
+          onclick="event.stopPropagation()"
+          oninput="this.style.background='linear-gradient(90deg,${sc} '+this.value+'%,#eef0f4 '+this.value+'%)';this.nextElementSibling.textContent=this.value+'%'"
+          onchange="lcQuickSetProgressEl(this,'${d.id}','${cur}',${mi})">
+        <span style="font-size:10px;color:#888;width:30px;text-align:right">${p}%</span>
+      </div>`;
+    }
     const barColor = mDone?'#52c41a':(p>0?'#1677ff':'#d0d4db');
-    const pctStyle = `font-size:10px;color:${mDone?'#52c41a':'#888'};width:34px;text-align:right`+(editable?';cursor:pointer;text-decoration:underline dotted #bbb':'');
-    const pctAttr = editable?` onclick="lcQuickEditProgress(event,'${d.id}','${cur}',${mi})" title="点击修改「${_escH(m.name)}」的进度"`:'';
-    return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">
-      <span style="font-size:11px;color:#555;width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(m.name)}">${_escH(m.name)}</span>
+    return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">${nameSpan}
       <div style="flex:1;height:5px;background:#eef0f4;border-radius:3px;overflow:hidden;max-width:60px"><div style="width:${p}%;height:100%;background:${barColor}"></div></div>
-      <span style="${pctStyle}"${pctAttr}>${mDone?'✓完成':p+'%'}${editable?' ✎':''}</span>
+      <span style="font-size:10px;color:${mDone?'#52c41a':'#888'};width:30px;text-align:right">${mDone?'✓完成':p+'%'}</span>
     </div>`;
   }).join('') : '<div style="font-size:11px;color:#bbb;margin-top:2px">未指派</div>';
-  return `<div style="min-width:150px">
+  return `<div style="min-width:175px">
     <div style="margin-bottom:2px;white-space:nowrap">
       <span class="tag" style="background:${sc}22;color:${sc};font-size:11px;padding:0 6px" title="${cur} · ${st.status||''}">${_mtStagePhaseLabel(cur, st.status, prog)}</span>
       <span style="font-size:10px;color:#aaa">共${prog}%</span>
@@ -4491,20 +4506,16 @@ async function _lcSyncDevProgress(){
     if(changed){ render(); if(MYTODO.loaded) loadMyTodos(true); }   // 刷新列表「进度/状态/评审/当前阶段」+ 面板/待办
   }catch(e){ console.warn('阶段同步(进度/状态/评审)回写失败:', e); }
 }
-// 列表「当前阶段」列内联改进度：点某成员% → 输入新值 → 存生命周期(自动留痕) → 对齐回写 → 刷新
-function lcQuickEditProgress(ev, id, stage, idx){
-  if(ev && ev.stopPropagation) ev.stopPropagation();
+// 列表「当前阶段」列内联滑块改进度：拖动滑块松手(onchange) → 存生命周期(自动留痕) → 对齐回写 → 刷新
+function lcQuickSetProgressEl(el, id, stage, idx){
   if(!canWrite('list')) return;
+  const val=Math.max(0, Math.min(100, parseInt(el.value)||0));
   const life=MYTODO.lifeMap && MYTODO.lifeMap[id];
   const req=(Array.isArray(allData)?allData:[]).find(r=>r.id===id);
   const st=life && life.stages && life.stages[stage];
-  const members=_lcStageMembers(req||{}, stage, st||{});
-  const m=members[idx]; if(!m) return;
-  const curVal=parseInt(m.progress)||0;
-  const v=prompt(`修改「${m.name}」在「${stage}」阶段的进度（0–100）：`, String(curVal));
-  if(v===null) return;
-  const val=Math.max(0, Math.min(100, parseInt(v)||0));
-  if(val===curVal) return;
+  const m=_lcStageMembers(req||{}, stage, st||{})[idx];
+  if(!m) return;
+  if((parseInt(m.progress)||0)===val) return;   // 没变不写
   lcQuickSetProgress(id, stage, m.name, val);
 }
 async function lcQuickSetProgress(id, stage, name, val){
@@ -4542,14 +4553,10 @@ async function loadLifecycle(d){
   _lcReqId=d.id; _lcDefaults={submitter:d.submitter||'', person:d.person||''};
   const cont=document.getElementById('lcContainer'); if(!cont) return;
   try{
-    const [life, blockers, logs, claimLogs, audit]=await Promise.all([
-      lcApi('lifecycle',null,`&req_id=${encodeURIComponent(d.id)}`),
-      lcApi('blockers-list',null,`&req_id=${encodeURIComponent(d.id)}`),
-      lcApi('log-list',null,`&req_id=${encodeURIComponent(d.id)}`),
-      lcApi('claim-log-list',null,`&req_id=${encodeURIComponent(d.id)}`).catch(()=>[]),  // 认领记录为辅助信息，失败不拖垮生命周期
-      lcApi('audit-list',null,`&req_id=${encodeURIComponent(d.id)}`).catch(()=>[])       // 操作留痕，失败不拖垮
-    ]);
-    _lcData=life; _lcBlockers=blockers; _lcLogs=logs; _lcClaimLogs=Array.isArray(claimLogs)?claimLogs:[]; _lcAudit=Array.isArray(audit)?audit:[];
+    // 一次请求拿全（后端并行查 5 张表），把高延迟公网的 5 次往返压成 1 次
+    const full=await lcApi('lifecycle-full',null,`&req_id=${encodeURIComponent(d.id)}`);
+    _lcData=full.life; _lcBlockers=full.blockers||[]; _lcLogs=full.logs||[];
+    _lcClaimLogs=Array.isArray(full.claimLogs)?full.claimLogs:[]; _lcAudit=Array.isArray(full.audit)?full.audit:[];
     renderLifecycle();
     if(MYTODO.loaded) loadMyTodos(true);   // 同步刷新我的待办角标
   }catch(e){ cont.innerHTML='<div style="color:#f5222d;font-size:12px">生命周期加载失败：'+e.message+'</div>'; }

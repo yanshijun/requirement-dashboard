@@ -156,6 +156,28 @@ exports.handler = async function (event) {
       return ok(rows.map(r => ({ id: r.id, reqId: r.req_id, entityType: r.entity_type, action: r.action, field: r.field || '', oldValue: r.old_value || '', newValue: r.new_value || '', operator: r.operator || '', source: r.source || 'manual', remark: r.remark || '', createdAt: r.created_at })));
     }
 
+    // ========== 生命周期：一次性拉取详情所需全部数据（把详情的 5 次请求合成 1 次，显著减少高延迟公网往返） ==========
+    if (action === "lifecycle-full") {
+      const reqId = event.queryStringParameters?.req_id || "";
+      if (!reqId) return err("缺少 req_id", 400);
+      const [lifeRes, blkRes, logRes, claimRes, auditRes] = await Promise.all([
+        pool.execute("SELECT * FROM req_lifecycle WHERE req_id=?", [reqId]),
+        pool.execute("SELECT * FROM collab_blockers WHERE req_id=? ORDER BY created_at DESC", [reqId]),
+        pool.execute("SELECT * FROM collab_flow_log WHERE req_id=? ORDER BY created_at ASC, id ASC", [reqId]),
+        pool.execute("SELECT * FROM collab_claim_log WHERE req_id=? ORDER BY created_at DESC, id DESC", [reqId]),
+        pool.execute("SELECT * FROM audit_log WHERE req_id=? ORDER BY created_at DESC, id DESC", [reqId])
+      ]);
+      const lr = lifeRes[0];
+      const life = (lr && lr.length)
+        ? { reqId, currentStage: lr[0].current_stage || STAGES[0], stages: normStages(parseJson(lr[0].stages, null)), initialized: true }
+        : { reqId, currentStage: STAGES[0], stages: defaultStages(), initialized: false };
+      const blockers = blkRes[0].map(mapBlocker);
+      const logs = logRes[0].map(r => ({ id: r.id, reqId: r.req_id, fromStage: r.from_stage || '', toStage: r.to_stage, operator: r.operator || '', remark: r.remark || '', createdAt: r.created_at }));
+      const claimLogs = claimRes[0].map(r => ({ id: r.id, reqId: r.req_id, action: r.action || '认领', persons: r.persons || '', operator: r.operator || '', remark: r.remark || '', createdAt: r.created_at }));
+      const audit = auditRes[0].map(r => ({ id: r.id, reqId: r.req_id, entityType: r.entity_type, action: r.action, field: r.field || '', oldValue: r.old_value || '', newValue: r.new_value || '', operator: r.operator || '', source: r.source || 'manual', remark: r.remark || '', createdAt: r.created_at }));
+      return ok({ life, blockers, logs, claimLogs, audit });
+    }
+
     // ---------- 写操作 ----------
     const body = JSON.parse(event.body || "{}");
 
