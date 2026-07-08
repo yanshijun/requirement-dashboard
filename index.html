@@ -546,8 +546,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
           </div></div>
         <div class="form-row"><label>优先级</label>
           <select id="fFPri"><option>中🟡</option><option>紧急🔴</option><option>高🟠</option><option>低🟢</option></select></div>
-        <div class="form-row"><label>开发状态</label>
-          <select id="fFStatus"><option>专题探讨</option><option>待开始</option><option>开发中</option><option>联调中</option><option>测试中</option><option>待上线</option><option>已上线</option><option>已暂缓</option></select></div>
+        <!-- 「开发状态」已移除：进行中的状态由生命周期阶段自动派生；已上线/已暂缓在需求详情里标记 -->
         <div class="form-row"><label>需求认领人</label>
           <div style="position:relative">
             <input id="fFPerson" placeholder="选择或输入姓名" autocomplete="off" onclick="showPersonDropdown()" oninput="filterPersonDropdown()">
@@ -1234,24 +1233,19 @@ function renderList(data) {
   const totalParent = allData.filter(d=>!d.parentId).length;
   const totalChild = allData.filter(d=>!!d.parentId).length;
   const urgent = statsData.filter(d=>d.priority==='紧急🔴').length;
-  const topic = statsData.filter(d=>d.status==='专题探讨').length;
+  // 「专题探讨/联调中/待上线」已无法从 UI 产生（仅历史/导入数据），不再单列；点卡跳看板按状态筛选，故各卡仍按本状态精确计数
   const todo = statsData.filter(d=>!d.status||d.status==='待开始').length;
   const doing = statsData.filter(d=>d.status==='开发中').length;
-  const liaodiao = statsData.filter(d=>d.status==='联调中').length;
   const testing = statsData.filter(d=>d.status==='测试中').length;
-  const ready = statsData.filter(d=>d.status==='待上线').length;
   const done = statsData.filter(d=>d.status==='已上线').length;
   const paused = statsData.filter(d=>d.status==='已暂缓').length;
 
   const stats = `<div class="stat-row">
     <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${totalParent}<span style="font-size:14px;color:#999;font-weight:400"> + ${totalChild}子</span></div><div class="lbl">全部需求</div></div>
     <div class="stat-card" onclick="jumpToKanban('紧急🔴')"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
-    <div class="stat-card" onclick="jumpToKanban('专题探讨')"><div class="num" style="color:#fa8c16">${topic}</div><div class="lbl">专题探讨</div></div>
     <div class="stat-card" onclick="jumpToKanban('待开始')"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
     <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
-    <div class="stat-card" onclick="jumpToKanban('联调中')"><div class="num" style="color:#13c2c2">${liaodiao}</div><div class="lbl">联调中</div></div>
     <div class="stat-card" onclick="jumpToKanban('测试中')"><div class="num" style="color:#faad14">${testing}</div><div class="lbl">测试中</div></div>
-    <div class="stat-card" onclick="jumpToKanban('待上线')"><div class="num" style="color:#722ed1">${ready}</div><div class="lbl">待上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已上线')"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已暂缓')"><div class="num" style="color:#d9d9d9">${paused}</div><div class="lbl">已暂缓</div></div>
   </div>
@@ -1308,7 +1302,6 @@ function renderList(data) {
     <td style="color:#666;font-size:12px;max-width:260px">${(d.desc||'').substring(0,80)}${(d.desc||'').length>80?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${d.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td style="font-size:12px;color:#666;white-space:nowrap">${d.submitter||''}</td>
-    <td>${statTag(d.status)}</td>
     <td>${reviewTag(d.review)}</td>
     <td>${stageCell(d)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${d.deadline||''}</td>
@@ -1335,7 +1328,6 @@ function renderList(data) {
     <td style="color:#666;font-size:12px;max-width:260px">${(c.desc||'').substring(0,60)}${(c.desc||'').length>60?'…':''}</td>
     <td style="white-space:nowrap">${(() => { const ps=(c.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.map(p=>`<span class="tag-claimed">👤 ${p} <span onclick="releaseOnePerson('${c.id}','${p}')" style="cursor:pointer;color:#aaa;margin-left:2px;font-size:13px" title="移除">×</span></span>`).join(' ') : '<span class="tag-unclaimed">待认领</span>'; })()}</td>
     <td style="font-size:12px;color:#666;white-space:nowrap">${c.submitter||''}</td>
-    <td>${statTag(c.status)}</td>
     <td>${reviewTag(c.review)}</td>
     <td>${stageCell(c)}</td>
     <td style="font-size:12px;color:#aaa;white-space:nowrap">${c.deadline||''}</td>
@@ -1389,7 +1381,7 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>状态</th><th>评审</th><th>当前阶段</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>评审</th><th>当前阶段</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>${pageButtons}</div>`;
 }
@@ -1633,7 +1625,6 @@ function openAdd() {
   document.getElementById('fFType').value='用户需求';
   buildPlanSelects(getPlans()[0]);
   document.getElementById('fFPri').value='中🟡';
-  document.getElementById('fFStatus').value='待开始';
   document.getElementById('fFDate').value='';
   // 默认当前日期
   const today = new Date().toISOString().split('T')[0];
@@ -1655,7 +1646,6 @@ function openEdit(id) {
   document.getElementById('fFType').value=d.type||'用户需求';
   buildPlanSelects(d.plan || getPlans()[0]);
   document.getElementById('fFPri').value=d.priority||'中🟡';
-  document.getElementById('fFStatus').value=d.status||'待开始';
   document.getElementById('fFPerson').value=d.person||'';
   document.getElementById('fFDate').value=d.deadline||'';
   document.getElementById('fFCreateTime').value=d.createTime||'';
@@ -1683,7 +1673,6 @@ function openAddChild(parentId) {
   document.getElementById('fFType').value='用户需求';
   buildPlanSelects(parent.plan || getPlans()[0]);
   document.getElementById('fFPri').value=parent.priority||'中🟡';
-  document.getElementById('fFStatus').value='待开始';
   document.getElementById('fFDate').value='';
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('fFCreateTime').value=today;
@@ -1734,9 +1723,11 @@ async function saveItem() {
   if(_reqAttachments.some(a=>a.uploading)){alert('附件上传中，请稍候');return;}
   const btn=document.getElementById('saveBtn');
   btn.disabled=true;btn.textContent='保存中...';
-  // 开发进度不再手填：编辑时保留生命周期(成员进度)回写的现值，新增默认 0
+  // 开发进度/开发状态不再手填：编辑时保留现值（状态由生命周期阶段派生、已上线/已暂缓在详情标记），新增默认
   const _editId=document.getElementById('fId').value;
-  const _curProg=_editId?(parseInt(((Array.isArray(allData)?allData:[]).find(x=>x.id===_editId)||{}).progress)||0):0;
+  const _curRow=_editId?((Array.isArray(allData)?allData:[]).find(x=>x.id===_editId)||{}):{};
+  const _curProg=_editId?(parseInt(_curRow.progress)||0):0;
+  const _curStatus=_editId?(_curRow.status||'待开始'):'待开始';
   const item={
     id:document.getElementById('fId').value||undefined,
     no:document.getElementById('fNo').value.trim(),
@@ -1744,7 +1735,7 @@ async function saveItem() {
     type:document.getElementById('fFType').value,
     plan:document.getElementById('fFPlan').value,
     priority:document.getElementById('fFPri').value,
-    status:document.getElementById('fFStatus').value,
+    status:_curStatus,
     progress:_curProg,
     person:document.getElementById('fFPerson').value.trim(),
     deadline:document.getElementById('fFDate').value,
@@ -1780,6 +1771,37 @@ async function saveItem() {
   }
   catch(e){alert('保存失败：'+e.message);}
   btn.disabled=false;btn.textContent='💾 保存';
+}
+
+// ===== 交付状态标记（需求详情内）：进行中(按阶段派生) / 已上线 / 已暂缓 =====
+// 「开发状态」输入已从表单/列表移除：进行中的细分状态(待开始/开发中/测试中…)由生命周期阶段自动派生；
+// 这里只让写权限用户标记阶段无法表达的收尾状态「已上线 / 已暂缓」，或从收尾状态撤回「进行中」。
+function _reqCurStage(id){
+  if(typeof MYTODO!=='undefined' && MYTODO.lifeMap && MYTODO.lifeMap[id] && MYTODO.lifeMap[id].currentStage) return MYTODO.lifeMap[id].currentStage;
+  if(_lcData && _lcData.reqId===id && _lcData.currentStage) return _lcData.currentStage;
+  return '提报';
+}
+function _reqFlowStatus(id){ return _lcAlignedStatus({currentStage:_reqCurStage(id)}, '待开始'); }
+function _deliveryMarker(d){
+  const cur = d.status==='已上线'?'已上线':(d.status==='已暂缓'?'已暂缓':'进行中');
+  const opt=(mode,label,color)=>{ const on=cur===mode;
+    return `<button type="button" onclick="setReqDelivery('${d.id}','${mode}')" style="padding:2px 11px;font-size:12px;border:1px solid ${on?color:'#e0e0e0'};background:${on?color:'#fff'};color:${on?'#fff':'#999'};border-radius:12px;cursor:pointer;margin-right:5px">${label}</button>`; };
+  return `<div><div style="font-size:12px;color:#888">交付状态</div><div style="margin-top:4px;display:flex">${opt('进行中','进行中','#1677ff')}${opt('已上线','已上线','#52c41a')}${opt('已暂缓','已暂缓','#8c8c8c')}</div></div>`;
+}
+async function setReqDelivery(id, mode){
+  if(!canWrite('list')) return;
+  const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===id); if(!r) return;
+  const isTerminal = r.status==='已上线'||r.status==='已暂缓';
+  let newStatus;
+  if(mode==='已上线') newStatus='已上线';
+  else if(mode==='已暂缓') newStatus='已暂缓';
+  else { if(!isTerminal) return; newStatus=_reqFlowStatus(id); }   // 撤回到进行中：按当前生命周期阶段派生
+  if(newStatus===r.status) return;
+  try{
+    await api('update', {...r, status:newStatus, operator:_lcOperator()});
+    const idx=allData.findIndex(x=>x.id===id); if(idx!==-1) allData[idx]={...allData[idx], status:newStatus};
+    openDetail(id); render();
+  }catch(e){ alert('更新失败：'+e.message); }
 }
 
 // ===== 需求图片/附件（参考创新项目 Bug 上传） =====
@@ -2067,7 +2089,9 @@ function openDetail(id) {
       <div><div style="font-size:12px;color:#888">类型</div><div style="margin-top:3px">${typeTag(d.type)}</div></div>
       <div><div style="font-size:12px;color:#888">所属计划</div><div style="margin-top:3px;font-size:13px">${d.plan||'-'}</div></div>
       <div><div style="font-size:12px;color:#888">优先级</div><div style="margin-top:3px">${priTag(d.priority)}</div></div>
-      <div><div style="font-size:12px;color:#888">开发状态</div><div style="margin-top:3px">${statTag(d.status)}</div></div>
+      ${canWrite('list')
+        ? _deliveryMarker(d)
+        : `<div><div style="font-size:12px;color:#888">交付状态</div><div style="margin-top:3px">${statTag(d.status)}</div></div>`}
       <div><div style="font-size:12px;color:#888">开发进度</div><div style="margin-top:3px">${progBar(displayProgress)}</div></div>
       <div><div style="font-size:12px;color:#888">认领人</div><div style="margin-top:3px;font-size:13px">${(() => { const ps=(d.person||'').split(',').map(p=>p.trim()).filter(hasPerson); return ps.length ? ps.join('、') : '待认领'; })()}</div></div>
       <div><div style="font-size:12px;color:#888">预计上线</div><div style="margin-top:3px;font-size:13px">${d.deadline||'-'}</div></div>
@@ -4982,15 +5006,19 @@ function computeAllTodos(){
     const st=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
     if(stageDist[cur]!==undefined) stageDist[cur]++;
     activeReqs++;
-    if(st.status==='已完成') return;
+    // 「提报」阶段的成员是提出人（非承接人），且默认已完成，不计入任何人的任务量。
+    // 其余工作阶段（研发评审/开发认领/测试认领）即使 status=已完成（做完但尚未推进到下一阶段），
+    // 也要计入承接人的任务量，否则面板会漏掉「做完待推进」的任务（如开发已完成却仍停在开发认领）。
+    if(cur==='提报') return;
+    const stageDone=st.status==='已完成';
     const members=_lcStageMembers(r,cur,st);
     members.forEach(m=>{
       const g=ensure(m.name);
-      const item={req:r,stage:cur,status:st.status||'进行中',progress:m.progress};
+      const item={req:r,stage:cur,status:st.status||'进行中',progress:m.progress,done:stageDone};
       g.stage.push(item);
       if(g.byStage[cur]) g.byStage[cur].push(item);
     });
-    if(stageReqs[cur]){
+    if(stageReqs[cur] && !stageDone){   // 「按阶段」泳道只展示进行中的需求，已完成待推进的不在此列
       stageReqs[cur].push({req:r, members, prog:_lcStageProgress(members,st.status), status:st.status||'进行中', blk:openBlkByReq[r.id]||0});
     }
   });
@@ -5071,8 +5099,9 @@ function _mtSimpleRow(r, tail){
 // ===== 七个视图 =====
 function _mtViewPeople(d){
   const arr=Object.keys(d.perPerson).map(n=>{ const g=d.perPerson[n];
-    const score=g.stage.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
-    const urg=g.stage.filter(t=>t.req.priority==='紧急🔴').length;
+    const activeTasks=g.stage.filter(t=>!t.done);   // 工作量/超载只算在办（未完成）任务；总数/完成数含已完成
+    const score=activeTasks.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
+    const urg=activeTasks.filter(t=>t.req.priority==='紧急🔴').length;
     return {n,g,score,urg};
   }).sort((a,b)=>b.score-a.score);
   _mtPersonList=arr.map(x=>x.n);
@@ -5214,12 +5243,13 @@ function _mtReportData(){
     const oldest=openBlk.map(b=>({b, days:_mtDaysAgo(b.occurredAt)})).filter(x=>x.days!=null).sort((a,b)=>b.days-a.days).slice(0,6);
     // 每人（复用 computeAllTodos().perPerson，口径同「按人」视图）
     const people=Object.keys(d.perPerson).map(n=>{ const g=d.perPerson[n];
-      const score=g.stage.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
-      const urg=g.stage.filter(t=>t.req.priority==='紧急🔴').length;
+      const activeTasks=g.stage.filter(t=>!t.done);   // 工作量/逾期/超载只算在办任务；总数/完成数/平均进度含已完成
+      const score=activeTasks.reduce((s,t)=>s+(MT_PRI_WEIGHT[t.req.priority]||1),0);
+      const urg=activeTasks.filter(t=>t.req.priority==='紧急🔴').length;
       const total=g.stage.length;
       const done=g.stage.filter(t=>(parseInt(t.progress)||0)>=100).length;
       const avg=total?Math.round(g.stage.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/total):0;
-      const taskOverdue=g.stage.filter(t=>t.req.deadline&&t.req.deadline<_lcToday()).length;
+      const taskOverdue=activeTasks.filter(t=>t.req.deadline&&t.req.deadline<_lcToday()).length;
       return {name:n, total, done, avg, review:(g.byStage['研发评审']||[]).length, dev:(g.byStage['开发认领']||[]).length, test:(g.byStage['测试认领']||[]).length, blk:g.blk.length, overdueBlk:g.overdue, taskOverdue, score:Math.round(score*10)/10, overloaded:score>=MT_OVERLOAD_SCORE||urg>=4};
     }).sort((a,b)=>b.score-a.score);
     // 阶段管线
