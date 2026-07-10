@@ -3,3 +3,6 @@
 
 # Playwright MCP test artifacts (console logs, page snapshots, screenshots)
 .playwright-mcp/
+
+# Local server log
+server.log

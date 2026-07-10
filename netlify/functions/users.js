@@ -11,9 +11,9 @@ const cors = {
 function ok(data) { return { statusCode: 200, headers: cors, body: JSON.stringify(data) }; }
 function err(msg, code = 500) { return { statusCode: code, headers: cors, body: JSON.stringify({ error: msg }) }; }
 
-function requireAdmin(event) {
+async function requireAdmin(event) {
   const token = (event.headers?.authorization || '').replace('Bearer ', '');
-  const user = validateToken(token);
+  const user = await validateToken(token);
   if (!user) return { error: '未登录', code: 401 };
   if (user.role !== 'admin') return { error: '无权限，仅管理员可操作', code: 403 };
   return { user };
@@ -30,7 +30,7 @@ exports.handler = async function (event) {
 
     // ===== 用户列表（仅管理员） =====
     if (action === "list") {
-      const auth = requireAdmin(event);
+      const auth = await requireAdmin(event);
       if (auth.error) return err(auth.error, auth.code);
 
       const [rows] = await pool.execute(
@@ -52,7 +52,7 @@ exports.handler = async function (event) {
 
     // ===== 新增用户（仅管理员） =====
     if (action === "add") {
-      const auth = requireAdmin(event);
+      const auth = await requireAdmin(event);
       if (auth.error) return err(auth.error, auth.code);
 
       const { username, password, displayName, role, permissions } = body;
@@ -74,7 +74,7 @@ exports.handler = async function (event) {
 
     // ===== 更新用户（仅管理员） =====
     if (action === "update") {
-      const auth = requireAdmin(event);
+      const auth = await requireAdmin(event);
       if (auth.error) return err(auth.error, auth.code);
 
       const { id, displayName, role, permissions, status } = body;
@@ -93,7 +93,7 @@ exports.handler = async function (event) {
 
     // ===== 重置密码（仅管理员） =====
     if (action === "reset-password") {
-      const auth = requireAdmin(event);
+      const auth = await requireAdmin(event);
       if (auth.error) return err(auth.error, auth.code);
 
       const { id, newPassword } = body;
@@ -107,7 +107,7 @@ exports.handler = async function (event) {
 
     // ===== 删除用户（仅管理员） =====
     if (action === "delete") {
-      const auth = requireAdmin(event);
+      const auth = await requireAdmin(event);
       if (auth.error) return err(auth.error, auth.code);
 
       const { id } = body;

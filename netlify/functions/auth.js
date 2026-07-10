@@ -11,19 +11,31 @@ const cors = {
 function ok(data) { return { statusCode: 200, headers: cors, body: JSON.stringify(data) }; }
 function err(msg, code = 500) { return { statusCode: code, headers: cors, body: JSON.stringify({ error: msg }) }; }
 
-// 简单 token 管理（内存存储，重启失效需重新登录）
-const sessions = {};
+// token 管理：持久化到 MySQL（sys_sessions 表），后端重启后登录不失效
 const TOKEN_EXPIRE = 7 * 24 * 60 * 60 * 1000; // 7天（一星期）
 
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function validateToken(token) {
-  const s = sessions[token];
-  if (!s) return null;
-  if (Date.now() > s.expireAt) { delete sessions[token]; return null; }
-  return s.user;
+// 校验 token：查库、过期即删并返回 null，否则返回登录时快照的 user。异步（读 DB）。
+async function validateToken(token) {
+  if (!token) return null;
+  try {
+    const pool = getPool();
+    const [rows] = await pool.execute("SELECT user_json, expire_at FROM sys_sessions WHERE token=?", [token]);
+    if (!rows.length) return null;
+    const row = rows[0];
+    if (new Date(row.expire_at).getTime() < Date.now()) {
+      pool.execute("DELETE FROM sys_sessions WHERE token=?", [token]).catch(() => {});
+      return null;
+    }
+    const u = row.user_json;
+    return (typeof u === 'string') ? JSON.parse(u) : u;
+  } catch (e) {
+    console.error("[auth] validateToken error:", e);
+    return null;
+  }
 }
 
 exports.handler = async function (event) {
@@ -52,10 +64,14 @@ exports.handler = async function (event) {
 
       const token = generateToken();
       const permissions = Array.isArray(user.permissions) ? user.permissions : (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions || {});
-      sessions[token] = {
-        user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions },
-        expireAt: Date.now() + TOKEN_EXPIRE
-      };
+      const sessionUser = { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions };
+      const expireAt = new Date(Date.now() + TOKEN_EXPIRE);
+      // 持久化会话到 DB（重启不失效）；顺手清理该用户已过期的旧会话
+      await pool.execute(
+        "INSERT INTO sys_sessions (token, user_id, user_json, expire_at) VALUES (?,?,?,?)",
+        [token, user.id, JSON.stringify(sessionUser), expireAt]
+      );
+      pool.execute("DELETE FROM sys_sessions WHERE expire_at < NOW()").catch(() => {});
 
       await pool.execute("UPDATE sys_users SET last_login=NOW() WHERE id=?", [user.id]);
 
@@ -68,7 +84,7 @@ exports.handler = async function (event) {
     // ===== 验证 token =====
     if (action === "check") {
       const token = (event.headers?.authorization || '').replace('Bearer ', '');
-      const user = validateToken(token);
+      const user = await validateToken(token);
       if (!user) return err("未登录或登录已过期", 401);
       return ok({ user });
     }
@@ -76,14 +92,14 @@ exports.handler = async function (event) {
     // ===== 登出 =====
     if (action === "logout") {
       const token = (event.headers?.authorization || '').replace('Bearer ', '');
-      if (token && sessions[token]) delete sessions[token];
+      if (token) await pool.execute("DELETE FROM sys_sessions WHERE token=?", [token]).catch(() => {});
       return ok({ ok: true });
     }
 
     // ===== 修改密码 =====
     if (action === "change-password") {
       const token = (event.headers?.authorization || '').replace('Bearer ', '');
-      const user = validateToken(token);
+      const user = await validateToken(token);
       if (!user) return err("未登录", 401);
 
       const body = JSON.parse(event.body || "{}");
@@ -109,4 +125,3 @@ exports.handler = async function (event) {
 };
 
 exports.validateToken = validateToken;
-exports.sessions = sessions;

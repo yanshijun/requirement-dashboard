@@ -199,6 +199,17 @@ async function _initTablesOnce() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // ===== 登录会话表（token 持久化，后端重启后登录不失效） =====
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS sys_sessions (
+        token VARCHAR(64) PRIMARY KEY COMMENT '登录token(hex)',
+        user_id INT NOT NULL COMMENT '用户ID',
+        user_json JSON COMMENT '登录时快照的用户信息(id/username/displayName/role/permissions)',
+        expire_at DATETIME NOT NULL COMMENT '过期时间',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_expire (expire_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
     // 初始化超级管理员（已存在则忽略）
     const [adminExists] = await conn.execute("SELECT id FROM sys_users WHERE username='admin'");
     if (!adminExists.length) {
