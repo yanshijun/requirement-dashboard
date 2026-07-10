@@ -25,7 +25,7 @@ function fmtDate(v) {
 }
 function toDate(v) { return v ? v : null; }
 
-const STAGES = ['提报', '研发评审', '开发认领', '测试认领'];
+const STAGES = ['提报', '研发评审', '开发认领', '测试认领', '上线'];
 // 缺省生命周期：提报默认已完成(需求已提交)，其余未开始；每阶段成员各自进度
 function defaultStages() {
   const o = {};

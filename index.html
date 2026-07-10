@@ -471,14 +471,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
   <div class="ms-wrap" id="fStatusWrap">
     <button type="button" class="ms-btn" id="fStatusBtn" onclick="toggleStatusPanel(event)"><span id="fStatusLabel">全部状态</span><span style="color:#aaa">▾</span></button>
     <div class="ms-panel" id="fStatusPanel">
-      <label><input type="checkbox" value="专题探讨" onchange="onStatusFilterChange()">专题探讨</label>
-      <label><input type="checkbox" value="待开始" onchange="onStatusFilterChange()">待开始</label>
-      <label><input type="checkbox" value="开发中" onchange="onStatusFilterChange()">开发中</label>
-      <label><input type="checkbox" value="联调中" onchange="onStatusFilterChange()">联调中</label>
-      <label><input type="checkbox" value="测试中" onchange="onStatusFilterChange()">测试中</label>
-      <label><input type="checkbox" value="待上线" onchange="onStatusFilterChange()">待上线</label>
-      <label><input type="checkbox" value="已上线" onchange="onStatusFilterChange()">已上线</label>
-      <label><input type="checkbox" value="已暂缓" onchange="onStatusFilterChange()">已暂缓</label>
+      <div id="fStatusOpts"></div>
       <div class="ms-clear" onclick="clearStatusFilter()">清空</div>
     </div>
   </div>
@@ -608,7 +601,7 @@ tr.bug-row-active td{background:#f0f5ff!important}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeClaim()">取消</button>
-      <button class="btn btn-primary" id="claimBtn" onclick="doClaim()">✅ 确认认领</button>
+      <button class="btn btn-primary" id="claimBtn" onclick="_claimAdvanceStage?doStageAdvanceWithMembers():doClaim()">✅ 确认认领</button>
     </div>
   </div>
 </div>
@@ -969,7 +962,12 @@ function buildPlanSelects(selectVal) {
 }
 let sortPri = null; // null | 'desc'(紧急优先) | 'asc'(低优先)
 const PRI_ORDER = {'紧急🔴':0,'紧急':0,'高🟠':1,'高':1,'中🟡':2,'中':2,'低🟢':3,'低':3};
-const COLS = ['专题探讨','待开始','开发中','联调中','测试中','待上线','已上线','已暂缓'];
+// 全站唯一「开发状态」词汇表（与生命周期阶段一一对应）——筛选/看板/统计卡/人员任务/校验都读这一份，杜绝各页面各写一套
+const STATUS_LIST = ['待开始','评审中','开发中','测试中','待上线','已上线','已暂缓'];
+// 状态归一：历史/异常值（旧「专题探讨/联调中」等）兜底归「待开始」，保证看板列与统计卡口径一致、绝不丢数据
+const _STATUS_SET = new Set(STATUS_LIST);
+function statusColOf(s){ s=s||'待开始'; return _STATUS_SET.has(s)?s:'待开始'; }
+const COLS = STATUS_LIST;   // 开发看板列 = 状态词汇表
 const IMPORT_FIELDS = ['no','name','desc','type','plan','priority','status','progress','person','deadline','design','review','note','parentId'];
 
 // ===== API =====
@@ -993,6 +991,7 @@ async function loadData(silent = false) {
   if (!silent) document.getElementById('mainContent').innerHTML = '<div class="loading-mask">⏳ 加载中...</div>';
   await loadPlans();  // 从服务端拉取计划列表（持久化）
   buildPlanSelects(); // 初始化计划下拉
+  buildStatusFilter(); // 初始化状态筛选（由 STATUS_LIST 生成，与看板/统计对齐）
   try {
     const res = await api('get', null, '?table=all');
     allData = res.requirements || res; // 兼容旧接口
@@ -1006,6 +1005,12 @@ async function loadData(silent = false) {
   }
 }
 
+// 状态筛选下拉：由 STATUS_LIST 动态生成，保证与看板/统计卡完全一致（单一事实源）
+function buildStatusFilter() {
+  const box = document.getElementById('fStatusOpts');
+  if (!box) return;
+  box.innerHTML = STATUS_LIST.map(s => `<label><input type="checkbox" value="${s}" onchange="onStatusFilterChange()">${s}</label>`).join('');
+}
 function buildPersonFilter() {
   const sel = document.getElementById('fPerson');
   const cur = sel.value;
@@ -1102,7 +1107,8 @@ function filtered() {
 
 // ===== 标签 =====
 const priMap = {'紧急🔴':'tag-p1','高🟠':'tag-p2','中🟡':'tag-p3','低🟢':'tag-p4'};
-const statMap = {'专题探讨':'tag-s7','待开始':'tag-s0','开发中':'tag-s1','联调中':'tag-s2','测试中':'tag-s3','待上线':'tag-s6','已上线':'tag-s4','已暂缓':'tag-s5'};
+// 状态标签配色：与管理面板阶段色一致（评审紫/开发蓝/测试橙），待上线紫红、已上线绿、终态灰
+const statMap = {'待开始':'tag-s0','评审中':'tag-s3','开发中':'tag-s1','测试中':'tag-s7','待上线':'tag-s2','已上线':'tag-s4','已暂缓':'tag-s5'};
 const hasPerson = p => p && p !== '待认领';
 const typeTag = t => `<span class="tag ${t==='用户需求'?'tag-ur':'tag-sr'}">${t||'-'}</span>`;
 const priTag = p => `<span class="tag ${priMap[p]||'tag-p3'}">${p||'-'}</span>`;
@@ -1116,7 +1122,7 @@ const reviewTag = r => {
 };
 const progBar = v => { const n=Math.min(100,Math.max(0,parseInt(v)||0)); return `<div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${n}%"></div></div><span style="font-size:11px;color:#888">${n}%</span></div>`; };
 // 需求列表「当前阶段」列：展示生命周期 当前阶段 / 进度 / 负责人
-const _lcStageColorList = {'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16'};
+const _lcStageColorList = {'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16','上线':'#52c41a'};
 function stageCell(d){
   const life = (typeof MYTODO!=='undefined' && MYTODO.lifeMap) ? MYTODO.lifeMap[d.id] : null;
   const cur = (life && life.currentStage) || '提报';
@@ -1126,7 +1132,8 @@ function stageCell(d){
   const prog = _lcStageProgress(members, st.status);
   // 每人一行：姓名 + 进度。有写权限且非「提报」阶段 → 进度条为可拖动滑块（拖动即改、松手即时保存+留痕）；否则只读静态条
   const editable = (typeof canWrite==='function') && canWrite('list') && cur!=='提报';
-  const rows = members.length ? members.map((m,mi)=>{
+  const bareStageCur = cur==='提报' || LC_MILESTONE_STAGES.includes(cur);   // 提报(提出人自动100%)/上线里程碑：无真实工作进度，列表只显示状态、不显示成员进度与总进度
+  const rows = bareStageCur ? '' : (members.length ? members.map((m,mi)=>{
     const p = Math.max(0, Math.min(100, parseInt(m.progress)||0));
     const mDone = p>=100;
     const nameSpan = `<span style="font-size:11px;color:#555;width:44px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escH(m.name)}">${_escH(m.name)}</span>`;
@@ -1145,11 +1152,11 @@ function stageCell(d){
       <div style="flex:1;height:5px;background:#eef0f4;border-radius:3px;overflow:hidden;max-width:60px"><div style="width:${p}%;height:100%;background:${barColor}"></div></div>
       <span style="font-size:10px;color:${mDone?'#52c41a':'#888'};width:30px;text-align:right">${mDone?'✓完成':p+'%'}</span>
     </div>`;
-  }).join('') : '<div style="font-size:11px;color:#bbb;margin-top:2px">未指派</div>';
+  }).join('') : '<div style="font-size:11px;color:#bbb;margin-top:2px">未指派</div>');
   return `<div style="min-width:175px">
     <div style="margin-bottom:2px;white-space:nowrap">
-      <span class="tag" style="background:${sc}22;color:${sc};font-size:11px;padding:0 6px" title="${cur} · ${st.status||''}">${_mtStagePhaseLabel(cur, st.status, prog)}</span>
-      <span style="font-size:10px;color:#aaa">共${prog}%</span>
+      ${statTag(d.status)}
+      ${bareStageCur ? '' : `<span style="font-size:10px;color:#aaa">共${prog}%</span>`}
     </div>
     ${rows}
   </div>`;
@@ -1233,10 +1240,12 @@ function renderList(data) {
   const totalParent = allData.filter(d=>!d.parentId).length;
   const totalChild = allData.filter(d=>!!d.parentId).length;
   const urgent = statsData.filter(d=>d.priority==='紧急🔴').length;
-  // 「专题探讨/联调中/待上线」已无法从 UI 产生（仅历史/导入数据），不再单列；点卡跳看板按状态筛选，故各卡仍按本状态精确计数
-  const todo = statsData.filter(d=>!d.status||d.status==='待开始').length;
+  // 各状态计数（与 STATUS_LIST / 看板 / 筛选完全同源同序）；待开始含未知状态兜底，与看板列口径一致
+  const todo = statsData.filter(d=>statusColOf(d.status)==='待开始').length;
+  const reviewing = statsData.filter(d=>d.status==='评审中').length;
   const doing = statsData.filter(d=>d.status==='开发中').length;
   const testing = statsData.filter(d=>d.status==='测试中').length;
+  const ready = statsData.filter(d=>d.status==='待上线').length;
   const done = statsData.filter(d=>d.status==='已上线').length;
   const paused = statsData.filter(d=>d.status==='已暂缓').length;
 
@@ -1244,8 +1253,10 @@ function renderList(data) {
     <div class="stat-card" onclick="jumpToKanban('')"><div class="num">${totalParent}<span style="font-size:14px;color:#999;font-weight:400"> + ${totalChild}子</span></div><div class="lbl">全部需求</div></div>
     <div class="stat-card" onclick="jumpToKanban('紧急🔴')"><div class="num" style="color:#f5222d">${urgent}</div><div class="lbl">🔴 紧急</div></div>
     <div class="stat-card" onclick="jumpToKanban('待开始')"><div class="num" style="color:#8c8c8c">${todo}</div><div class="lbl">待开始</div></div>
+    <div class="stat-card" onclick="jumpToKanban('评审中')"><div class="num" style="color:#722ed1">${reviewing}</div><div class="lbl">评审中</div></div>
     <div class="stat-card" onclick="jumpToKanban('开发中')"><div class="num" style="color:#1677ff">${doing}</div><div class="lbl">开发中</div></div>
-    <div class="stat-card" onclick="jumpToKanban('测试中')"><div class="num" style="color:#faad14">${testing}</div><div class="lbl">测试中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('测试中')"><div class="num" style="color:#fa8c16">${testing}</div><div class="lbl">测试中</div></div>
+    <div class="stat-card" onclick="jumpToKanban('待上线')"><div class="num" style="color:#eb2f96">${ready}</div><div class="lbl">待上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已上线')"><div class="num" style="color:#52c41a">${done}</div><div class="lbl">已上线</div></div>
     <div class="stat-card" onclick="jumpToKanban('已暂缓')"><div class="num" style="color:#d9d9d9">${paused}</div><div class="lbl">已暂缓</div></div>
   </div>
@@ -1381,14 +1392,14 @@ function renderList(data) {
   document.getElementById('mainContent').innerHTML = stats+`<div class="tbl-wrap">
     <div class="tbl-info">共 ${data.length} 条${data.length<totalParent?' （已筛选）':''} · 第 ${currentPage}/${totalPages} 页</div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>评审</th><th>当前阶段</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
+      <thead><tr><th>编号</th><th>需求名称</th><th>类型</th><th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="togglePriSort()">优先级 <span style="${priSortStyle}">${priSortIcon}</span></th><th>所属计划</th><th>需求描述</th><th>认领人</th><th>提出人</th><th>评审</th><th>交付状态</th><th>预计上线</th><th>提出时间</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>${pageButtons}</div>`;
 }
 
 function renderKanban(data) {
   const cols = COLS.map(col=>{
-    const cards = data.filter(d=>(d.status||'待开始')===col);
+    const cards = data.filter(d=>statusColOf(d.status)===col);   // 未知状态兜底归「待开始」，绝不丢卡
     const rendered = [];
     const parentIds = new Set();
 
@@ -1438,8 +1449,8 @@ function renderPerson(data) {
     const countTasks = tasks.filter(t => !parents.has(t.id));
     const done=countTasks.filter(t=>t.status==='已上线').length;
     const ready=countTasks.filter(t=>t.status==='待上线').length;
-    const doing=countTasks.filter(t=>['开发中','联调中','测试中'].includes(t.status)).length;
-    const todo=countTasks.filter(t=>!t.status||t.status==='待开始').length;
+    const doing=countTasks.filter(t=>['评审中','开发中','测试中'].includes(t.status)).length;
+    const todo=countTasks.filter(t=>statusColOf(t.status)==='待开始').length;
     const avg=countTasks.length>0?Math.round(countTasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0)/countTasks.length):0;
     return `<div class="person-card"><div class="pname">👤 ${name}</div>${progBar(avg)}
       <div class="person-stats">
@@ -1774,28 +1785,30 @@ async function saveItem() {
 }
 
 // ===== 交付状态标记（需求详情内）：进行中(按阶段派生) / 已上线 / 已暂缓 =====
-// 「开发状态」输入已从表单/列表移除：进行中的细分状态(待开始/开发中/测试中…)由生命周期阶段自动派生；
-// 这里只让写权限用户标记阶段无法表达的收尾状态「已上线 / 已暂缓」，或从收尾状态撤回「进行中」。
-function _reqCurStage(id){
-  if(typeof MYTODO!=='undefined' && MYTODO.lifeMap && MYTODO.lifeMap[id] && MYTODO.lifeMap[id].currentStage) return MYTODO.lifeMap[id].currentStage;
-  if(_lcData && _lcData.reqId===id && _lcData.currentStage) return _lcData.currentStage;
-  return '提报';
+// 交付流程已收进「需求生命周期」步骤条（提报→评审→开发→测试→上线，一条线推进；确认已上线在步骤条内）。
+// 详情这里只保留：只读交付状态徽标 + 「已暂缓」这一正交的暂停开关（暂停不是向前一步，故单列）。
+function _reqLifeData(id){
+  if(typeof MYTODO!=='undefined' && MYTODO.lifeMap && MYTODO.lifeMap[id]) return MYTODO.lifeMap[id];
+  if(_lcData && _lcData.reqId===id) return _lcData;
+  return {currentStage:'提报', stages:null};
 }
-function _reqFlowStatus(id){ return _lcAlignedStatus({currentStage:_reqCurStage(id)}, '待开始'); }
+function _reqCurStage(id){ const l=_reqLifeData(id); return (l&&l.currentStage)||'提报'; }
+// 按生命周期阶段派生的“进行中”细分状态（待开始/开发中/测试中/待上线）——恢复暂缓时用
+function _reqFlowStatus(id){ return _lcAlignedStatus(_reqLifeData(id), '待开始'); }
 function _deliveryMarker(d){
-  const cur = d.status==='已上线'?'已上线':(d.status==='已暂缓'?'已暂缓':'进行中');
-  const opt=(mode,label,color)=>{ const on=cur===mode;
-    return `<button type="button" onclick="setReqDelivery('${d.id}','${mode}')" style="padding:2px 11px;font-size:12px;border:1px solid ${on?color:'#e0e0e0'};background:${on?color:'#fff'};color:${on?'#fff':'#999'};border-radius:12px;cursor:pointer;margin-right:5px">${label}</button>`; };
-  return `<div><div style="font-size:12px;color:#888">交付状态</div><div style="margin-top:4px;display:flex">${opt('进行中','进行中','#1677ff')}${opt('已上线','已上线','#52c41a')}${opt('已暂缓','已暂缓','#8c8c8c')}</div></div>`;
+  const paused = d.status==='已暂缓';
+  const toggle = paused
+    ? `<button type="button" onclick="setReqPause('${d.id}',false)" style="padding:2px 11px;font-size:12px;border:1px solid #1677ff;background:#fff;color:#1677ff;border-radius:12px;cursor:pointer">▶ 恢复</button>`
+    : `<button type="button" onclick="setReqPause('${d.id}',true)" style="padding:2px 11px;font-size:12px;border:1px solid #e0e0e0;background:#fff;color:#999;border-radius:12px;cursor:pointer">⏸ 暂缓</button>`;
+  const hint = paused ? '<span style="font-size:11px;color:#999;margin-left:8px">恢复后按当前阶段自动回到流程</span>'
+                      : '<span style="font-size:11px;color:#999;margin-left:8px">交付状态随生命周期阶段推进；上线在步骤条内确认</span>';
+  return `<div><div style="font-size:12px;color:#888">交付状态</div><div style="margin-top:4px;display:flex;align-items:center">${statTag(d.status)}<span style="margin-left:8px"></span>${toggle}${hint}</div></div>`;
 }
-async function setReqDelivery(id, mode){
+// 暂缓/恢复：暂缓写 sticky 的「已暂缓」；恢复按当前生命周期阶段重新派生状态
+async function setReqPause(id, pause){
   if(!canWrite('list')) return;
   const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===id); if(!r) return;
-  const isTerminal = r.status==='已上线'||r.status==='已暂缓';
-  let newStatus;
-  if(mode==='已上线') newStatus='已上线';
-  else if(mode==='已暂缓') newStatus='已暂缓';
-  else { if(!isTerminal) return; newStatus=_reqFlowStatus(id); }   // 撤回到进行中：按当前生命周期阶段派生
+  const newStatus = pause ? '已暂缓' : _reqFlowStatus(id);
   if(newStatus===r.status) return;
   try{
     await api('update', {...r, status:newStatus, operator:_lcOperator()});
@@ -1881,7 +1894,7 @@ async function deleteItem(id,name) {
 }
 
 // ===== 认领 =====
-let _claimId = null, _claimSelected = new Set(), _claimForce = false;
+let _claimId = null, _claimSelected = new Set(), _claimForce = false, _claimAdvanceStage = null;
 
 // 评审门禁：飞书「评审是否通过」=已通过 或 生命周期「研发评审」阶段=已完成，任一满足即放行
 function reviewPassed(d){
@@ -1901,6 +1914,10 @@ async function lcAutoAdvance(reqId, toStage){
   const cur = (life && life.currentStage) || LC_STAGES[0];
   if(LC_STAGES.indexOf(cur) >= tgt) return;
   await lcApi('stage-advance', { reqId, toStage, operator: _lcOperator(), remark: '认领后自动推进到'+toStage });
+  // 本地即时把 currentStage 推到目标阶段，并对齐回写「开发状态/进度/评审」——否则列表/详情仍显示旧状态（如认领后仍「评审中」）
+  const newLife = Object.assign({}, life || {stages:{}}, { currentStage: toStage });
+  if(MYTODO.lifeMap) MYTODO.lifeMap[reqId] = newLife;
+  await _lcAlignReq(reqId, newLife).catch(()=>{});
 }
 
 const DEFAULT_MEMBERS = ['吴江兵','江宇岭','江鹏','潘徐莉','沈明杰','覃显华','钟万伟','周晓','颜世俊','邹晓东'];
@@ -1973,7 +1990,53 @@ function openClaim(id) {
   refreshClaimList();
   document.getElementById('claimModal').style.display = 'flex';
 }
-function closeClaim() { document.getElementById('claimModal').style.display = 'none'; _claimId = null; _claimSelected = new Set(); _claimForce = false; }
+function closeClaim() { document.getElementById('claimModal').style.display = 'none'; _claimId = null; _claimSelected = new Set(); _claimForce = false; _claimAdvanceStage = null; }
+
+// 推进到「研发评审/测试认领」等手动阶段但还没负责人 → 复用认领弹窗的选人 UI，选完直接推进（不必进编辑），一步到位
+function openStageAdvance(toStage){
+  if(!canWrite('list')||!_lcReqId||!_lcData) return;
+  _claimAdvanceStage = toStage;
+  _claimId = _lcReqId;
+  _claimForce = false;
+  const st = _lcData.stages && _lcData.stages[toStage];
+  const existing = ((st && st.members) || []).map(m=>m.name).filter(Boolean);
+  _claimSelected = new Set(existing);
+  document.getElementById('claimReqName').innerHTML =
+    '<strong>推进到「'+toStage+'」阶段</strong><br><span style="color:#888;font-size:12px">选择本阶段负责人，确认后自动推进（之前阶段标记为已完成）</span>';
+  document.querySelector('#claimModal .modal-head h2').textContent = '➡️ 指派「'+toStage+'」负责人';
+  document.getElementById('claimBtn').textContent = '✅ 确认并推进';
+  refreshClaimList();
+  document.getElementById('claimModal').style.display = 'flex';
+}
+async function doStageAdvanceWithMembers(){
+  const toStage = _claimAdvanceStage, reqId = _claimId;
+  const names = [..._claimSelected];
+  if(!names.length){ alert('请至少选择一位负责人'); return; }
+  const btn = document.getElementById('claimBtn'); btn.disabled = true; btn.textContent = '提交中...';
+  try{
+    const life = (MYTODO.lifeMap && MYTODO.lifeMap[reqId]) || _lcData || {currentStage:'提报', stages:{}};
+    const stages = JSON.parse(JSON.stringify(life.stages || {}));
+    const cur = stages[toStage] || {status:'未开始', members:[], due:''};
+    cur.members = names.map(n=>({name:n, progress:0}));      // 新指派成员，进度从 0 起
+    stages[toStage] = cur;
+    // 先写入目标阶段成员，再推进（推进把之前阶段置已完成、目标阶段进行中）
+    await lcApi('lifecycle-save', { reqId, currentStage: life.currentStage||'提报', stages, operator:_lcOperator() });
+    await lcApi('stage-advance', { reqId, toStage, operator:_lcOperator(), remark:'推进并指派负责人：'+names.join('、') });
+    const newLife = Object.assign({}, life, { currentStage: toStage, stages });
+    if(MYTODO.lifeMap) MYTODO.lifeMap[reqId] = newLife;
+    await _lcAlignReq(reqId, newLife).catch(()=>{});   // 对齐回写开发状态/进度/评审
+    closeClaim();
+    render();
+    // 详情正打开就地刷新生命周期
+    const _dm=document.getElementById('detailModal');
+    if(_lcReqId===reqId && _dm && _dm.style.display!=='none'){
+      const _rd=(Array.isArray(allData)?allData:[]).find(x=>x.id===reqId)||{};
+      await loadLifecycle({id:reqId, submitter:_rd.submitter, person:_rd.person}).catch(()=>{});
+    }
+    loadData(true);
+  }catch(e){ alert('推进失败：'+(e.message||e)); }
+  btn.disabled = false; btn.textContent = '✅ 确认并推进';
+}
 
 async function releaseClaim(id) {
   const d = allData.find(x => x.id === id); if (!d) return;
@@ -2023,6 +2086,12 @@ async function doClaim() {
     lcApi('claim-log-add', { reqId, action: logAction, persons: person, operator: _lcOperator(), remark: logAction==='换人' ? ('由 '+(prevPersons.join('、')||'-')+' 变更') : '' }).catch(()=>{});
     await lcAutoAdvance(reqId, '开发认领').catch(()=>{});   // 认领即进入「开发认领」阶段（待开发）
     loadData(true);
+    // 若该需求详情正打开，就地刷新其生命周期（认领人/开发认领阶段即时反映，无需回列表）
+    const _dm=document.getElementById('detailModal');
+    if(_lcReqId===reqId && _dm && _dm.style.display!=='none'){
+      const _rd=(Array.isArray(allData)?allData:[]).find(x=>x.id===reqId)||{};
+      loadLifecycle({id:reqId, submitter:_rd.submitter, person:_rd.person||person}).catch(()=>{});
+    }
   } catch(e) { alert('认领失败：' + e.message); loadData(); }
   btn.disabled = false; btn.textContent = '✅ 确认认领';
 }
@@ -4439,8 +4508,10 @@ async function deleteUser(id) {
 }
 
 // ==================== 需求生命周期（挂在需求详情内） ====================
-const LC_STAGES = ['提报','研发评审','开发认领','测试认领'];
+const LC_STAGES = ['提报','研发评审','开发认领','测试认领','上线'];
 const LC_AUTO_STAGES = { '提报':'submitter', '开发认领':'person' }; // 负责人自动关联需求字段
+const LC_MILESTONE_STAGES = ['上线'];   // 里程碑阶段：无需成员（进度=未完成0/已完成100）
+function _lcNoMemberStage(s){ return !!LC_AUTO_STAGES[s] || LC_MILESTONE_STAGES.includes(s); }
 const LC_STAGE_STATUS = ['未开始','进行中','已完成'];
 const LC_DEPTS = ['销售部','研发部','开发部','测试部','产品部','其他'];
 const LC_BLK_STATUS = ['待处理','协调中','已解决'];
@@ -4482,16 +4553,18 @@ function _lcDevProgress(data, reqLike){
   const st=(data.stages&&data.stages['开发认领'])||{status:'进行中',members:[]};
   return _lcStageProgress(_lcStageMembers(reqLike,'开发认领',st), st.status);
 }
-// 生命周期阶段 → 开发状态（列表「状态」列）对齐：前向映射、不覆盖手动置的后期/终态
-const LC_KEEP_STATUS=['联调中','待上线','已上线','已暂缓'];
+// 生命周期阶段 → 开发状态 对齐：与阶段一一对应；只有终态(已上线/已暂缓)是 sticky、不被派生覆盖
+const LC_KEEP_STATUS=['已上线','已暂缓'];   // sticky：显式置的终态不被阶段派生覆盖（联调中已下线→交给派生自动归位为对应阶段状态）
 function _lcAlignedStatus(data, curStatus){
   if(!data) return curStatus;
-  if(LC_KEEP_STATUS.includes(curStatus)) return curStatus;   // 手动后期/终态不被阶段覆盖
+  if(LC_KEEP_STATUS.includes(curStatus)) return curStatus;   // 已上线/已暂缓 不被阶段覆盖
   const idx=LC_STAGES.indexOf(data.currentStage||'提报');
-  const idxDev=LC_STAGES.indexOf('开发认领'), idxTest=LC_STAGES.indexOf('测试认领');
-  if(idx>=idxTest) return '测试中';
+  const idxReview=LC_STAGES.indexOf('研发评审'), idxDev=LC_STAGES.indexOf('开发认领'), idxTest=LC_STAGES.indexOf('测试认领'), idxLaunch=LC_STAGES.indexOf('上线');
+  if(idx>=idxLaunch) return '待上线';   // 处于「上线」阶段=测好待发布（已上线由步骤条显式置、KEEP 保护）
+  if(idx===idxTest){ const t=data.stages&&data.stages['测试认领']; return (t&&t.status==='已完成')?'待上线':'测试中'; }   // 测试做完=待上线（测试完成即待上线，与列表/详情一致）
   if(idx===idxDev) return '开发中';
-  return curStatus==='专题探讨'?'专题探讨':'待开始';           // 提报/研发评审：开发未开始
+  if(idx===idxReview) return '评审中';   // 研发评审阶段=评审中（与生命周期一一对应）
+  return '待开始';                       // 提报：开发未开始
 }
 // 生命周期「研发评审」阶段是否已完成（评审通过）：当前阶段已越过评审，或评审阶段 status=已完成
 function _lcReviewDone(data){
@@ -4629,7 +4702,7 @@ function renderLifecycle(){
       <div class="lc-dot">${dot}</div>
       <div class="lc-sname">${s}</div>
       <div class="lc-sstatus" style="color:${stColor}">${st.status}</div>
-      <div class="lc-sowner">${members.length?members.map(m=>`<span class="lc-owner-chip">${_escH(m.name)}</span>`).join(''):'<span class="none">未指派</span>'}${isAuto?' <span title="自动关联需求'+(s==='提报'?'提出人':'认领人')+'" style="color:#52c41a;font-size:9px">🔗</span>':''}</div>
+      <div class="lc-sowner">${members.length?members.map(m=>`<span class="lc-owner-chip">${_escH(m.name)}</span>`).join(''):(LC_MILESTONE_STAGES.includes(s)?'<span class="none">—</span>':'<span class="none">未指派</span>')}${isAuto?' <span title="自动关联需求'+(s==='提报'?'提出人':'认领人')+'" style="color:#52c41a;font-size:9px">🔗</span>':''}</div>
       <div class="lc-prog"><i style="width:${prog}%;background:${barColor}"></i></div>
       <div class="lc-spct">${prog}%${members.length>1?' · '+members.length+'人':''}</div>
       ${st.due?`<div style="font-size:10px;margin-top:2px;color:${_lcStageDueOverdue(st)?'#f5222d':'#8c8c8c'}">📅 ${st.due}${_lcStageDueOverdue(st)?' ⚠逾期'+(_mtDaysAgo(st.due)||0)+'天':''}</div>`:''}
@@ -4637,8 +4710,19 @@ function renderLifecycle(){
       ${canW?`<div class="lc-sbtns"><button onclick="lcEditStage('${s}')">编辑</button>${i===curIdx+1?`<button class="adv" onclick="lcAdvance('${s}')">推进→</button>`:''}</div>`:''}
     </div>`;
   }).join('');
-  const advHead = (canW && curIdx>=0 && curIdx<LC_STAGES.length-1)
-    ? `<button class="btn btn-primary btn-sm" onclick="lcAdvance('${LC_STAGES[curIdx+1]}')">推进至 ${LC_STAGES[curIdx+1]} →</button>` : '';
+  // 交付流程头部动作：非终点→推进至下一阶段；处于「上线」阶段未发布→确认已上线；已上线→撤销上线（全部在步骤条内一条线走完）
+  const _lcReq=(Array.isArray(allData)?allData:[]).find(x=>x.id===_lcReqId)||{};
+  const _shipped=_lcReq.status==='已上线';
+  let advHead='';
+  if(canW){
+    if(curIdx>=0 && curIdx<LC_STAGES.length-1){
+      advHead=`<button class="btn btn-primary btn-sm" onclick="lcAdvance('${LC_STAGES[curIdx+1]}')">推进至 ${LC_STAGES[curIdx+1]} →</button>`;
+    } else if(cur==='上线' && !_shipped){
+      advHead=`<button class="btn btn-primary btn-sm" style="background:#52c41a;border-color:#52c41a" onclick="lcShip()">✅ 确认已上线</button>`;
+    } else if(_shipped){
+      advHead=`<span class="lc-badge" style="background:#f6ffed;color:#389e0d;margin-right:6px">✅ 已上线</span><button class="btn btn-ghost btn-sm" onclick="lcUnship()">↩ 撤销上线</button>`;
+    }
+  }
 
   // 成员进度明细：每阶段列出每人各自进度条（开发/测试进度一目了然）
   const memberDetail = info.filter(x=>x.members.length).map(x=>{
@@ -4651,7 +4735,7 @@ function renderLifecycle(){
   const blkList=_lcBlockers.length?_lcBlockers.map(lcBlockerHtml).join(''):'<div style="color:#aaa;font-size:12px">暂无卡点</div>';
   const _curClaimers=_splitNames(_lcDefaults.person);
   // 「当前认领人」是状态摘要、不是一次操作 → 移出留痕时间线，作为独立摘要条（无操作人/时间，不带时间线圆点）
-  const claimSummary=`<div style="font-size:12px;color:#555;margin-bottom:10px;padding:6px 10px;background:#f7f9ff;border-radius:6px;border-left:3px solid #1677ff">👥 <b>当前认领人：</b>${_curClaimers.length?_escH(_curClaimers.join('、')):'<span style="color:#faad14">待认领</span>'}</div>`;
+  const claimSummary=`<div style="font-size:12px;color:#555;margin-bottom:10px;padding:6px 10px;background:#f7f9ff;border-radius:6px;border-left:3px solid #1677ff;display:flex;align-items:center;gap:8px;flex-wrap:wrap">👥 <b>当前认领人：</b>${_curClaimers.length?_escH(_curClaimers.join('、')):'<span style="color:#faad14">待认领</span>'}${canW?`<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 12px" onclick="openClaim('${_lcReqId}')">🙋 ${_curClaimers.length?'更换认领人':'认领'}</button>`:''}</div>`;
   // 统一操作记录：合并 审计(字段/阶段/卡点) + 流转(阶段推进) + 认领，按时间倒序
   const _merged=[];
   _lcAudit.forEach(a=>{
@@ -4690,14 +4774,15 @@ function renderLifecycle(){
 
 // ---- 阶段编辑（成员列表：每人姓名 + 个人进度） ----
 let _lsMembers=[];  // [{name, progress}]
+let _lsProgressLocked=false;  // 未推进到本阶段时锁定进度/状态编辑（仅允许预先指派负责人）
 function renderLsMembers(){
   const box=document.getElementById('lsMembers'); if(!box) return;
   const locked=!!LC_AUTO_STAGES[_lcStageEditKey];
-  if(!_lsMembers.length){ box.innerHTML='<div class="ls-empty">'+(locked?(_lcStageEditKey==='开发认领'?'请先在需求中「认领」（设置认领人）':'提报人自动为需求提出人'):'未添加成员，请在下方添加负责人')+'</div>'; return; }
+  if(!_lsMembers.length){ box.innerHTML='<div class="ls-empty">'+(locked?(_lcStageEditKey==='开发认领'?'尚未认领——用详情上方「🙋 认领」或「推进至 开发认领」指定认领人':'提报人自动为需求提出人'):'未添加成员，请在下方添加负责人')+'</div>'; return; }
   box.innerHTML=_lsMembers.map((m,i)=>`
     <div class="ls-mrow">
       <span class="ls-mname" title="${_escH(m.name)}">${_escH(m.name)}</span>
-      <input type="range" min="0" max="100" step="5" value="${m.progress}" oninput="_lsMembers[${i}].progress=parseInt(this.value)||0;this.nextElementSibling.textContent=this.value+'%'">
+      <input type="range" min="0" max="100" step="5" value="${m.progress}" ${_lsProgressLocked?'disabled title="推进到本阶段后才能改进度"':''} oninput="_lsMembers[${i}].progress=parseInt(this.value)||0;this.nextElementSibling.textContent=this.value+'%'">
       <span class="ls-mpct">${m.progress}%</span>
       ${locked?'':`<button type="button" class="ls-mdel" onclick="lsRemoveMember(${i})">×</button>`}
     </div>`).join('');
@@ -4715,25 +4800,43 @@ function lcEditStage(stageKey){
   _lcStageEditKey=stageKey; _lcFillMembers();
   const st=_lcData.stages[stageKey]||{status:'未开始',members:[]};
   const isAuto=!!LC_AUTO_STAGES[stageKey];
+  const isMilestone=LC_MILESTONE_STAGES.includes(stageKey);
+  const noMember=isAuto||isMilestone;
+  // 前置条件：只有「已推进到」的阶段（当前或已过）才能改进度/状态；未到的阶段只能预先指派负责人/计划完成日
+  const curIdx=LC_STAGES.indexOf(_lcData.currentStage);
+  const reached = curIdx<0 ? true : (LC_STAGES.indexOf(stageKey)<=curIdx);
+  _lsProgressLocked=!reached;
   const reqLike={submitter:_lcDefaults.submitter, person:_lcDefaults.person};
   document.getElementById('lifeStageTitle').textContent='编辑阶段 · '+stageKey;
-  document.getElementById('lsAddRow').style.display=isAuto?'none':'';
-  document.getElementById('lsAutoHint').style.display=isAuto?'':'none';
-  if(isAuto) document.getElementById('lsAutoHint').textContent='📌 成员自动关联'+(stageKey==='提报'?'需求「提出人」':'需求「认领人」')+'（在需求中修改，可多人）；此处填各人进度与阶段状态';
+  document.getElementById('lsMemberRow').style.display=isMilestone?'none':'';   // 里程碑（上线）无成员，整行隐藏
+  document.getElementById('lsStatusNote').style.display=(isMilestone||_lsProgressLocked)?'none':'';
+  document.getElementById('lsAddRow').style.display=noMember?'none':'';
+  // 提示语：自动/里程碑说明 + 未推进锁定说明
+  let hint='';
+  if(isAuto) hint='📌 成员自动关联'+(stageKey==='提报'?'需求「提出人」':'需求「认领人」')+'（在需求中修改，可多人）';
+  else if(isMilestone) hint='📌 「'+stageKey+'」为里程碑阶段，无需成员';
+  if(_lsProgressLocked) hint=(hint?hint+'；':'')+'⏳ 需先「推进」到本阶段，才能填写进度与状态；此处可先指派负责人 / 计划完成日';
+  else if(isAuto) hint+='；此处填各人进度与阶段状态';
+  else if(isMilestone) hint+='；此处填阶段状态与计划完成日';
+  document.getElementById('lsAutoHint').style.display=hint?'':'none';
+  document.getElementById('lsAutoHint').textContent=hint;
   _lsMembers=_lcStageMembers(reqLike, stageKey, st).map(m=>({name:m.name, progress:m.progress}));
   document.getElementById('lsMemberInput').value=''; renderLsMembers();
-  document.getElementById('lsStatus').value=st.status||'未开始';
+  const stSel=document.getElementById('lsStatus');
+  stSel.value=_lsProgressLocked?'未开始':(st.status||'未开始');
+  stSel.disabled=_lsProgressLocked;
   document.getElementById('lsDue').value=st.due||'';
   document.getElementById('lifeStageModal').style.display='flex';
 }
 async function lcSaveStage(){
   if(!_lcData||!_lcStageEditKey) return;
-  const isAuto=!!LC_AUTO_STAGES[_lcStageEditKey];
-  if(!isAuto && _lsMembers.length===0){ alert('每个阶段负责人必填，请至少添加一位负责人'); return; }
+  const noMember=_lcNoMemberStage(_lcStageEditKey);
+  if(!noMember && !_lsProgressLocked && _lsMembers.length===0){ alert('每个阶段负责人必填，请至少添加一位负责人'); return; }
   const stages=JSON.parse(JSON.stringify(_lcData.stages));
+  const bareMembers=(_lcStageEditKey==='提报'||LC_MILESTONE_STAGES.includes(_lcStageEditKey));
   stages[_lcStageEditKey]={
-    status:document.getElementById('lsStatus').value,
-    members: _lcStageEditKey==='提报' ? [] : _lsMembers.map(m=>({name:m.name, progress:parseInt(m.progress)||0})),
+    status:_lsProgressLocked?'未开始':document.getElementById('lsStatus').value,   // 未推进到本阶段：状态锁「未开始」、进度锁 0，仅保存负责人/计划完成日
+    members: bareMembers ? [] : _lsMembers.map(m=>({name:m.name, progress:_lsProgressLocked?0:(parseInt(m.progress)||0)})),
     due: document.getElementById('lsDue').value||''
   };
   const btn=document.getElementById('lsSaveBtn'); btn.disabled=true; btn.textContent='保存中…';
@@ -4749,10 +4852,11 @@ async function lcAdvance(toStage){
   if(!canWrite('list')||!_lcReqId) return;
   // 每个阶段负责人必填：推进前校验目标阶段已有负责人
   if(toStage==='开发认领'){
-    if(!(_lcDefaults.person||'').trim()){ alert('「开发认领」负责人自动关联需求「认领人」。请先在需求中「认领」（指定认领人）再推进。'); return; }
-  } else {
+    // 认领人即「开发认领」负责人 → 未认领时直接弹「认领」选择，确认后 doClaim 会自动推进到本阶段（无需进编辑）
+    if(!(_lcDefaults.person||'').trim()){ openClaim(_lcReqId); return; }
+  } else if(!_lcNoMemberStage(toStage)){   // 里程碑阶段（上线）无需成员
     const mem=(_lcData && _lcData.stages && _lcData.stages[toStage] && _lcData.stages[toStage].members)||[];
-    if(!mem.length){ alert('请先为「'+toStage+'」阶段设置负责人（每个阶段负责人必填），再推进。'); return; }
+    if(!mem.length){ openStageAdvance(toStage); return; }   // 手动阶段未指派负责人 → 弹选人，选完直接推进（不必进编辑）
   }
   const remark=prompt(`将需求推进到「${toStage}」阶段（之前阶段将标记为已完成，操作留痕）。\n可填写流转备注（可留空）：`,'');
   if(remark===null) return;
@@ -4761,6 +4865,35 @@ async function lcAdvance(toStage){
     await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
     await _lcSyncDevProgress();   // 回写开发进度到飞书（推进到测试认领→100%，推进到开发认领→当前进度）
   }catch(e){ alert('推进失败：'+e.message); }
+}
+
+// 确认已上线：把「上线」阶段（及之前全部）标记已完成，开发状态显式置「已上线」（sticky，不被阶段派生覆盖）
+async function lcShip(){
+  if(!canWrite('list')||!_lcReqId||!_lcData) return;
+  if(!confirm('确认该需求已上线？将把「上线」阶段标记为已完成，开发状态置为「已上线」。')) return;
+  const stages=JSON.parse(JSON.stringify(_lcData.stages));
+  LC_STAGES.forEach(s=>{ if(stages[s]){ stages[s].status='已完成'; stages[s].members=(stages[s].members||[]).map(m=>({name:m.name,progress:100})); } });
+  try{
+    await lcApi('lifecycle-save',{reqId:_lcReqId,currentStage:'上线',stages,operator:_lcOperator()});
+    const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===_lcReqId);
+    if(r){ await api('update',{...r,status:'已上线',operator:_lcOperator()}); const i=allData.findIndex(x=>x.id===_lcReqId); if(i!==-1) allData[i]={...allData[i],status:'已上线'}; }
+    await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+    render(); if(MYTODO.loaded) loadMyTodos(true);
+  }catch(e){ alert('确认上线失败：'+e.message); }
+}
+// 撤销上线：回到「上线」阶段进行中（待上线），开发状态显式置「待上线」以脱离 sticky 的已上线
+async function lcUnship(){
+  if(!canWrite('list')||!_lcReqId||!_lcData) return;
+  if(!confirm('撤销上线？需求将回到「上线」阶段（待上线），可继续处理。')) return;
+  const stages=JSON.parse(JSON.stringify(_lcData.stages));
+  if(stages['上线']) stages['上线'].status='进行中';
+  try{
+    await lcApi('lifecycle-save',{reqId:_lcReqId,currentStage:'上线',stages,operator:_lcOperator()});
+    const r=(Array.isArray(allData)?allData:[]).find(x=>x.id===_lcReqId);
+    if(r){ await api('update',{...r,status:'待上线',operator:_lcOperator()}); const i=allData.findIndex(x=>x.id===_lcReqId); if(i!==-1) allData[i]={...allData[i],status:'待上线'}; }
+    await loadLifecycle({id:_lcReqId, submitter:_lcDefaults.submitter, person:_lcDefaults.person});
+    render(); if(MYTODO.loaded) loadMyTodos(true);
+  }catch(e){ alert('撤销上线失败：'+e.message); }
 }
 
 // ---- 卡点 增删改 ----
@@ -4874,12 +5007,25 @@ async function loadMyTodos(silent=false){
 
 function computeMyTodos(){
   const mine=_myNames();
-  const stageTodos=[], blockerTodos=[];
+  const stageTodos=[], blockerTodos=[], doneTodos=[];
   const reqById={}; _mtScopedReqs().forEach(r=>{ reqById[r.id]=r; });
   _mtScopedReqs().forEach(r=>{
-    if(r.status==='已上线'||r.status==='已暂缓') return;   // 已交付/暂缓的不计入待办
     const life=MYTODO.lifeMap[r.id]||null;
+    if(r.status==='已上线'||r.status==='已暂缓'){   // 已上线=我参与且已交付的「已完成」；暂缓不计
+      if(r.status==='已上线'){
+        let did=false;
+        if(life&&life.stages){ ['研发评审','开发认领','测试认领'].forEach(sk=>{ const st=life.stages[sk]; if(st&&_lcStageMembers(r,sk,st).some(m=>mine.has(m.name))) did=true; }); }
+        if(!did && _nameMatch(r.person,mine)) did=true;
+        if(did) doneTodos.push({req:r, shipped:true});
+      }
+      return;
+    }
     const cur=(life&&life.currentStage)||'提报';
+    const curIdx=LC_STAGES.indexOf(cur);
+    // 我在「已过工作阶段」的完成任务（如开发做完、需求已转测试）→ 计入「已完成」，不再凭空消失
+    let didPassed=false;
+    MT_STAGE_META.forEach(sm=>{ const sk=sm.key, skIdx=LC_STAGES.indexOf(sk); if(skIdx>=curIdx) return; const st=life&&life.stages&&life.stages[sk]; if(st&&_lcStageMembers(r,sk,st).some(m=>mine.has(m.name))) didPassed=true; });
+    if(didPassed) doneTodos.push({req:r, inFlight:true});
     const st=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
     if(st.status==='已完成') return;                       // 当前阶段已完成，等推进，不算
     const mineMember=_lcStageMembers(r,cur,st).find(m=>mine.has(m.name));
@@ -4889,7 +5035,7 @@ function computeMyTodos(){
     if(b.status==='已解决') return;
     if(_nameMatch(b.follower,mine)) blockerTodos.push({blocker:b, req:reqById[b.reqId]||null});
   });
-  return {stageTodos, blockerTodos};
+  return {stageTodos, blockerTodos, doneTodos};
 }
 
 function updateMyTodoBadge(){
@@ -4917,14 +5063,14 @@ const MT_SOON_DAYS=7;          // 距预计上线 ≤ N 天 = 临近
 const MT_LAG_PROGRESS=60;      // 临近上线但进度 < 此 = 滞后
 const MT_OVERLOAD_SCORE=20;    // 加权工作量 ≥ 此 = 超载
 const MT_STALE_CLAIM_DAYS=30;  // 待认领超过 N 天 = 长期无人认领
-const _mtStageColor={'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16'};
+const _mtStageColor={'提报':'#8c8c8c','研发评审':'#722ed1','开发认领':'#1677ff','测试认领':'#fa8c16','上线':'#52c41a'};
 function _mtIsActive(r){ return r && r.status!=='已上线' && r.status!=='已暂缓'; }
 function _mtDaysAgo(v){ if(!v) return null; const t=new Date(v).getTime(); if(isNaN(t)) return null; return Math.floor((Date.now()-t)/86400000); }
 function _mtDaysUntil(v){ if(!v) return null; const t=new Date(v).getTime(); if(isNaN(t)) return null; return Math.ceil((t-Date.now())/86400000); }
 function _mtDaysBetween(a,b){ const ta=new Date(a).getTime(), tb=new Date(b).getTime(); if(isNaN(ta)||isNaN(tb)) return null; return Math.round((tb-ta)/86400000); }
 function _mtStage(r){ const life=MYTODO.lifeMap[r.id]; return (life&&life.currentStage)||'提报'; }
 // 阶段友好名（进行时态）：研发评审→评审中 / 开发认领→开发中 / 测试认领→测试中，与按人/按阶段视图一致
-const _MT_STAGE_LABEL={'提报':'提报','研发评审':'评审中','开发认领':'开发中','测试认领':'测试中'};
+const _MT_STAGE_LABEL={'提报':'提报','研发评审':'评审中','开发认领':'开发中','测试认领':'测试中','上线':'上线'};
 function _mtStageLabel(stage){ return _MT_STAGE_LABEL[stage]||stage; }
 // 当前阶段的状态（未开始/进行中/已完成）
 function _mtStageStatus(r){ const life=MYTODO.lifeMap[r.id]; const cur=(life&&life.currentStage)||'提报'; const st=life&&life.stages&&life.stages[cur]; return (st&&st.status)||(cur==='提报'?'已完成':'进行中'); }
@@ -4990,8 +5136,8 @@ async function mtBackfillClaims(){
 }
 function computeAllTodos(){
   const perPerson={};
-  const ensure=n=>{ if(!perPerson[n]) perPerson[n]={stage:[],byStage:{'研发评审':[],'开发认领':[],'测试认领':[]},blk:[],overdue:0}; return perPerson[n]; };
-  const stageDist={'提报':0,'研发评审':0,'开发认领':0,'测试认领':0};
+  const ensure=n=>{ if(!perPerson[n]) perPerson[n]={stage:[],byStage:{'研发评审':[],'开发认领':[],'测试认领':[]},blk:[],overdue:0,done:[]}; return perPerson[n]; };
+  const stageDist={'提报':0,'研发评审':0,'开发认领':0,'测试认领':0,'上线':0};
   const stageReqs={'研发评审':[],'开发认领':[],'测试认领':[]};   // 按阶段泳道用
   const list=_mtScopedReqs();
   const reqById={}; list.forEach(r=>reqById[r.id]=r);
@@ -5000,26 +5146,46 @@ function computeAllTodos(){
   _mtScopedBlockers().forEach(b=>{ if(b.status!=='已解决' && b.reqId){ openBlkByReq[b.reqId]=(openBlkByReq[b.reqId]||0)+1; } });
   let activeReqs=0;
   list.forEach(r=>{
-    if(r.status==='已上线'||r.status==='已暂缓') return;
     const life=MYTODO.lifeMap[r.id]||null;
+    if(r.status==='已上线'||r.status==='已暂缓'){
+      // 已上线=已交付：把参与过工作阶段(研发评审/开发认领/测试认领)的成员计入其「已完成」；无生命周期成员则回退认领人。不计工作量。
+      if(r.status==='已上线'){
+        const doneNames=new Set();
+        if(life&&life.stages){ ['研发评审','开发认领','测试认领'].forEach(sk=>{ const st=life.stages[sk]; if(!st) return; _lcStageMembers(r,sk,st).forEach(m=>{ if(m.name) doneNames.add(m.name); }); }); }
+        if(!doneNames.size) _splitNames(r.person).forEach(n=>doneNames.add(n));
+        doneNames.forEach(nm=>{ ensure(nm).done.push({req:r}); });
+      }
+      return;   // 已交付/暂缓不计入在办任务量
+    }
     const cur=(life&&life.currentStage)||'提报';
-    const st=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
+    const curIdx=LC_STAGES.indexOf(cur);
     if(stageDist[cur]!==undefined) stageDist[cur]++;
     activeReqs++;
-    // 「提报」阶段的成员是提出人（非承接人），且默认已完成，不计入任何人的任务量。
-    // 其余工作阶段（研发评审/开发认领/测试认领）即使 status=已完成（做完但尚未推进到下一阶段），
-    // 也要计入承接人的任务量，否则面板会漏掉「做完待推进」的任务（如开发已完成却仍停在开发认领）。
-    if(cur==='提报') return;
-    const stageDone=st.status==='已完成';
-    const members=_lcStageMembers(r,cur,st);
-    members.forEach(m=>{
-      const g=ensure(m.name);
-      const item={req:r,stage:cur,status:st.status||'进行中',progress:m.progress,done:stageDone};
-      g.stage.push(item);
-      if(g.byStage[cur]) g.byStage[cur].push(item);
+    // 把需求计入其「参与过的每个工作阶段(研发评审/开发认领/测试认领)」的承接人：
+    //   已过阶段=该人此阶段已完成(done,进度100)、当前阶段=进行中或做完待推进、未到阶段=跳过。
+    //   这样开发做完转测试后，开发列仍体现该开发的「已完成」任务，不会凭空消失。
+    MT_STAGE_META.forEach(sm=>{
+      const sk=sm.key, skIdx=LC_STAGES.indexOf(sk);
+      if(skIdx>curIdx) return;                       // 尚未推进到的阶段不计
+      const st=(life&&life.stages&&life.stages[sk])||null;
+      const members=_lcStageMembers(r,sk,st||{});
+      if(!members.length) return;
+      const passed=skIdx<curIdx;                     // 已过阶段=该人此阶段工作已完成
+      members.forEach(m=>{
+        const g=ensure(m.name);
+        const prog=passed?100:(parseInt(m.progress)||0);
+        // 「已完成」统一口径=该人此阶段个人进度≥100%（与总进度「完成 X/Y」、展开明细「开发完成」标签一致，避免多套定义）
+        const done=prog>=100;
+        const item={req:r, stage:sk, status:passed?'已完成':((st&&st.status)||'进行中'), progress:prog, done};
+        g.stage.push(item);
+        if(g.byStage[sk]) g.byStage[sk].push(item);
+      });
     });
-    if(stageReqs[cur] && !stageDone){   // 「按阶段」泳道只展示进行中的需求，已完成待推进的不在此列
-      stageReqs[cur].push({req:r, members, prog:_lcStageProgress(members,st.status), status:st.status||'进行中', blk:openBlkByReq[r.id]||0});
+    // 「按阶段」泳道只展示当前阶段、进行中的需求（已完成待推进/已过阶段的不在泳道）
+    const stcur=(life&&life.stages&&life.stages[cur])||{status:(cur==='提报'?'已完成':'进行中'),members:[]};
+    if(stageReqs[cur] && stcur.status!=='已完成'){
+      const cmembers=_lcStageMembers(r,cur,stcur);
+      stageReqs[cur].push({req:r, members:cmembers, prog:_lcStageProgress(cmembers,stcur.status), status:stcur.status||'进行中', blk:openBlkByReq[r.id]||0});
     }
   });
   let openBlk=0, overdueBlk=0;
@@ -5034,11 +5200,13 @@ function computeAllTodos(){
   });
   return {perPerson, stageDist, stageReqs, activeReqs, openBlk, overdueBlk, peopleCount:Object.keys(perPerson).length};
 }
-// 按人矩阵：某阶段单元格（数量 + 平均进度迷你条）
+// 按人矩阵：某阶段单元格（数量 + 已完成数 + 平均进度迷你条）
 function _mtStageCell(items,color){
   if(!items||!items.length) return '<span style="color:#d5d9e0">–</span>';
+  const done=items.filter(t=>t.done).length;
   const avg=Math.round(items.reduce((s,t)=>s+(t.progress||0),0)/items.length);
-  return `<div class="mt-cell"><span class="c" style="color:${color}">${items.length}</span><div class="b"><i style="width:${avg}%;background:${color}"></i></div><span class="p">${avg}%</span></div>`;
+  const doneBadge=done?`<span title="其中 ${done} 项已完成" style="color:#52c41a;font-size:10px;margin-left:2px">✓${done}</span>`:'';
+  return `<div class="mt-cell"><span class="c" style="color:${color}">${items.length}</span>${doneBadge}<div class="b"><i style="width:${avg}%;background:${color}"></i></div><span class="p">${avg}%</span></div>`;
 }
 // ===== 预警/趋势/重点 计算 =====
 function _mtWarnings(){
@@ -5118,15 +5286,17 @@ function _mtViewPeople(d){
     let sub='';
     if(exp){
       const items=[];
-      MT_STAGE_META.forEach(sm=>{ (g.byStage[sm.key]||[]).forEach(t=>{ items.push(`<div class="si" onclick="openDetail('${t.req.id}')">🚀 <b>${_escH(t.req.name||'')}</b> ${priTag(t.req.priority)} <span class="lc-badge" style="background:${sm.color}22;color:${sm.color}">${sm.label}·${t.status}</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px"><span style="width:70px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden;display:inline-block"><i style="display:block;width:${t.progress||0}%;height:100%;background:${sm.color}"></i></span><span style="font-size:11px;color:${sm.color};min-width:34px;text-align:right">${t.progress||0}%</span></span></div>`); }); });
+      const _phaseBase={'研发评审':'评审','开发认领':'开发','测试认领':'测试'};
+      MT_STAGE_META.forEach(sm=>{ (g.byStage[sm.key]||[]).forEach(t=>{ const _base=_phaseBase[t.stage]||''; const _lbl=t.done?(_base+'完成'):((t.status==='未开始'?'待':'')+_base+(t.status==='未开始'?'':'中')); items.push(`<div class="si" onclick="openDetail('${t.req.id}')">${t.done?'✅':'🚀'} <b>${_escH(t.req.name||'')}</b> ${priTag(t.req.priority)} <span class="lc-badge" style="background:${t.done?'#52c41a22':sm.color+'22'};color:${t.done?'#52c41a':sm.color}">${_lbl}</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px"><span style="width:70px;height:6px;background:#eef0f4;border-radius:3px;overflow:hidden;display:inline-block"><i style="display:block;width:${t.progress||0}%;height:100%;background:${t.done?'#52c41a':sm.color}"></i></span><span style="font-size:11px;color:${t.done?'#52c41a':sm.color};min-width:34px;text-align:right">${t.progress||0}%</span></span></div>`); }); });
       g.blk.forEach(t=>{ const ov=t.blocker.expectedResolveAt&&t.blocker.expectedResolveAt<_lcToday(); items.push(`<div class="si" ${t.req?`onclick="openDetail('${t.req.id}')"`:''}>🚧 ${_escH(t.blocker.description)} <span style="color:#888">${t.req?_escH(t.req.name||''):'(需求已删除)'}</span>${ov?' <span style="color:#f5222d">⚠逾期</span>':''}</div>`); });
-      sub=`<tr class="mt-sub"><td colspan="8">${items.join('')||'<div style="color:#aaa;padding:6px">无</div>'}</td></tr>`;
+      (g.done||[]).forEach(t=>{ items.push(`<div class="si" onclick="openDetail('${t.req.id}')">✅ <b>${_escH(t.req.name||'')}</b> ${priTag(t.req.priority)} <span class="lc-badge" style="background:#52c41a22;color:#52c41a">已上线</span></div>`); });
+      sub=`<tr class="mt-sub"><td colspan="9">${items.join('')||'<div style="color:#aaa;padding:6px">无</div>'}</td></tr>`;
     }
     const cells=MT_STAGE_META.map(sm=>`<td>${_mtStageCell(g.byStage[sm.key],sm.color)}</td>`).join('');
-    return `<tr class="prow" onclick="mtTogglePerson(${idx})"><td>${exp?'▾':'▸'} ${_escH(n)}${overloaded?' <span class="mt-overload">超载</span>':''}</td><td>${_progCell}</td>${cells}<td class="pnum" style="color:${overloaded?'#f5222d':'#722ed1'}">${Math.round(score)}${urg?`<span style="color:#f5222d;font-size:10px"> ·${urg}急</span>`:''}</td><td class="pnum" style="color:#f5222d">${g.blk.length||''}</td><td class="pnum" style="color:${g.overdue?'#f5222d':'#bbb'}">${g.overdue||''}</td></tr>${sub}`;
+    return `<tr class="prow" onclick="mtTogglePerson(${idx})"><td>${exp?'▾':'▸'} ${_escH(n)}${overloaded?' <span class="mt-overload">超载</span>':''}</td><td>${_progCell}</td>${cells}<td class="pnum" style="color:#52c41a">${g.done.length||''}</td><td class="pnum" style="color:${overloaded?'#f5222d':'#722ed1'}">${Math.round(score)}${urg?`<span style="color:#f5222d;font-size:10px"> ·${urg}急</span>`:''}</td><td class="pnum" style="color:#f5222d">${g.blk.length||''}</td><td class="pnum" style="color:${g.overdue?'#f5222d':'#bbb'}">${g.overdue||''}</td></tr>${sub}`;
   }).join('');
-  const table=arr.length?`<table class="mt-ptable mt-matrix"><thead><tr><th>成员</th><th>总进度</th><th style="color:#722ed1">评审中</th><th style="color:#1677ff">开发中</th><th style="color:#fa8c16">测试中</th><th title="优先级加权：紧急×4 / 高×2 / 中×1 / 低×0.5">工作量</th><th>卡点</th><th>逾期</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="mt-empty">暂无待办数据</div>';
-  return `<div class="mt-sec-h">👥 全员待办 · 按人 × 阶段（总进度=在办任务平均进度 · 完成数；点姓名展开每条任务进度）</div>${table}`;
+  const table=arr.length?`<table class="mt-ptable mt-matrix"><thead><tr><th>成员</th><th>总进度</th><th style="color:#722ed1">评审中</th><th style="color:#1677ff">开发中</th><th style="color:#fa8c16">测试中</th><th style="color:#52c41a" title="该成员参与、现已上线交付的需求数（点姓名展开明细）">✅已上线</th><th title="优先级加权：紧急×4 / 高×2 / 中×1 / 低×0.5">工作量</th><th>卡点</th><th>逾期</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="mt-empty">暂无待办数据</div>';
+  return `<div class="mt-sec-h">👥 全员待办 · 按人 × 阶段（阶段列数字=该人此阶段任务数，绿色 ✓N=其中进度已满100%；✅已上线列=整条需求已上线交付数 · 点姓名展开明细）</div>${table}`;
 }
 function _mtViewStage(d){
   const lanes=MT_STAGE_META.map(sm=>{
@@ -5201,7 +5371,7 @@ function _mtViewHealth(){
   const staleClaim=list.filter(r=>_mtIsActive(r)&&!hasPerson(r.person)&&(_mtDaysAgo(r.createTime)||0)>=MT_STALE_CLAIM_DAYS);
   const conflict=list.filter(r=>{ if(!_mtIsActive(r)) return false; const st=_mtStage(r);
     if(r.status==='测试中'&&st==='开发认领') return true;
-    if((r.status==='开发中'||r.status==='联调中')&&(st==='提报'||st==='研发评审')) return true;
+    if(r.status==='开发中'&&(st==='提报'||st==='研发评审')) return true;
     return false; });
   const total=dupNos.length+progDone.length+noDeadline.length+staleClaim.length+conflict.length;
   const top=total===0?'<div class="mt-alert" style="background:#f6ffed;border-color:#b7eb8f;color:#389e0d">✅ 未发现明显的数据异常</div>':`<div class="mt-alert">共发现 ${total} 处待清理的数据问题，建议逐项处理以保证看板数据可信。</div>`;
@@ -5498,7 +5668,7 @@ const MYTODO_ORDER=['研发评审','开发认领','测试认领','提报'];
 function renderMyTodos(){
   if(_currentUser && _currentUser.role==='admin'){ renderAdminPanel(); return; }
   const mc=document.getElementById('mainContent');
-  const {stageTodos, blockerTodos}=computeMyTodos();
+  const {stageTodos, blockerTodos, doneTodos}=computeMyTodos();
   const meName=[..._myNames()][0]||'当前账号';
   const _blkColor={'待处理':'#f5222d','协调中':'#fa8c16','已解决':'#52c41a'};
 
@@ -5534,13 +5704,25 @@ function renderMyTodos(){
   if(blockerTodos.length){
     cols.push(`<div class="mt-lane"><div class="mt-lane-h" style="border-top-color:#f5222d"><span style="color:#f5222d">🚧 待我处理的卡点</span><b>${blockerTodos.length}</b></div><div class="mt-lane-body">${blockerTodos.map(blkCard).join('')}</div></div>`);
   }
+  // ✅ 已完成（我参与、已上线交付 或 我这一阶段做完已转下一阶段的需求）——与"进行中"并排，直观看到做完了哪些
+  const doneCard=(t)=>{ const r=t.req; const badge = t.inFlight
+      ? `<span class="lc-badge" style="background:#52c41a22;color:#52c41a">我已完成 · 当前${_escH(r.status||'流程中')}</span>`
+      : `<span class="lc-badge" style="background:#52c41a22;color:#52c41a">已上线</span>`;
+    return `<div class="mt-lane-card" onclick="openDetail('${r.id}')">
+      <div class="t">${_escH(r.name||'(未命名)')}</div>
+      <div class="m"><b>${_escH(r.no||'')}</b> ${priTag(r.priority)} ${badge}</div>
+    </div>`; };
+  if(doneTodos.length){
+    cols.push(`<div class="mt-lane"><div class="mt-lane-h" style="border-top-color:#52c41a"><span style="color:#52c41a">✅ 已完成</span><b>${doneTodos.length}</b></div><div class="mt-lane-body">${doneTodos.map(doneCard).join('')}</div></div>`);
+  }
 
   // 头部分类计数：待评审 X · 待开发 Y · 待测试 Z · 卡点 W
   const cnt=k=>(byStage[k]||[]).length;
   const parts=[]; MYTODO_ORDER.forEach(stg=>{ if(cnt(stg)) parts.push(MYTODO_ACTION[stg].label.replace('待我','待')+' '+cnt(stg)); });
   if(blockerTodos.length) parts.push('卡点 '+blockerTodos.length);
+  if(doneTodos.length) parts.push('已完成 '+doneTodos.length);
   const summary=parts.length?parts.join(' · '):'暂无待办';
-  const empty=(stageTodos.length+blockerTodos.length===0);
+  const empty=(cols.length===0);   // 待办+已完成都空才算"无内容"
 
   mc.innerHTML=`
     <div class="mt-head">
@@ -5693,14 +5875,14 @@ function renderMyTodos(){
     </div>
     <div class="modal-body">
       <div id="lsAutoHint" style="display:none;font-size:12px;color:#52c41a;background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:8px 10px;margin-bottom:12px"></div>
-      <div class="form-row"><label>负责人及个人进度 <span style="color:red">*</span></label>
+      <div class="form-row" id="lsMemberRow"><label>负责人及个人进度 <span style="color:red">*</span></label>
         <div id="lsMembers" class="ls-mbox"></div>
         <div id="lsAddRow" style="display:flex;gap:6px;margin-top:8px">
           <input id="lsMemberInput" list="lcMembersList" placeholder="输入姓名，回车或点「添加成员」" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();lsAddMember();}">
           <button type="button" class="btn btn-ghost btn-sm" onclick="lsAddMember()">添加成员</button>
         </div>
       </div>
-      <div class="form-row"><label>阶段状态 <span style="color:#aaa;font-weight:400;font-size:11px">（选「已完成」自动把各人进度置100%）</span></label>
+      <div class="form-row"><label>阶段状态 <span id="lsStatusNote" style="color:#aaa;font-weight:400;font-size:11px">（选「已完成」自动把各人进度置100%）</span></label>
         <select id="lsStatus" onchange="lsStatusSync()"><option>未开始</option><option>进行中</option><option>已完成</option></select></div>
       <div class="form-row"><label>计划完成日 <span style="color:#aaa;font-weight:400;font-size:11px">（本阶段应完成的日期；过期未完成即"本阶段逾期"，可留空）</span></label>
         <input id="lsDue" type="date"></div>
