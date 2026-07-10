@@ -13,7 +13,7 @@ function err(msg, code = 500) { return { statusCode: code, headers: cors, body: 
 
 // 简单 token 管理（内存存储，重启失效需重新登录）
 const sessions = {};
-const TOKEN_EXPIRE = 24 * 60 * 60 * 1000; // 24小时
+const TOKEN_EXPIRE = 7 * 24 * 60 * 60 * 1000; // 7天（一星期）
 
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
