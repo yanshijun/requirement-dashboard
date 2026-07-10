@@ -217,6 +217,13 @@ exports.handler = async function (event) {
       if (!body.id) return err("缺少记录ID", 400);
       const [oldRows] = await pool.query("SELECT req_no,name FROM reqs WHERE id=?", [body.id]);
       await pool.execute("DELETE FROM reqs WHERE id=?", [body.id]);
+      // 级联清理该需求关联数据（卡点/生命周期/流转/认领留痕），避免成为孤儿后仍被统计（如未解决卡点数）
+      for (const sql of [
+        "DELETE FROM collab_blockers WHERE req_id=?",
+        "DELETE FROM req_lifecycle WHERE req_id=?",
+        "DELETE FROM collab_flow_log WHERE req_id=?",
+        "DELETE FROM collab_claim_log WHERE req_id=?"
+      ]) { try { await pool.execute(sql, [body.id]); } catch (e) { console.warn("[reqs.delete cascade]", e.message); } }
       const o = oldRows[0] || {};
       await logAudit({ reqId: body.id, entityType: "req", action: "delete", operator: body.operator, source: body.source || "manual", remark: (o.req_no ? o.req_no + " " : "") + (o.name || "") });
       return ok({ ok: true });
