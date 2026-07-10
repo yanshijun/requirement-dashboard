@@ -1,2 +1,5 @@
 # Local Netlify folder
 .netlify
+
+# Playwright MCP test artifacts (console logs, page snapshots, screenshots)
+.playwright-mcp/
