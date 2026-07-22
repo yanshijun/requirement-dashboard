@@ -1009,7 +1009,9 @@ async function loadData(silent = false) {
 function buildStatusFilter() {
   const box = document.getElementById('fStatusOpts');
   if (!box) return;
-  box.innerHTML = STATUS_LIST.map(s => `<label><input type="checkbox" value="${s}" onchange="onStatusFilterChange()">${s}</label>`).join('');
+  const cur = new Set(getStatusFilter());   // 保留当前勾选，避免 loadData（编辑/保存后）重建时把状态筛选清空
+  box.innerHTML = STATUS_LIST.map(s => `<label><input type="checkbox" value="${s}" ${cur.has(s)?'checked':''} onchange="onStatusFilterChange()">${s}</label>`).join('');
+  updateStatusLabel();
 }
 function buildPersonFilter() {
   const sel = document.getElementById('fPerson');
@@ -3067,6 +3069,7 @@ function renderIssues() {
   const toolbar = `<div class="iss-toolbar">
     <button class="btn btn-success" onclick="openIssAdd()">＋ 新增记录</button>
     <button class="btn btn-ghost" onclick="loadIssues()">🔄 刷新</button>
+    <button class="btn btn-ghost" onclick="exportIssues()">📊 导出</button>
     <select id="issPlatformFilter" onchange="window._issPlatformVal=this.value;renderIssues()">${platformOptions}</select>
     <input id="issSearch" type="text" placeholder="🔍 搜索问题描述…" value="${issSearchVal.replace(/"/g,'&quot;')}" oninput="window._issSearchVal=this.value;renderIssues()" style="width:220px">
     <button class="btn btn-primary" onclick="openKbPanel()" style="margin-left:auto">🤖 AI 售后助手</button>
@@ -3116,6 +3119,61 @@ function renderIssues() {
       <thead><tr><th>日期</th><th>客户ID</th><th>套餐类型</th><th>平台</th><th>问题描述</th><th>CHAT-UP</th><th>附件</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
+}
+
+function exportIssues() {
+  const kw = (window._issSearchVal || '').trim().toLowerCase();
+  const platformVal = window._issPlatformVal || '';
+  const rows = [...issuesData]
+    .filter(d => (!kw || (d.desc || '').toLowerCase().includes(kw) || (d.customerId || '').toLowerCase().includes(kw)) && (!platformVal || d.platform === platformVal))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  if (!rows.length) { alert('暂无数据可导出'); return; }
+
+  const esc = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const C = (val, styleId) => `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${esc(val)}</Data></Cell>`;
+
+  const cols = [
+    { label: '日期', width: 90, get: d => d.date },
+    { label: '客户ID', width: 110, get: d => d.customerId },
+    { label: '套餐类型', width: 80, get: d => d.packageType },
+    { label: '平台', width: 70, get: d => d.platform },
+    { label: '问题描述', width: 300, get: d => d.desc },
+    { label: '解决方案', width: 300, get: d => d.solution },
+    { label: '问题标签', width: 150, get: d => d.tags },
+    { label: '责任人', width: 80, get: d => d.person },
+    { label: '状态', width: 70, get: d => d.status || '未解决' },
+  ];
+
+  const colWidths = cols.map(c => `<Column ss:Width="${c.width}"/>`).join('');
+  const titleRow = `<Row ss:Height="26"><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="sTitle"><Data ss:Type="String">客户问题记录　共${rows.length}条　生成时间：${new Date().toLocaleString('zh-CN')}</Data></Cell></Row>`;
+  const headerRow = `<Row ss:Height="22">${cols.map(c => C(c.label, 'sTh')).join('')}</Row>`;
+  const dataRows = rows.map(d => `<Row>${cols.map(c => C(c.get(d), 'sCell')).join('')}</Row>`).join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+<Styles>
+  <Style ss:ID="sTitle"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="13" ss:Color="#1d2b4f"/><Interior ss:Color="#dce8ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#3370ff"/></Borders></Style>
+  <Style ss:ID="sTh"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="11" ss:Color="#1d2b4f"/><Interior ss:Color="#e8edf5" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="sCell"><Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/><Font ss:Size="11"/><Borders><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e8e8e8"/></Borders></Style>
+</Styles>
+<Worksheet ss:Name="问题记录">
+  <Table>${colWidths}${titleRow}${headerRow}${dataRows}</Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+    <FreezePanes/><FrozenNoSplit/><SplitHorizontal>2</SplitHorizontal><TopRowBottomPane>2</TopRowBottomPane>
+  </WorksheetOptions>
+</Worksheet>
+</Workbook>`;
+
+  const blob = new Blob(['﻿' + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `问题记录_${new Date().toISOString().split('T')[0]}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 let _issEditId = null;
